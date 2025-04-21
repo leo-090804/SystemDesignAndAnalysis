@@ -1,0 +1,121 @@
+@startwbs
+* HỆ THỐNG TRAO ĐỔI/QUYÊN GÓP/THANH LÝ ĐỒ CŨ
+** QUẢN LÝ THÀNH VIÊN
+*** ĐĂNG KÝ/ĐĂNG NHẬP
+**** Đăng ký tài khoản
+***** Nhập thông tin: họ tên, lớp, vai trò: học sinh/giáo viên
+***** <color:#Tomato>Cung cấp email trường để xác thực</color>
+***** Tạo mật khẩu và xác nhận
+**** Đăng nhập
+***** Nhập email và mật khẩu
+***** <color:#Tomato>Quên mật khẩu: gửi link khôi phục qua email</color>
+*** <color:#Tomato>PHÂN QUYỀN</color>
+**** <color:#Tomato>Học sinh</color>
+***** Đăng sản phẩm để bán/trao đổi/quyên góp
+***** Tham gia các hoạt động gây quỹ/quyên góp
+***** Xem và tra cứu sản phẩm của thành viên khác
+**** <color:#Tomato>Giáo viên</color>
+***** Duyệt bài đăng sản phẩm
+***** Quản lý hoạt động: phát động, giám sát
+***** <color:#Tomato>Xem báo cáo thống kê</color>
+**** Admin/Nhà trường
+***** Quản lý toàn bộ thành viên: thêm, xóa, chỉnh sửa
+***** Quản lý quỹ: phân bổ, kiểm tra
+***** Quản lý bài đăng
+***** Quản lý hệ thống: cập nhật danh mục, quy định
+
+** QUẢN LÝ SẢN PHẨM
+***  ĐĂNG SẢN PHẨM
+**** Chọn danh mục
+***** Danh mục cố định: sách, đồ dùng học tập, quần áo, đồ chơi, ...
+***** Danh mục tùy chỉnh: đề xuất danh mục mới
+**** Thêm mô tả sản phẩm
+***** Tình trạng: mới, đã qua sử dụng, cần sửa chữa
+' ***** Kích thước, chất liệu, màu sắc 
+***** Mô tả chi tiết: (Kích thước, chất liệu, màu sắc, lý do bán/trao đổi/quyên góp)
+**** Tải hình ảnh
+***** Tải lên hình ảnh
+' ***** Xem trước và chỉnh sửa hình ảnh
+**** Đặt mức giá hoặc loại giao dịch
+***** <color:#Tomato>Đặt giá cố định nếu bán</color>
+***** Chọn trao đổi: mô tả mong muốn nhận lại
+***** Chọn quyên góp: không cần giá (giá = 0)
+*** DUYỆT BÀI ĐĂNG
+' **** Giáo viên kiểm tra
+**** Admin kiểm tra
+***** Kiểm tra nội dung: mô tả, hình ảnh có phù hợp
+***** Kiểm tra danh mục và loại giao dịch
+**** Phê duyệt hoặc từ chối
+***** Phê duyệt: bài đăng hiển thị công khai
+***** Từ chối: gửi thông báo lý do cho người đăng
+*** TRA CỨU SẢN PHẨM
+**** Lọc và tìm kiếm
+***** Lọc theo danh mục, giá, loại giao dịch
+***** Tìm kiếm theo từ khóa: tên sản phẩm, mô tả
+**** Xem chi tiết
+***** Xem toàn bộ thông tin: mô tả, hình ảnh, giá
+***** <color:#Tomato>Liên hệ người đăng qua tin nhắn trong hệ </color>
+*** GIAO DỊCH SẢN PHẨM
+**** Bán
+***** Thanh toán trực tiếp giữa hai bên
+***** Thanh toán qua quỹ: chuyển tiền vào quỹ chung
+**** Trao đổi
+***** Thỏa thuận sản phẩm trao đổi qua tin nhắn
+***** Ghi nhận giao dịch: nộp phí nhỏ vào quỹ
+**** Quyên góp
+***** Chuyển sản phẩm vào hoạt động quyên góp
+***** Thông báo hoàn tất cho người quyên góp
+
+** QUẢN LÝ HOẠT ĐỘNG
+*** PHÁT ĐỘNG HOẠT ĐỘNG
+**** Gây quỹ
+***** Đặt mục tiêu: số tiền cần đạt
+***** Mô tả: mục đích, thời gian, đối tượng tham gia
+***** Thông báo cho toàn bộ thành viên
+**** Quyên góp
+***** Danh mục đồ cần quyên góp: sách, quần áo,...
+***** Địa điểm và thời gian thu gom
+***** Thông báo qua hệ thống và email
+' **** Trao đổi đồ
+' ***** Tổ chức sự kiện: thời gian, địa điểm
+' ***** Quy định: danh mục đồ được trao đổi
+' ***** Thu phí tham gia nếu có
+*** THAM GIA HOẠT ĐỘNG
+**** Đăng ký tham gia
+***** Đăng ký sản phẩm đóng góp
+***** Đóng phí tham gia nếu có
+**** Xem tiến độ
+***** Xem số lượng tham gia, đồ đã quyên góp
+***** Xem kết quả sau khi hoạt động kết thúc
+*** QUẢN LÝ QUỸ
+**** Thu phí
+***** Thu phí giao dịch từ hoạt động trao đổi
+***** Thu phí tham gia sự kiện nếu có
+**** Phân bổ quỹ
+***** Phân bổ cho hoạt động từ thiện
+***** Công khai minh bạch cho thành viên
+
+** BÁO CÁO & THỐNG KẾ
+*** <color:#Tomato>THỐNG KÊ GIAO DỊCH</color>
+**** Thống kê số lượng
+***** Số giao dịch bán, trao đổi, quyên góp
+***** Số sản phẩm theo danh mục
+**** Thống kê tài chính
+***** Doanh thu từ phí giao dịch
+***** Tổng giá trị sản phẩm bán
+' *** ĐÁNH GIÁ HOẠT ĐỘNG
+' **** Hiệu quả
+' ***** Tỷ lệ đạt mục tiêu gây quỹ/quyên góp
+' ***** Số lượng thành viên tham gia
+' **** Phản hồi
+' ***** Thu thập ý kiến từ thành viên
+' ***** Đánh giá mức độ hài lòng
+*** BÁO CÁO ĐỊNH KỲ
+**** Tổng kết
+***** Báo cáo theo tháng
+***** So sánh giữa các tháng
+**** Xuất báo cáo
+***** Xuất file PDF cho nhà trường
+***** <color:#Tomato>Gửi email thông báo báo cáo</color>
+
+@endwbs
