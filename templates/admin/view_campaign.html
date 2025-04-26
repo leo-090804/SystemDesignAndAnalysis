@@ -1,0 +1,318 @@
+{% extends "base.html" %}
+
+{% block title %}Campaign Details - Admin{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Campaign Details</h2>
+        <a href="/admin/campaigns" class="btn btn-outline-secondary">Back to Campaigns</a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4>{{ campaign.name }}</h4>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h5>Description</h5>
+                        <p>{{ campaign.description }}</p>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Campaign Details</h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Campaign Type:</span>
+                                    <span class="badge bg-info">{{ campaign.campaign_type|capitalize }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Organizer:</span>
+                                    <span>{{ campaign.organizer }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Status:</span>
+                                    <span class="badge {% if campaign.status == 'active' %}bg-success{% elif campaign.status == 'completed' %}bg-primary{% else %}bg-danger{% endif %}">
+                                        {{ campaign.status|capitalize }}
+                                    </span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Start Date:</span>
+                                    <span>{{ campaign.start_date }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>End Date:</span>
+                                    <span>{{ campaign.end_date }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Created By:</span>
+                                    <span>{{ creator.name if creator else "Unknown" }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Created On:</span>
+                                    <span>{{ campaign.created_at.split('T')[0] if campaign.created_at else "Unknown" }}</span>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h5>Campaign Progress</h5>
+                            {% if campaign.goal_amount %}
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title">Fundraising Goal</h6>
+                                    <p class="fs-4">${{ "%.2f"|format(campaign.current_amount) }} of ${{ "%.2f"|format(campaign.goal_amount) }}</p>
+                                    <div class="progress">
+                                        {% set progress = (campaign.current_amount / campaign.goal_amount * 100)|round|int %}
+                                        <div class="progress-bar" role="progressbar" style="width: {{ progress }}%;" 
+                                             aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100">{{ progress }}%</div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="card mt-3">
+                                <div class="card-body">
+                                    <h6 class="card-title">Items in Campaign</h6>
+                                    <p class="fs-4">{{ campaign_items|length }} items</p>
+                                    <p><strong>Total Value:</strong> ${{ "%.2f"|format(total_value) }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 d-flex gap-2">
+                        <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editCampaignModal">
+                            <i class="fas fa-edit me-1"></i> Edit Campaign
+                        </button>
+                        <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#cancelCampaignModal" 
+                                {% if campaign.status != 'active' %}disabled{% endif %}>
+                            <i class="fas fa-ban me-1"></i> Cancel Campaign
+                        </button>
+                        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#completeCampaignModal"
+                                {% if campaign.status != 'active' %}disabled{% endif %}>
+                            <i class="fas fa-check-circle me-1"></i> Mark as Completed
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Campaign Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Total Items:</span>
+                            <span class="badge bg-primary">{{ campaign_items|length }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Total Value:</span>
+                            <span>${{ "%.2f"|format(total_value) }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Days Remaining:</span>
+                            <span class="badge {% if campaign.status != 'active' %}bg-secondary{% else %}bg-primary{% endif %}">
+                                {% set today = now().strftime('%Y-%m-%d') %}
+                                {% if campaign.start_date > today %}
+                                    Not Started
+                                {% elif campaign.end_date < today %}
+                                    Ended
+                                {% else %}
+                                    {% set end_date = campaign.end_date.split('-') %}
+                                    {% set today_parts = today.split('-') %}
+                                    {% set days = (end_date[0]|int - today_parts[0]|int) * 365 + 
+                                                (end_date[1]|int - today_parts[1]|int) * 30 + 
+                                                (end_date[2]|int - today_parts[2]|int) %}
+                                    {{ days }} day{% if days != 1 %}s{% endif %}
+                                {% endif %}
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if campaign_items %}
+    <div class="card mt-3">
+        <div class="card-header">
+            <h5>Items in Campaign</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Owner</th>
+                            <th>Price</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in campaign_items %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    {% if item.image_path %}
+                                    <img src="{{ item.image_path }}" alt="Item" class="me-3" style="width: 50px; height: 50px; object-fit: cover;">
+                                    {% else %}
+                                    <div class="me-3 bg-light text-center" style="width: 50px; height: 50px;">
+                                        <i class="fas fa-image text-muted" style="line-height: 50px;"></i>
+                                    </div>
+                                    {% endif %}
+                                    {{ item.name }}
+                                </div>
+                            </td>
+                            <td>{{ item.user_name if item.user_name else "Unknown" }}</td>
+                            <td>${{ "%.2f"|format(item.price) }}</td>
+                            <td>
+                                {% if item.status == 'active' %}
+                                <span class="badge bg-success">Active</span>
+                                {% elif item.status == 'pending' %}
+                                <span class="badge bg-warning text-dark">Pending</span>
+                                {% elif item.status == 'sold' %}
+                                <span class="badge bg-info">Sold</span>
+                                {% else %}
+                                <span class="badge bg-secondary">{{ item.status|capitalize }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="/admin/items/{{ item.item_id }}" class="btn btn-sm btn-outline-primary">View</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="card mt-3">
+        <div class="card-body text-center py-4">
+            <i class="fas fa-box-open fa-4x text-muted mb-3"></i>
+            <h5>No items in this campaign</h5>
+            <p class="text-muted">This campaign doesn't have any items yet.</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Edit Campaign Modal -->
+<div class="modal fade" id="editCampaignModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Campaign</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="/admin/campaigns/{{ campaign.campaign_id }}/edit" method="post">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Campaign Name</label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ campaign.name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="4" required>{{ campaign.description }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="organizer" class="form-label">Campaign Organizer</label>
+                        <input type="text" class="form-control" id="organizer" name="organizer" value="{{ campaign.organizer }}" required>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="start_date" class="form-label">Start Date</label>
+                            <input type="date" class="form-control" id="start_date" name="start_date" value="{{ campaign.start_date }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="end_date" class="form-label">End Date</label>
+                            <input type="date" class="form-control" id="end_date" name="end_date" value="{{ campaign.end_date }}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3" id="goal-amount-section">
+                        <label for="goal_amount" class="form-label">Goal Amount ($)</label>
+                        <input type="number" class="form-control" id="goal_amount" name="goal_amount" min="0" step="0.01" value="{{ campaign.goal_amount if campaign.goal_amount else '' }}">
+                        <div class="form-text">Optional for donation and exchange campaigns.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="status" class="form-label">Status</label>
+                        <select class="form-select" id="status" name="status" required>
+                            <option value="active" {% if campaign.status == 'active' %}selected{% endif %}>Active</option>
+                            <option value="completed" {% if campaign.status == 'completed' %}selected{% endif %}>Completed</option>
+                            <option value="cancelled" {% if campaign.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Cancel Campaign Modal -->
+<div class="modal fade" id="cancelCampaignModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cancel Campaign</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="/admin/campaigns/{{ campaign.campaign_id }}/cancel" method="post">
+                <div class="modal-body">
+                    <p>Are you sure you want to cancel this campaign?</p>
+                    <p class="text-danger">This will make the campaign inactive and unavailable to users.</p>
+                    <div class="mb-3">
+                        <label for="cancellation_reason" class="form-label">Reason for Cancellation</label>
+                        <textarea class="form-control" id="cancellation_reason" name="reason" rows="3" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No, Keep Active</button>
+                    <button type="submit" class="btn btn-danger">Yes, Cancel Campaign</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Complete Campaign Modal -->
+<div class="modal fade" id="completeCampaignModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Complete Campaign</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="/admin/campaigns/{{ campaign.campaign_id }}/complete" method="post">
+                <div class="modal-body">
+                    <p>Are you sure you want to mark this campaign as completed?</p>
+                    <p class="text-info">This will finalize the campaign and make it read-only.</p>
+                    <div class="mb-3">
+                        <label for="completion_note" class="form-label">Completion Note (Optional)</label>
+                        <textarea class="form-control" id="completion_note" name="note" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Mark as Completed</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - School Exchange Platform{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Profile</h5>
+            </div>
+            <div class="card-body">
+                <h5>{{ user.name }}</h5>
+                <p class="text-muted">{{ user.role|capitalize }}</p>
+                {% if user.grade %}
+                <p><strong>Grade:</strong> {{ user.grade }}</p>
+                {% endif %}
+                {% if user.organization %}
+                <p><strong>Organization:</strong> {{ user.organization }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="/items" class="btn btn-outline-primary">Browse Items</a>
+                    <a href="/items/create" class="btn btn-outline-success">Post New Item</a>
+                    <a href="/items/my" class="btn btn-outline-info">My Items</a>
+                    <a href="/transactions" class="btn btn-outline-secondary">My Transactions</a>
+                    <a href="/campaigns" class="btn btn-outline-warning">View Campaigns</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Recent Activity</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-center text-muted">No recent activity to display.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

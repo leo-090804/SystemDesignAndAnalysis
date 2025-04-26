@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Profile - School Exchange Platform{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Edit Profile</h5>
+                </div>
+                <div class="card-body">
+                    {% if error %}
+                    <div class="alert alert-danger">{{ error }}</div>
+                    {% endif %}
+                    
+                    <form action="/profile/edit" method="post" enctype="multipart/form-data">
+                        <div class="row">
+                            <div class="col-md-4 text-center">
+                                <div class="mb-3">
+                                    {% if user.profile_image %}
+                                    <img src="{{ user.profile_image }}" id="profile-preview" class="img-fluid rounded-circle mb-3" alt="Profile Image" style="width: 150px; height: 150px; object-fit: cover;">
+                                    {% else %}
+                                    <div id="profile-placeholder" class="bg-light rounded-circle d-flex justify-content-center align-items-center mx-auto mb-3" style="width: 150px; height: 150px;">
+                                        <i class="fas fa-user fa-4x text-secondary"></i>
+                                    </div>
+                                    <img src="" id="profile-preview" class="img-fluid rounded-circle mb-3 d-none" alt="Profile Image" style="width: 150px; height: 150px; object-fit: cover;">
+                                    {% endif %}
+                                    
+                                    <label for="profile-image" class="form-label">Profile Picture</label>
+                                    <input type="file" class="form-control" id="profile-image" name="profile_image" accept="image/*">
+                                    <div class="form-text">Optional. Max size: 5MB</div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="name" class="form-label">Full Name</label>
+                                    <input type="text" class="form-control" id="name" name="name" value="{{ user.name }}" required>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="username" class="form-label">Username</label>
+                                    <input type="text" class="form-control" id="username" value="{{ user.username }}" disabled>
+                                    <div class="form-text">Username cannot be changed</div>
+                                </div>
+                                
+                                {% if user.role == 'student' %}
+                                <div class="mb-3">
+                                    <label for="grade" class="form-label">Grade</label>
+                                    <input type="text" class="form-control" id="grade" name="grade" value="{{ user.grade or '' }}">
+                                </div>
+                                {% endif %}
+                                
+                                <div class="mb-3">
+                                    <label for="organization" class="form-label">Organization</label>
+                                    <input type="text" class="form-control" id="organization" name="organization" value="{{ user.organization or '' }}">
+                                </div>
+                                
+                                <hr>
+                                <h5>Change Password</h5>
+                                <div class="mb-3">
+                                    <label for="current-password" class="form-label">Current Password</label>
+                                    <input type="password" class="form-control" id="current-password" name="current_password">
+                                    <div class="form-text">Leave blank if you don't want to change your password</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="new-password" class="form-label">New Password</label>
+                                    <input type="password" class="form-control" id="new-password" name="new_password">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="confirm-password" class="form-label">Confirm New Password</label>
+                                    <input type="password" class="form-control" id="confirm-password" name="confirm_password">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 d-flex justify-content-between">
+                            <a href="/profile" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const profileInput = document.getElementById('profile-image');
+    const profilePreview = document.getElementById('profile-preview');
+    const profilePlaceholder = document.getElementById('profile-placeholder');
+    
+    profileInput.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                profilePreview.setAttribute('src', e.target.result);
+                profilePreview.classList.remove('d-none');
+                if (profilePlaceholder) {
+                    profilePlaceholder.classList.add('d-none');
+                }
+            }
+            
+            reader.readAsDataURL(this.files[0]);
+        }
+    });
+});
+</script>
+{% endblock %}

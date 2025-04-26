@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+
+{% block title %}View Item - Admin{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Review Item</h2>
+        <a href="/admin/items" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i> Back to Items
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- Item Image -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-0 d-flex align-items-center justify-content-center">
+                    {% if item.image_path %}
+                    <img src="{{ item.image_path }}" alt="{{ item.name }}" class="img-fluid rounded">
+                    {% else %}
+                    <div class="text-center py-5 w-100">
+                        <i class="fas fa-image fa-5x text-muted mb-3"></i>
+                        <p class="text-muted">No image available</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Item Details -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">Item Details</h5>
+                </div>
+                <div class="card-body">
+                    <h3 class="mb-3">{{ item.name }}</h3>
+                    
+                    <!-- Status Badge -->
+                    <div class="mb-3">
+                        {% if item.status == 'active' %}
+                        <span class="badge bg-success">Active</span>
+                        {% elif item.status == 'pending' %}
+                        <span class="badge bg-warning text-dark">Pending</span>
+                        {% elif item.status == 'rejected' %}
+                        <span class="badge bg-danger">Rejected</span>
+                        {% elif item.status == 'sold' %}
+                        <span class="badge bg-info">Sold</span>
+                        {% elif item.status == 'pending_sale' %}
+                        <span class="badge bg-primary">Pending Sale</span>
+                        {% else %}
+                        <span class="badge bg-secondary">{{ item.status }}</span>
+                        {% endif %}
+                        
+                        <!-- Status Date with time -->
+                        {% if item.status != 'pending' %}
+                            {% if item.status == 'active' and item.approved_at %}
+                            <small class="text-muted ms-2">Approved on {{ item.approved_at.replace('T', ' ').split('.')[0] }}</small>
+                            {% elif item.status == 'rejected' and item.rejection_date %}
+                            <small class="text-muted ms-2">Rejected on {{ item.rejection_date.replace('T', ' ').split('.')[0] }}</small>
+                            {% elif item.status == 'sold' and item.sold_at %}
+                            <small class="text-muted ms-2">Sold on {{ item.sold_at.replace('T', ' ').split('.')[0] }}</small>
+                            {% elif item.status_updated_at %}
+                            <small class="text-muted ms-2">Updated on {{ item.status_updated_at.replace('T', ' ').split('.')[0] }}</small>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6 mb-3">
+                            <p class="mb-1 text-muted">ID</p>
+                            <p class="mb-0 fw-bold">{{ item.item_id }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <p class="mb-1 text-muted">Price</p>
+                            <p class="mb-0 fw-bold">${{ "%.2f"|format(item.price) }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <p class="mb-1 text-muted">Category</p>
+                            <p class="mb-0 fw-bold">{{ category.name if category else "Unknown" }}</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <p class="mb-1 text-muted">Posted by</p>
+                            <p class="mb-0 fw-bold">{{ owner.name if owner else "Unknown" }}</p>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <p class="mb-1 text-muted">Posted on</p>
+                            <p class="mb-0 fw-bold">{{ item.created_at.replace('T', ' ').split('.')[0] if item.created_at else "Unknown" }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <p class="mb-1 text-muted">Description</p>
+                        <p class="mb-0">{{ item.description }}</p>
+                    </div>
+                    
+                    <!-- Approval/Rejection Buttons - Only show for pending items -->
+                    {% if item.status == 'pending' %}
+                    <div class="d-flex gap-2 mt-4">
+                        <button class="btn btn-success flex-grow-1 approve-item" data-id="{{ item.item_id }}">
+                            <i class="fas fa-check me-2"></i> Approve
+                        </button>
+                        <button class="btn btn-danger flex-grow-1 reject-item" data-id="{{ item.item_id }}" data-bs-toggle="modal" data-bs-target="#rejectModal" data-item-name="{{ item.name }}">
+                            <i class="fas fa-times me-2"></i> Reject
+                        </button>
+                    </div>
+                    {% endif %}
+                    
+                    {% if item.status == 'rejected' and item.rejection_reason %}
+                    <div class="mt-4">
+                        <p class="mb-1 text-muted">Rejection Reason</p>
+                        <div class="alert alert-danger">
+                            {{ item.rejection_reason }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reject Item Modal -->
+<div class="modal fade" id="rejectModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Reason for Rejection</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="reject-form">
+                    <div class="mb-3">
+                        <label for="rejection-reason" class="form-label">Please provide a reason for rejection:</label>
+                        <textarea class="form-control" id="rejection-reason" rows="3" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirm-reject">Confirm Rejection</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.all.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Item approval functionality
+    document.querySelectorAll('.approve-item').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const itemId = this.getAttribute('data-id');
+            if(confirm('Are you sure you want to approve this item?')) {
+                // Include current timestamp
+                const now = new Date();
+                
+                fetch('/admin/items/' + itemId + '/approve', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        approved_at: now.toISOString()
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Item Approved',
+                            text: 'The item has been approved successfully.',
+                            timer: 5000,
+                            timerProgressBar: true
+                        }).then(() => {
+                            window.location.href = '/admin/items';
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: data.message || 'Failed to approve item.',
+                            timer: 5000,
+                            timerProgressBar: true
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'An error occurred while approving the item',
+                        timer: 5000,
+                        timerProgressBar: true
+                    });
+                });
+            }
+        });
+    });
+    
+    // Set up the reject modal
+    document.querySelectorAll('.reject-item').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const itemName = this.getAttribute('data-item-name');
+            document.getElementById('reject-form').setAttribute('data-id', this.getAttribute('data-id'));
+            document.getElementById('rejection-reason').value = '';
+            document.querySelector('.modal-body label').innerText = 'Please provide a reason for rejecting "' + itemName + '":';
+        });
+    });
+    
+    // Handle rejection confirmation
+    document.getElementById('confirm-reject').addEventListener('click', function() {
+        const reason = document.getElementById('rejection-reason').value.trim();
+        const itemId = document.getElementById('reject-form').getAttribute('data-id');
+        
+        if (!reason) {
+            alert('Please provide a reason for rejection');
+            return;
+        }
+        
+        // Add rejection date with current timestamp
+        const now = new Date();
+        
+        fetch('/admin/items/' + itemId + '/reject', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: new URLSearchParams({
+                'reason': reason,
+                'rejection_date': now.toISOString()
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Item Rejected',
+                    text: 'The item has been rejected successfully.',
+                    timer: 5000,
+                    timerProgressBar: true
+                }).then(() => {
+                    window.location.href = '/admin/items';
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: data.message || 'Failed to reject item.',
+                    timer: 5000,
+                    timerProgressBar: true
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'An error occurred while rejecting the item',
+                timer: 5000,
+                timerProgressBar: true
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,428 @@
+{% extends "base.html" %}
+
+{% block title %}User Profile: {{ profile_user.name }} - Admin{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>User Profile</h2>
+        <a href="/admin/users" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i> Back to Users
+        </a>
+    </div>
+    
+    <div class="row">
+        <!-- User Information Card -->
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-user-circle me-2"></i> Account Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="display-5 rounded-circle bg-light d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 100px; height: 100px;">
+                            <i class="fas fa-user text-primary"></i>
+                        </div>
+                        <h4>{{ profile_user.name }}</h4>
+                        <p class="text-muted mb-0">@{{ profile_user.username }}</p>
+                    </div>
+                    
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-id-badge me-2"></i> User ID:</span>
+                            <span class="fw-bold">{{ profile_user.user_id }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-user-tag me-2"></i> Role:</span>
+                            <span class="badge bg-primary">{{ profile_user.role | capitalize }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-graduation-cap me-2"></i> Grade:</span>
+                            <span>{{ profile_user.grade or "Not specified" }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-building me-2"></i> Organization:</span>
+                            <span>{{ profile_user.organization or "Not specified" }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-calendar-alt me-2"></i> Joined:</span>
+                            <span>{{ profile_user.created_at.split('T')[0] if profile_user.created_at else "Unknown" }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-lock me-2"></i> Status:</span>
+                            {% if profile_user.is_active %}
+                            <span class="badge bg-success">Active</span>
+                            {% else %}
+                            <span class="badge bg-danger">Locked</span>
+                            {% endif %}
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-footer bg-white">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-warning toggle-status-btn" data-id="{{ profile_user.user_id }}" data-status="{{ profile_user.is_active }}">
+                            {% if profile_user.is_active %}
+                            <i class="fas fa-lock me-2"></i> Lock Account
+                            {% else %}
+                            <i class="fas fa-unlock me-2"></i> Unlock Account
+                            {% endif %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-8">
+            <!-- Items Tab -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-box me-2"></i> User's Items</h5>
+                </div>
+                <div class="card-body">
+                    {% if user_items %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Image</th>
+                                    <th>Name</th>
+                                    <th>Price</th>
+                                    <th>Category</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in user_items %}
+                                <tr>
+                                    <td>{{ item.item_id }}</td>
+                                    <td>
+                                        {% if item.image_path %}
+                                        <img src="{{ item.image_path }}" alt="{{ item.name }}" class="img-thumbnail" style="width: 50px; height: 50px; object-fit: cover;">
+                                        {% else %}
+                                        <div class="bg-light text-center" style="width: 50px; height: 50px;">
+                                            <i class="fas fa-image text-muted" style="line-height: 50px;"></i>
+                                        </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ item.name }}</td>
+                                    <td>${{ "%.2f"|format(item.price) }}</td>
+                                    <td>{{ categories.get(item.cate_id, "Unknown") }}</td>
+                                    <td>
+                                        {% if item.status == 'active' %}
+                                        <span class="badge bg-success">Active</span>
+                                        {% elif item.status == 'pending' %}
+                                        <span class="badge bg-warning text-dark">Pending</span>
+                                        {% elif item.status == 'rejected' %}
+                                        <span class="badge bg-danger">Rejected</span>
+                                        {% elif item.status == 'sold' %}
+                                        <span class="badge bg-info">Sold</span>
+                                        {% elif item.status == 'pending_sale' %}
+                                        <span class="badge bg-primary">Pending Sale</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">{{ item.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="/admin/items/{{ item.item_id }}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                        <h5>No Items Found</h5>
+                        <p class="text-muted">This user hasn't posted any items yet.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- PURCHASES & SALES SECTION -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-shopping-cart me-2"></i> Purchase & Sales History</h5>
+                </div>
+                <div class="card-body">
+                    {% set purchase_transactions = [] %}
+                    {% for transaction in transactions if transaction.transaction_type == 'purchase' %}
+                        {% set _ = purchase_transactions.append(transaction) %}
+                    {% endfor %}
+                    
+                    {% if purchase_transactions %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Amount</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transaction in purchase_transactions %}
+                                <tr>
+                                    <td>{{ transaction.transaction_id }}</td>
+                                    <td>${{ "%.2f"|format(transaction.amount) }}</td>
+                                    <td>
+                                        {% if transaction.buyer_user_id == profile_user.user_id %}
+                                        <span class="badge bg-primary">Buyer</span>
+                                        {% else %}
+                                        <span class="badge bg-info">Seller</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if transaction.status == 'pending' %}
+                                        <span class="badge bg-warning text-dark">Pending</span>
+                                        {% elif transaction.status == 'completed' %}
+                                        <span class="badge bg-success">Completed</span>
+                                        {% elif transaction.status == 'cancelled' %}
+                                        <span class="badge bg-danger">Cancelled</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">{{ transaction.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ transaction.transaction_date.split('T')[0] if transaction.transaction_date else "Unknown" }}</td>
+                                    <td>
+                                        <a href="/admin/transactions/{{ transaction.transaction_id }}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                        <h5>No Purchase or Sale Transactions Found</h5>
+                        <p class="text-muted">This user hasn't bought or sold any items yet.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- DONATIONS SECTION -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-hand-holding-heart me-2"></i> Donations</h5>
+                </div>
+                <div class="card-body">
+                    {% set donation_transactions = [] %}
+                    {% for transaction in transactions if transaction.transaction_type == 'donation' %}
+                        {% set _ = donation_transactions.append(transaction) %}
+                    {% endfor %}
+                    
+                    {% if donation_transactions %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Campaign</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transaction in donation_transactions %}
+                                <tr>
+                                    <td>{{ transaction.transaction_id }}</td>
+                                    <td>
+                                        {% if transaction.campaign_id %}
+                                        {% for campaign in participated_campaigns if campaign.campaign_id == transaction.campaign_id %}
+                                            {{ campaign.name }}
+                                        {% else %}
+                                            Campaign #{{ transaction.campaign_id }}
+                                        {% endfor %}
+                                        {% else %}
+                                        Unknown Campaign
+                                        {% endif %}
+                                    </td>
+                                    <td>${{ "%.2f"|format(transaction.amount) }}</td>
+                                    <td>
+                                        {% if transaction.status == 'pending' %}
+                                        <span class="badge bg-warning text-dark">Pending</span>
+                                        {% elif transaction.status == 'completed' %}
+                                        <span class="badge bg-success">Completed</span>
+                                        {% elif transaction.status == 'cancelled' %}
+                                        <span class="badge bg-danger">Cancelled</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">{{ transaction.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ transaction.transaction_date.split('T')[0] if transaction.transaction_date else "Unknown" }}</td>
+                                    <td>
+                                        <a href="/admin/transactions/{{ transaction.transaction_id }}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        {% if transaction.campaign_id %}
+                                        <a href="/admin/campaigns/{{ transaction.campaign_id }}" class="btn btn-sm btn-success">
+                                            <i class="fas fa-bullhorn"></i>
+                                        </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-hand-holding-heart fa-3x text-muted mb-3"></i>
+                        <h5>No Donation Transactions Found</h5>
+                        <p class="text-muted">This user hasn't made any donations yet.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Campaigns -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-bullhorn me-2"></i> Campaign Participation</h5>
+                </div>
+                <div class="card-body">
+                    <!-- <h6>Created Campaigns</h6>
+                    {% if created_campaigns %}
+                    <div class="table-responsive mb-4">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Type</th>
+                                    <th>Goal Amount</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for campaign in created_campaigns %}
+                                <tr>
+                                    <td>{{ campaign.campaign_id }}</td>
+                                    <td>{{ campaign.name }}</td>
+                                    <td>{{ campaign.campaign_type | capitalize }}</td>
+                                    <td>
+                                        {% if campaign.goal_amount %}
+                                        ${{ "%.2f"|format(campaign.goal_amount) }}
+                                        {% else %}
+                                        N/A
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if campaign.status == 'active' %}
+                                        <span class="badge bg-success">Active</span>
+                                        {% elif campaign.status == 'completed' %}
+                                        <span class="badge bg-info">Completed</span>
+                                        {% elif campaign.status == 'cancelled' %}
+                                        <span class="badge bg-danger">Cancelled</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">{{ campaign.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="/admin/campaigns/{{ campaign.campaign_id }}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-3 mb-4">
+                        <p class="text-muted">This user hasn't created any campaigns.</p>
+                    </div>
+                    {% endif %}
+                    
+                    <h6>Participated Campaigns</h6> -->
+                    {% if participated_campaigns %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for campaign in participated_campaigns %}
+                                <tr>
+                                    <td>{{ campaign.campaign_id }}</td>
+                                    <td>{{ campaign.name }}</td>
+                                    <td>{{ campaign.campaign_type | capitalize }}</td>
+                                    <td>
+                                        {% if campaign.status == 'active' %}
+                                        <span class="badge bg-success">Active</span>
+                                        {% elif campaign.status == 'completed' %}
+                                        <span class="badge bg-info">Completed</span>
+                                        {% elif campaign.status == 'cancelled' %}
+                                        <span class="badge bg-danger">Cancelled</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">{{ campaign.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="/admin/campaigns/{{ campaign.campaign_id }}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-3">
+                        <p class="text-muted">This user hasn't participated in any campaigns.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle toggle status button
+    document.querySelectorAll('.toggle-status-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const userId = this.getAttribute('data-id');
+            const currentStatus = parseInt(this.getAttribute('data-status'));
+            
+            if (confirm(`Are you sure you want to ${currentStatus ? 'lock' : 'unlock'} this account?`)) {
+                fetch(`/admin/users/${userId}/toggle`, {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        alert('Failed to update user status');
+                    }
+                });
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

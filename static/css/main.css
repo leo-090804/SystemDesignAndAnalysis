@@ -1,0 +1,195 @@
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: #f8f9fa;
+}
+
+.footer {
+    margin-top: auto;
+}
+
+.card {
+    border-radius: 8px;
+    border: none;
+}
+
+.card-header {
+    border-top-left-radius: 8px !important;
+    border-top-right-radius: 8px !important;
+}
+
+/* Notifications styling */
+.notifications-menu {
+    padding: 0;
+}
+
+.notifications-badge {
+    transform: translate(-50%, -50%) !important;
+}
+
+.notification-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+}
+
+.notification-item:hover {
+    background-color: #f8f9fa;
+}
+
+.dropdown-header {
+    padding: 0.75rem 1rem;
+    background-color: #f8f9fa;
+}
+
+.mark-all-read {
+    font-size: 0.875rem;
+    padding: 0;
+    color: #0d6efd;
+}
+
+.mark-all-read:hover {
+    text-decoration: underline !important;
+    color: #0a58ca;
+}
+
+.dropdown-item.active, .dropdown-item:active {
+    background-color: #e9ecef;
+    color: #212529;
+}
+
+/* Permanent alerts that shouldn't fade out */
+.alert-permanent {
+    opacity: 1 !important;
+    display: block !important;
+    /* Subtle pulsing effect to draw attention */
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 5px rgba(255, 193, 7, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 193, 7, 0);
+    }
+}
+
+/* Make pending approval alerts permanently visible */
+.pending-approval-alert {
+    opacity: 1 !important;
+    display: block !important;
+    border-left: 4px solid #ffc107;
+    animation: none !important; /* Prevent any fade-out animations */
+}
+
+/* Add a subtle pulsing effect for pending alerts */
+@keyframes pulse-warning {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 5px rgba(255, 193, 7, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 193, 7, 0);
+    }
+}
+
+.pending-approval-alert {
+    animation: pulse-warning 2s infinite !important;
+}
+
+.reject-alert {
+    opacity: 1 !important;
+    display: block !important;
+    border-left: 4px solid #ffc107;
+    animation: none !important; /* Prevent any fade-out animations */
+}
+
+/* Add a subtle pulsing effect for pending alerts */
+@keyframes pulse-alert {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 5px rgba(255, 193, 7, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 193, 7, 0);
+    }
+}
+
+.reject-alert {
+    animation: pulse-alert 2s infinite !important;
+}
+
+/* Make rejection alerts permanently visible */
+.item-rejected-alert {
+    opacity: 1 !important;
+    display: block !important;
+    border-left: 4px solid #dc3545;
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.2);
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+}
+
+/* Add a subtle danger highlight for rejected items */
+@keyframes highlight-danger {
+    0% {
+        background-color: rgba(220, 53, 69, 0.08);
+    }
+    50% {
+        background-color: rgba(220, 53, 69, 0.15);
+    }
+    100% {
+        background-color: rgba(220, 53, 69, 0.08);
+    }
+}
+
+.item-rejected-alert {
+    animation: highlight-danger 3s ease-in-out infinite !important;
+}
+
+/* Toast notification styles */
+.toast-notification {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 9999;
+    background-color: white;
+    box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.1);
+    border-radius: 0.25rem;
+    padding: 0.5rem;
+    width: 300px;
+    animation: slide-in 0.3s ease;
+    border-left: 4px solid #0d6efd;
+}
+
+.toast-notification .toast-header {
+    display: flex;
+    align-items: center;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.toast-notification .toast-body {
+    padding-top: 0.5rem;
+}
+
+.toast-hide {
+    animation: slide-out 0.3s ease;
+}
+
+@keyframes slide-in {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slide-out {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+}
