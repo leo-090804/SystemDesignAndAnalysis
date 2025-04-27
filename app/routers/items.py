@@ -118,7 +118,7 @@ async def create_item(
     # Get next item ID
     last_item = await db.items.find_one(sort=[("item_id", -1)])
     # next_item_id = 1 if not last_item else last_item["item_id"] + 1
-    next_item_id = uuid.uuid4().int
+    next_item_id = int(str(uuid.uuid4().int)[:9])
 
     # Handle image upload if provided
     image_path = None
@@ -162,7 +162,7 @@ async def create_item(
                 "is_read": False,
                 "is_seen": False,
                 # "noti_id": await get_next_id(db, "notifications", "noti_id"),
-                "noti_id": uuid.uuid4().int,
+                "noti_id": int(str(uuid.uuid4().int)[:9]),
                 "user_id": admin["user_id"],
                 "related_item_id": next_item_id,
                 "related_transaction_id": None,
@@ -283,7 +283,7 @@ async def purchase_item(item_id: int = Path(...), user: dict = Depends(user_requ
 
         # Create transaction record
         # transaction_id = await get_next_id(db, "transactions", "transaction_id")
-        transaction_id = uuid.uuid4().int
+        transaction_id = int(str(uuid.uuid4().int)[:9])
 
         transaction = {
             "transaction_id": transaction_id,
@@ -315,7 +315,7 @@ async def purchase_item(item_id: int = Path(...), user: dict = Depends(user_requ
             "is_read": False,
             "is_seen": False,
             # "noti_id": await get_next_id(db, "notifications", "noti_id"),
-            "noti_id": uuid.uuid4().int,
+            "noti_id": int(str(uuid.uuid4().int)[:9]),
             "user_id": seller["user_id"],
             "related_item_id": item_id,
             "related_transaction_id": transaction_id,
@@ -331,7 +331,7 @@ async def purchase_item(item_id: int = Path(...), user: dict = Depends(user_requ
                 "is_read": False,
                 "is_seen": False,
                 # "noti_id": await get_next_id(db, "notifications", "noti_id"),
-                "noti_id": uuid.uuid4().int,
+                "noti_id": int(str(uuid.uuid4().int)[:9]),
                 "user_id": admin["user_id"],
                 "related_item_id": item_id,
                 "related_transaction_id": transaction_id,
@@ -346,7 +346,7 @@ async def purchase_item(item_id: int = Path(...), user: dict = Depends(user_requ
             "is_read": False,
             "is_seen": False,
             # "noti_id": await get_next_id(db, "notifications", "noti_id"),
-            "noti_id": uuid.uuid4().int,
+            "noti_id": int(str(uuid.uuid4().int)[:9]),
             "user_id": user["user_id"],
             "related_item_id": item_id,
             "related_transaction_id": transaction_id,
@@ -399,4 +399,4 @@ async def purchased_items(request: Request, user: dict = Depends(user_required),
     return templates.TemplateResponse(
         "items/purchased.html",
         {"request": request, "user": user, "items": purchased_items, "page": page, "total_pages": total_pages},
-    )
+)

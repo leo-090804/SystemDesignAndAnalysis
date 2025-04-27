@@ -59,7 +59,7 @@
                     </thead>
                     <tbody>
                         {% for u in users %}
-                        <tr>
+                        <tr class="clickable-row" data-href="/admin/users/{{ u.user_id }}/profile" style="cursor: pointer;">
                             <td>{{ u.user_id }}</td>
                             <td>{{ u.username }}</td>
                             <td>{{ u.name }}</td>
@@ -72,16 +72,7 @@
                                 {% endif %}
                             </td>
                             <td>
-                                <a href="/admin/users/{{ u.user_id }}/profile" class="btn btn-sm btn-primary">
-                                    <i class="fas fa-user me-1"></i> View Profile
-                                </a>
-                                <!-- <button class="btn btn-sm btn-warning toggle-status-btn" data-id="{{ u.user_id }}" data-status="{{ u.is_active }}">
-                                    {% if u.is_active %}
-                                    <i class="fas fa-lock me-1"></i> Lock
-                                    {% else %}
-                                    <i class="fas fa-unlock me-1"></i> Unlock
-                                    {% endif %}
-                                </button> -->
+                                <!-- Remove the View Profile button since rows are now clickable -->
                                 <button class="btn btn-sm btn-danger delete-user-btn" data-id="{{ u.user_id }}">
                                     <i class="fas fa-trash me-1"></i> Delete
                                 </button>
@@ -138,6 +129,31 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Make rows clickable
+    document.querySelectorAll('.clickable-row').forEach(row => {
+        row.addEventListener('click', function(e) {
+            // Navigate to the URL specified in data-href
+            window.location.href = this.dataset.href;
+        });
+    });
+    
+    // Prevent row click when clicking on delete button
+    document.querySelectorAll('.delete-user-btn').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.stopPropagation(); // Prevent row click event from firing
+            
+            // Delete user functionality
+            userIdToDelete = this.getAttribute('data-id');
+            // Find the username from the table row
+            const row = this.closest('tr');
+            const userName = row.cells[1].textContent.trim(); // Get username from the second column
+            document.getElementById('delete-user-name').textContent = userName;
+            
+            // Show modal
+            new bootstrap.Modal(document.getElementById('deleteModal')).show();
+        });
+    });
+    
     // Toggle user status
     document.querySelectorAll('.toggle-status').forEach(button => {
         button.addEventListener('click', function() {
@@ -166,17 +182,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Delete user
     let userIdToDelete = null;
     
-    document.querySelectorAll('.delete-user').forEach(button => {
-        button.addEventListener('click', function() {
-            userIdToDelete = this.getAttribute('data-id');
-            const userName = this.getAttribute('data-name');
-            document.getElementById('delete-user-name').textContent = userName;
-            
-            // Show modal
-            new bootstrap.Modal(document.getElementById('deleteModal')).show();
-        });
-    });
-    
     document.getElementById('confirm-delete').addEventListener('click', function() {
         if (userIdToDelete) {
             fetch(`/admin/users/${userIdToDelete}/delete`, {
@@ -189,6 +194,8 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.success) {
                     window.location.reload();
+                } else {
+                    alert('Failed to delete user: ' + (data.message || 'Unknown error'));
                 }
             })
             .catch(error => {

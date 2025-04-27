@@ -146,10 +146,23 @@ class NotificationManager {
                     const itemId = item.getAttribute('data-item-id');
                     const transactionId = item.getAttribute('data-transaction-id');
                     
+                    // Check if the current user is an admin
+                    const isAdmin = document.body.getAttribute('data-role') === 'admin';
+                    
                     if (itemId && itemId !== 'null' && itemId !== '') {
-                        window.location.href = `/items/${itemId}`;
+                        // Direct admins to the admin item view
+                        if (isAdmin) {
+                            window.location.href = `/admin/items/${itemId}`;
+                        } else {
+                            window.location.href = `/items/${itemId}`;
+                        }
                     } else if (transactionId && transactionId !== 'null' && transactionId !== '') {
-                        window.location.href = `/transactions/${transactionId}`;
+                        // Direct admins to the admin transaction view
+                        if (isAdmin) {
+                            window.location.href = `/admin/transactions/${transactionId}`;
+                        } else {
+                            window.location.href = `/transactions/${transactionId}`;
+                        }
                     } else {
                         window.location.href = '/notifications';
                     }

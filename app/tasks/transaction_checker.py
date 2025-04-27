@@ -50,7 +50,7 @@ async def check_expired_transactions():
                 "is_read": False,
                 "is_seen": False,
                 # "noti_id": await get_next_id(db, "notifications", "noti_id"),
-                "noti_id": uuid.uuid4().int,
+                "noti_id": int(str(uuid.uuid4().int)[:9]),
                 "user_id": transaction["buyer_user_id"],
                 "related_item_id": transaction["item_id"],
                 "related_transaction_id": transaction["transaction_id"]
@@ -63,7 +63,7 @@ async def check_expired_transactions():
                 "is_read": False,
                 "is_seen": False,
                 # "noti_id": await get_next_id(db, "notifications", "noti_id"),
-                "noti_id": uuid.uuid4().int,
+                "noti_id": int(str(uuid.uuid4().int)[:9]),
                 "user_id": transaction["seller_user_id"],
                 "related_item_id": transaction["item_id"],
                 "related_transaction_id": transaction["transaction_id"]

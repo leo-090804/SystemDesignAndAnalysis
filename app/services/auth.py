@@ -63,9 +63,9 @@ async def create_user(user: UserCreate):
         return None
 
     # Get next user ID
-    last_user = await db.users.find_one(sort=[("user_id", -1)])
+    # last_user = await db.users.find_one(sort=[("user_id", -1)])
     # next_user_id = 1 if not last_user else last_user["user_id"] + 1
-    next_user_id = uuid.uuid4().int
+    next_user_id = int(str(uuid.uuid4().int)[:9])
 
     # Create user document
     user_dict = user.dict()

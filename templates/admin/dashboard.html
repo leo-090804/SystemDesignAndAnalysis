@@ -280,107 +280,69 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Transactions chart with better error handling
-    const transactionsCtx = document.getElementById('transactionsChart').getContext('2d');
-    try {
-        new Chart(transactionsCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Pending', 'Completed', 'Cancelled'],
-                datasets: [{
-                    data: [
-                        {{ transaction_status.pending }},
-                        {{ transaction_status.completed }},
-                        {{ transaction_status.cancelled }}
-                    ],
-                    backgroundColor: [
-                        '#ff9800', // Pending - orange
-                        '#4caf50', // Completed - green
-                        '#f44336'  // Cancelled - red
-                    ],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'right',
-                        labels: {
-                            boxWidth: 12,
-                            font: {
-                                size: 10
-                            }
-                        }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let value = context.raw;
-                                let total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                let percentage = total > 0 ? Math.round((value / total) * 100) : 0;
-                                return `${context.label}: ${value} (${percentage}%)`;
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    } catch (e) {
-        console.error("Error rendering transactions chart:", e);
-    }
+    // Transaction chart - replace with correct data structure
+    const transactionTypesCtx = document.getElementById('transactionsChart').getContext('2d');
+    const transactionTypesData = {
+        labels: ['Purchase', 'Donation'],
+        datasets: [{
+            data: [
+                {{ transaction_types.purchase if transaction_types and 'purchase' in transaction_types else 0 }},
+                {{ transaction_types.donation if transaction_types and 'donation' in transaction_types else 0 }}
+            ],
+            backgroundColor: [
+                '#007bff', // Purchase - blue
+                '#6610f2'  // Donation - indigo
+            ],
+            borderWidth: 1
+        }]
+    };
 
-    // Campaigns chart with better error handling
-    const campaignsCtx = document.getElementById('campaignsChart').getContext('2d');
-    try {
-        new Chart(campaignsCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Fundraising', 'Donation', 'Exchange'],
-                datasets: [{
-                    data: [
-                        {{ campaign_types.fundraising }},
-                        {{ campaign_types.donation }},
-                        {{ campaign_types.exchange }}
-                    ],
-                    backgroundColor: [
-                        '#ff9800', // Fundraising - orange
-                        '#9c27b0', // Donation - purple
-                        '#00bcd4'  // Exchange - cyan
-                    ],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'right',
-                        labels: {
-                            boxWidth: 12,
-                            font: {
-                                size: 10
-                            }
-                        }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let value = context.raw;
-                                let total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                let percentage = total > 0 ? Math.round((value / total) * 100) : 0;
-                                return `${context.label}: ${value} (${percentage}%)`;
-                            }
-                        }
-                    }
+    new Chart(transactionTypesCtx, {
+        type: 'doughnut',
+        data: transactionTypesData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right'
                 }
             }
-        });
-    } catch (e) {
-        console.error("Error rendering campaigns chart:", e);
-    }
+        }
+    });
+
+    // Campaign chart - replace with correct data structure
+    const campaignCtx = document.getElementById('campaignsChart').getContext('2d');
+    const campaignData = {
+        labels: ['Fundraising', 'Donation', 'Exchange'],
+        datasets: [{
+            data: [
+                {{ campaign_types.fundraising if campaign_types and 'fundraising' in campaign_types else 0 }},
+                {{ campaign_types.donation if campaign_types and 'donation' in campaign_types else 0 }},
+                {{ campaign_types.exchange if campaign_types and 'exchange' in campaign_types else 0 }}
+            ],
+            backgroundColor: [
+                '#28a745', // Fundraising - green
+                '#17a2b8', // Donation - teal
+                '#fd7e14'  // Exchange - orange
+            ],
+            borderWidth: 1
+        }]
+    };
+
+    new Chart(campaignCtx, {
+        type: 'doughnut',
+        data: campaignData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right'
+                }
+            }
+        }
+    });
 });
 </script>
 {% endblock %}

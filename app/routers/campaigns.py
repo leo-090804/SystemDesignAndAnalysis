@@ -1,4 +1,5 @@
 import uuid
+import asyncio # Import asyncio
 from fastapi import APIRouter, Depends, HTTPException, Request, Query, Path, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -21,6 +22,12 @@ async def user_required(request: Request):
     return user
 
 logger = logging.getLogger(__name__)
+
+# Dictionary to hold locks for donation processing
+# Key: f"{user_id}-{campaign_id}-{amount}" -> Value: asyncio.Lock()
+donation_locks = {}
+# Lock to protect access to the donation_locks dictionary itself
+locks_dict_lock = asyncio.Lock()
 
 @router.get("/", response_class=HTMLResponse)
 async def list_campaigns(
@@ -106,120 +113,113 @@ async def make_donation(
     
     db = Database.db
         
-    try:
-        # Validate amount
-        if amount <= 0:
-            return {"success": False, "message": "Donation amount must be greater than zero"}
-        
-        # Get campaign
-        campaign = await db.campaigns.find_one({"campaign_id": campaign_id})
-        if not campaign:
-            return {"success": False, "message": "Campaign not found"}
-        
-        if campaign["status"] != "active":
-            return {"success": False, "message": "This campaign is no longer active"}
-        
-        # Check for duplicate donations (transactions) in the last 30 seconds
-        # time_threshold = (datetime.now() - timedelta(seconds=30)).isoformat()
-        # recent_transaction = await db.transactions.find_one({
-        #     "transaction_type": "donation",
-        #     "buyer_user_id": user["user_id"],
-        #     "campaign_id": campaign_id,
-        #     "amount": amount,
-        #     "transaction_date": {"$gt": time_threshold}
-        # })
-        
-        # if recent_transaction:
-        #     logger.info(f"Prevented duplicate donation from user {user['user_id']} to campaign {campaign_id}")
-        #     return {
-        #         "success": True,
-        #         "message": "Your donation was already processed",
-        #         "new_amount": campaign.get("current_amount", 0),
-        #         "goal_amount": campaign.get("goal_amount")
-        #     }
+    # Define a unique key for this potential donation attempt
+    donation_key = f"{user['user_id']}-{campaign_id}-{amount}"
+
+    # Get or create the lock for this specific donation key atomically
+    async with locks_dict_lock:
+        if donation_key not in donation_locks:
+            donation_locks[donation_key] = asyncio.Lock()
+        specific_donation_lock = donation_locks[donation_key]
+
+    # Acquire the specific lock for this donation attempt
+    async with specific_donation_lock:
+        try:
+            # Validate amount (can be done before or inside lock)
+            if amount <= 0:
+                return {"success": False, "message": "Donation amount must be greater than zero"}
             
-        # Create transaction record with current timestamp
-        current_time = datetime.now().isoformat()
-        # transaction_id = await get_next_id(db, "transactions", "transaction_id")
-        transaction_id = uuid.uuid4().int()
-        
-        transaction = {
-            "transaction_id": transaction_id,
-            "transaction_type": "donation",
-            "amount": amount,
-            "transaction_date": current_time,
-            "status": "pending",  # Changed from "completed" to "pending"
-            "status_updated_at": current_time,
-            "cancellation_reason": None,
-            "buyer_user_id": user["user_id"],
-            "seller_user_id": None,  # No seller for donations
-            "item_id": None,  # No item for donations
-            "campaign_id": campaign_id,
-            "message": message
-        }
-        
-        # Use transaction ID as a unique identifier
-        donation_id = f"{user['user_id']}-{campaign_id}-{transaction_id}"
-        transaction["donation_id"] = donation_id
-        
-        await db.transactions.insert_one(transaction)
-        
-        # Don't update campaign amount yet - wait for admin approval
-        
-        # Create notification for campaign creator
-        # creator_notification = {
-        #     "message": f"New donation of ${amount:.2f} for campaign '{campaign['name']}' is waiting for admin approval.",
-        #     "created_at": current_time,
-        #     "is_read": False,
-        #     "is_seen": False,
-        #     "noti_id": await get_next_id(db, "notifications", "noti_id"),
-        #     "user_id": campaign["created_by"],
-        #     "related_item_id": None,
-        #     "related_transaction_id": transaction_id,
-        #     "donation_id": donation_id
-        # }
-        # await db.notifications.insert_one(creator_notification)
-        
-        # Create notification for donor
-        donor_notification = {
-            "message": f"Your donation of ${amount:.2f} to '{campaign['name']}' is pending admin approval.",
-            "created_at": current_time,
-            "is_read": False,
-            "is_seen": False,
-            "noti_id": await get_next_id(db, "notifications", "noti_id"),
-            "user_id": user["user_id"],
-            "related_item_id": None,
-            "related_transaction_id": transaction_id,
-            "donation_id": donation_id
-        }
-        await db.notifications.insert_one(donor_notification)
-        
-        # Create notification for admins
-        admin_users = await db.users.find({"role": "admin"}).to_list(length=100)
-        for admin in admin_users:
-            admin_notification = {
-                "message": f"New donation of ${amount:.2f} by {user['name']} for campaign '{campaign['name']}' needs approval.",
+            # Get campaign (can be done before or inside lock)
+            campaign = await db.campaigns.find_one({"campaign_id": campaign_id})
+            if not campaign:
+                return {"success": False, "message": "Campaign not found"}
+            
+            if campaign["status"] != "active":
+                return {"success": False, "message": "This campaign is no longer active"}
+
+            # --- Critical Section Start ---
+            # Re-check for duplicate submissions INSIDE the lock
+            thirty_seconds_ago = (datetime.now() - timedelta(seconds=30)).isoformat()
+            existing_transaction = await db.transactions.find_one({
+                "transaction_type": "donation",
+                "buyer_user_id": user["user_id"],
+                "campaign_id": campaign_id,
+                "amount": amount,
+                "transaction_date": {"$gt": thirty_seconds_ago}
+            })
+            
+            if existing_transaction:
+                # Duplicate found inside the lock, return existing one
+                logger.info(f"Prevented duplicate donation (inside lock) from user {user['user_id']} to campaign {campaign_id}")
+                return {
+                    "success": True,
+                    "message": "Your donation is already being processed.",
+                    "transaction_id": existing_transaction["transaction_id"]
+                }
+                
+            # No duplicate found, proceed to create the transaction
+            current_time = datetime.now().isoformat()
+            transaction_id = int(str(uuid.uuid4().int)[:9])
+            
+            transaction = {
+                "transaction_id": transaction_id,
+                "transaction_type": "donation",
+                "amount": amount,
+                "transaction_date": current_time,
+                "status": "pending",
+                "status_updated_at": current_time,
+                "cancellation_reason": None,
+                "buyer_user_id": user["user_id"],
+                "seller_user_id": None,
+                "item_id": None,
+                "campaign_id": campaign_id,
+                "message": message
+            }
+            
+            await db.transactions.insert_one(transaction)
+            # --- Critical Section End ---
+
+            # Notifications can happen outside the critical section if desired
+            # Create notification for donor
+            donor_notification = {
+                "message": f"Your donation of ${amount:.2f} to '{campaign['name']}' is pending admin approval.",
                 "created_at": current_time,
                 "is_read": False,
                 "is_seen": False,
-                "noti_id": await get_next_id(db, "notifications", "noti_id"),
-                "user_id": admin["user_id"],
+                "noti_id": int(str(uuid.uuid4().int)[:9]),
+                "user_id": user["user_id"],
                 "related_item_id": None,
                 "related_transaction_id": transaction_id,
-                "donation_id": donation_id,
-                "priority": "high"  # Add priority to highlight this notification
             }
-            await db.notifications.insert_one(admin_notification)
-        
-        return {
-            "success": True, 
-            "message": "Donation submitted successfully. Waiting for admin approval.",
-            "transaction_id": transaction_id
-        }
-        
-    except Exception as e:
-        logger.error(f"Error processing donation: {str(e)}")
-        return {"success": False, "message": f"An error occurred while processing your donation"}
+            await db.notifications.insert_one(donor_notification)
+            
+            # Create notification for admins
+            admin_users = await db.users.find({"role": "admin"}).to_list(length=100)
+            for admin in admin_users:
+                admin_notification = {
+                    "message": f"New donation of ${amount:.2f} by {user['name']} for campaign '{campaign['name']}' needs approval.",
+                    "created_at": current_time,
+                    "is_read": False,
+                    "is_seen": False,
+                    "noti_id": int(str(uuid.uuid4().int)[:9]),
+                    "user_id": admin["user_id"],
+                    "related_item_id": None,
+                    "related_transaction_id": transaction_id,
+                    "priority": "high"  # Add priority to highlight this notification
+                }
+                await db.notifications.insert_one(admin_notification)
+            
+            return {
+                "success": True, 
+                "message": "Donation submitted successfully. Waiting for admin approval.",
+                "transaction_id": transaction_id
+            }
+            
+        except Exception as e:
+            logger.error(f"Error processing donation inside lock: {str(e)}")
+            # The lock is automatically released by 'async with' even if an error occurs
+            return {"success": False, "message": f"An error occurred while processing your donation"}
+        # Lock is released automatically here
 
 # Helper function to get next ID - if not already defined elsewhere
 # async def get_next_id(db, collection_name, id_field):

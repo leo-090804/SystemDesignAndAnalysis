@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -11,7 +11,7 @@
     <!-- Add notification sound (hidden) -->
     <audio id="notification-sound" src="{{ url_for('static', path='/sounds/notification.mp3') }}" preload="auto" style="display: none;"></audio>
 </head>
-<body>
+<body data-role="{{ user.role if user else 'guest' }}">
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
         <div class="container">
             <a class="navbar-brand" href="/">School Exchange</a>
@@ -182,17 +182,33 @@
                         
                         notificationsList.innerHTML = notificationsHtml;
                         
-                        // Add click event listeners to notification items
+                        // Add click event listeners to notification items in dropdown
                         document.querySelectorAll('.notification-item').forEach(item => {
                             item.addEventListener('click', function() {
                                 const notiId = this.getAttribute('data-id');
                                 markAsRead(notiId);
                                 
-                                // If there's a related item, redirect to it
-                                if (item.dataset.itemId) {
-                                    window.location.href = `/items/${item.dataset.itemId}`;
-                                } else if (item.dataset.transactionId) {
-                                    window.location.href = `/transactions/${item.dataset.transactionId}`;
+                                // Check if current user is admin
+                                const isAdmin = document.body.getAttribute('data-role') === 'admin';
+                                
+                                // If there's a related item or transaction, redirect to it
+                                const itemId = this.getAttribute('data-item-id');
+                                const transactionId = this.getAttribute('data-transaction-id');
+                                
+                                if (itemId && itemId !== 'null' && itemId !== '') {
+                                    // Redirect to admin item view for admins
+                                    if (isAdmin) {
+                                        window.location.href = `/admin/items/${itemId}`;
+                                    } else {
+                                        window.location.href = `/items/${itemId}`;
+                                    }
+                                } else if (transactionId && transactionId !== 'null' && transactionId !== '') {
+                                    // Redirect to admin transaction view for admins
+                                    if (isAdmin) {
+                                        window.location.href = `/admin/transactions/${transactionId}`;
+                                    } else {
+                                        window.location.href = `/transactions/${transactionId}`;
+                                    }
                                 } else {
                                     window.location.href = '/notifications';
                                 }

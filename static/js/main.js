@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 setTimeout(() => {
                     alert.remove();
                 }, 500);
-            }, 5000);
+            }, 10000); // Increased from 5000 to 10000 (10 seconds)
         });
     }
 });

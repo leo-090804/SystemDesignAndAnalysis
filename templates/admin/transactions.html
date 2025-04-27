@@ -54,7 +54,7 @@
                     </thead>
                     <tbody>
                         {% for transaction in regular_transactions %}
-                        <tr>
+                        <tr class="clickable-row" data-href="/admin/transactions/{{ transaction.transaction_id }}" style="cursor: pointer;">
                             <td>{{ transaction.transaction_id }}</td>
                             <td>{{ transaction.item.name }}</td>
                             <td>${{ "%.2f"|format(transaction.amount) }}</td>
@@ -71,10 +71,10 @@
                             </td>
                             <td>{{ transaction.transaction_date.split('T')[0] }}</td>
                             <td>
-                                <a href="/admin/transactions/{{ transaction.transaction_id }}" class="btn btn-sm btn-outline-primary">View</a>
+                                <a href="/admin/transactions/{{ transaction.transaction_id }}" class="btn btn-sm btn-outline-primary action-btn">View</a>
                                 {% if transaction.status == 'pending' %}
-                                <button class="btn btn-sm btn-outline-success approve-btn" data-id="{{ transaction.transaction_id }}">Approve</button>
-                                <button class="btn btn-sm btn-outline-danger cancel-btn" data-id="{{ transaction.transaction_id }}" data-bs-toggle="modal" data-bs-target="#cancelModal{{ transaction.transaction_id }}">Cancel</button>
+                                <button class="btn btn-sm btn-outline-success approve-btn action-btn" data-id="{{ transaction.transaction_id }}">Approve</button>
+                                <button class="btn btn-sm btn-outline-danger cancel-btn action-btn" data-id="{{ transaction.transaction_id }}" data-bs-toggle="modal" data-bs-target="#cancelModal{{ transaction.transaction_id }}">Cancel</button>
                                 {% endif %}
                             </td>
                         </tr>
@@ -114,7 +114,7 @@
                     </thead>
                     <tbody>
                         {% for transaction in campaign_transactions %}
-                        <tr>
+                        <tr class="clickable-row" data-href="/admin/transactions/{{ transaction.transaction_id }}" style="cursor: pointer;">
                             <td>{{ transaction.transaction_id }}</td>
                             <td>{{ transaction.campaign.name }}</td>
                             <td>${{ "%.2f"|format(transaction.amount) }}</td>
@@ -130,11 +130,11 @@
                             </td>
                             <td>{{ transaction.transaction_date.split('T')[0] }}</td>
                             <td>
-                                <a href="/admin/transactions/{{ transaction.transaction_id }}" class="btn btn-sm btn-outline-primary">View</a>
-                                <a href="/admin/campaigns/{{ transaction.campaign_id }}" class="btn btn-sm btn-outline-success">View Campaign</a>
+                                <a href="/admin/transactions/{{ transaction.transaction_id }}" class="btn btn-sm btn-outline-primary action-btn">View</a>
+                                <a href="/admin/campaigns/{{ transaction.campaign_id }}" class="btn btn-sm btn-outline-success action-btn">View Campaign</a>
                                 {% if transaction.status == 'pending' %}
-                                <button class="btn btn-sm btn-outline-success approve-btn" data-id="{{ transaction.transaction_id }}">Approve</button>
-                                <button class="btn btn-sm btn-outline-danger cancel-btn" data-id="{{ transaction.transaction_id }}" data-bs-toggle="modal" data-bs-target="#cancelModal{{ transaction.transaction_id }}">Cancel</button>
+                                <button class="btn btn-sm btn-outline-success approve-btn action-btn" data-id="{{ transaction.transaction_id }}">Approve</button>
+                                <button class="btn btn-sm btn-outline-danger cancel-btn action-btn" data-id="{{ transaction.transaction_id }}" data-bs-toggle="modal" data-bs-target="#cancelModal{{ transaction.transaction_id }}">Cancel</button>
                                 {% endif %}
                             </td>
                         </tr>
@@ -157,6 +157,20 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Make rows clickable
+    document.querySelectorAll('.clickable-row').forEach(row => {
+        row.addEventListener('click', function() {
+            window.location.href = this.dataset.href;
+        });
+    });
+    
+    // Prevent row click when clicking on action buttons
+    document.querySelectorAll('.action-btn').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.stopPropagation(); // Prevent row click event from firing
+        });
+    });
+
     // Approve transaction buttons
     document.querySelectorAll('.approve-btn').forEach(btn => {
         btn.addEventListener('click', function() {
