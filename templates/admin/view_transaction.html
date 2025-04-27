@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+
+{% block title %}Transaction Details - Admin{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Transaction #{{ transaction.transaction_id }}</h2>
+        <a href="/admin/transactions" class="btn btn-outline-secondary">Back to Transactions</a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Transaction Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Basic Information</h6>
+                            <ul class="list-group list-group-flush mb-3">
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Transaction Type:</span>
+                                    <span>{{ transaction.transaction_type|capitalize }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Amount:</span>
+                                    <span class="fw-bold">${{ "%.2f"|format(transaction.amount) }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Date:</span>
+                                    <span>{{ transaction.transaction_date.split('T')[0] }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Status:</span>
+                                    <span>
+                                        {% if transaction.status == 'processing' %}
+                                        <span class="badge bg-warning text-dark">Processing</span>
+                                        {% elif transaction.status == 'completed' %}
+                                        <span class="badge bg-success">Completed</span>
+                                        {% elif transaction.status == 'cancelled' %}
+                                        <span class="badge bg-danger">Cancelled</span>
+                                        {% endif %}
+                                    </span>
+                                </li>
+                                {% if transaction.cancellation_reason %}
+                                <li class="list-group-item">
+                                    <span>Cancellation Reason:</span>
+                                    <p class="mb-0 mt-1 text-danger">{{ transaction.cancellation_reason }}</p>
+                                </li>
+                                {% endif %}
+                            </ul>
+                            
+                            <h6>Expiration</h6>
+                            <ul class="list-group list-group-flush mb-3">
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Expiration Date:</span>
+                                    <span>
+                                        {% if transaction.expiration_date %}
+                                            {{ transaction.expiration_date.split('T')[0] }}
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>User Information</h6>
+                            <ul class="list-group list-group-flush mb-3">
+                                <li class="list-group-item">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Buyer:</span>
+                                        <span>{{ buyer.name }}</span>
+                                    </div>
+                                    <small class="text-muted">ID: {{ buyer.user_id }}</small>
+                                </li>
+                                <li class="list-group-item">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Seller:</span>
+                                        <span>{{ seller.name }}</span>
+                                    </div>
+                                    <small class="text-muted">ID: {{ seller.user_id }}</small>
+                                </li>
+                            </ul>
+                            
+                            <h6>Item Information</h6>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Item ID:</span>
+                                        <span>{{ item.item_id }}</span>
+                                    </div>
+                                </li>
+                                <li class="list-group-item">
+                                    <span>Item Name:</span>
+                                    <p class="mb-0 mt-1">{{ item.name }}</p>
+                                </li>
+                                <li class="list-group-item">
+                                    <a href="/items/{{ item.item_id }}" class="btn btn-sm btn-outline-primary">
+                                        View Item
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- Actions for Processing transactions -->
+                    {% if transaction.status == 'processing' %}
+                    <div class="mt-4">
+                        <h6>Actions</h6>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-success" id="approve-btn">
+                                <i class="fas fa-check me-1"></i> Approve Transaction
+                            </button>
+                            <button class="btn btn-danger" id="cancel-btn" data-bs-toggle="modal" data-bs-target="#cancelModal">
+                                <i class="fas fa-times me-1"></i> Cancel Transaction
+                            </button>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Timeline</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush timeline">
+                        <li class="list-group-item">
+                            <div class="timeline-badge bg-primary"></div>
+                            <strong>Transaction Created</strong>
+                            <p class="mb-0">{{ transaction.transaction_date.split('T')[0] }}</p>
+                        </li>
+                        
+                        {% if transaction.status == 'completed' %}
+                        <li class="list-group-item">
+                            <div class="timeline-badge bg-success"></div>
+                            <strong>Transaction Completed</strong>
+                            <p class="mb-0">{{ transaction.status_updated_at.split('T')[0] }}</p>
+                        </li>
+                        {% elif transaction.status == 'cancelled' %}
+                        <li class="list-group-item">
+                            <div class="timeline-badge bg-danger"></div>
+                            <strong>Transaction Cancelled</strong>
+                            <p class="mb-0">{{ transaction.status_updated_at.split('T')[0] }}</p>
+                            <p class="mb-0 text-muted">Reason: {{ transaction.cancellation_reason }}</p>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cancel Modal -->
+<div class="modal fade" id="cancelModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cancel Transaction</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="cancel-form">
+                    <div class="mb-3">
+                        <label for="reason" class="form-label">Cancellation Reason:</label>
+                        <textarea class="form-control" id="reason" name="reason" rows="3" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-danger" id="confirm-cancel">Confirm Cancellation</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Approve button
+    const approveBtn = document.getElementById('approve-btn');
+    if (approveBtn) {
+        approveBtn.addEventListener('click', function() {
+            if (confirm('Are you sure you want to approve this transaction?')) {
+                fetch('/admin/transactions/{{ transaction.transaction_id }}/approve', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Transaction Approved',
+                            text: 'The transaction has been successfully approved.'
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: data.message || 'Failed to approve transaction.'
+                        });
+                    }
+                });
+            }
+        });
+    }
+    
+    // Cancel button
+    const confirmCancelBtn = document.getElementById('confirm-cancel');
+    if (confirmCancelBtn) {
+        confirmCancelBtn.addEventListener('click', function() {
+            const reason = document.getElementById('reason').value.trim();
+            
+            if (!reason) {
+                alert('Please provide a reason for cancellation');
+                return;
+            }
+            
+            fetch('/admin/transactions/{{ transaction.transaction_id }}/cancel', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams({
+                    'reason': reason
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Transaction Cancelled',
+                        text: 'The transaction has been cancelled.'
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message || 'Failed to cancel transaction.'
+                    });
+                }
+            });
+        });
+    }
+});
+</script>
+{% endblock %}
+
+<style>
+.timeline {
+    position: relative;
+}
+.timeline-badge {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    position: absolute;
+    left: -20px;
+    top: 15px;
+}
+.timeline .list-group-item {
+    padding-left: 10px;
+    border-left: 2px solid #dee2e6;
+    margin-left: 6px;
+}
+</style>
+{% endblock %}

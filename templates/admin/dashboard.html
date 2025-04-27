@@ -1,0 +1,348 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - School Exchange Platform{% endblock %}
+
+{% block content %}
+<div class="container py-4 admin-dashboard">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>Welcome</h2>
+            <p class="text-muted mb-0">{{ user.name }}</p>
+        </div>
+    </div>
+
+    <!-- MANAGEMENT SECTION -->
+    <div class="mb-5">
+        <h3 class="border-bottom pb-2 mb-4"><i class="fas fa-tasks me-2"></i> Management</h3>
+        
+        <!-- Stats Overview Cards -->
+        <div class="row g-4 mb-4">
+            <!-- Total Users Card -->
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body p-4 text-center">
+                        <div class="d-flex align-items-center justify-content-center mb-3">
+                            <div class="icon-box bg-primary-subtle rounded-circle p-3 me-3">
+                                <i class="fas fa-users text-primary"></i>
+                            </div>
+                            <h3 class="fs-2 mb-0">{{ total_users }}</h3>
+                        </div>
+                        <h6 class="text-muted mb-3">Total Users</h6>
+                        <a href="/admin/users" class="btn btn-primary w-100">Manage Users</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Campaigns Card -->
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body p-4 text-center">
+                        <div class="d-flex align-items-center justify-content-center mb-3">
+                            <div class="icon-box bg-success-subtle rounded-circle p-3 me-3">
+                                <i class="fas fa-bullhorn text-success"></i>
+                            </div>
+                            <h3 class="fs-2 mb-0">{{ active_campaigns }}</h3>
+                        </div>
+                        <h6 class="text-muted mb-3">Active Campaigns</h6>
+                        <a href="/admin/campaigns" class="btn btn-success w-100">Manage Campaigns</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Pending approvals sections -->
+        <div class="row g-4">
+            <!-- Items Pending Approval Section -->
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-primary text-white py-3">
+                        <h5 class="mb-0"><i class="fas fa-clipboard-check me-2"></i> Items Pending Approval</h5>
+                    </div>
+                    <div class="card-body p-4" id="pending-items-container">
+                        {% if pending_items_count > 0 %}
+                        <div class="alert alert-primary alert-permanent d-flex align-items-center mb-4">
+                            <i class="fas fa-exclamation-circle me-3 fs-4"></i>
+                            <div>
+                                <strong>{{ pending_items_count }}</strong> item{% if pending_items_count != 1 %}s{% endif %} waiting for your approval.
+                            </div>
+                        </div>
+                        <a href="/admin/items/pending" class="btn btn-primary w-100">
+                            <i class="fas fa-search me-2"></i> Review Items
+                        </a>
+                        {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-check-circle text-success fa-4x mb-3"></i>
+                            <h5>No items pending approval</h5>
+                            <p class="text-muted">All items have been reviewed.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transactions Pending Approval Section -->
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-success text-white py-3">
+                        <h5 class="mb-0"><i class="fas fa-handshake me-2"></i> Transactions Pending Approval</h5>
+                    </div>
+                    <div class="card-body p-4" id="pending-transactions-container">
+                        {% if pending_transactions_count > 0 %}
+                        <div class="alert alert-success alert-permanent d-flex align-items-center mb-4">
+                            <i class="fas fa-exclamation-circle me-3 fs-4"></i>
+                            <div>
+                                <strong>{{ pending_transactions_count }}</strong> transaction{% if pending_transactions_count != 1 %}s{% endif %} waiting for your approval.
+                            </div>
+                        </div>
+                        <a href="/admin/transactions?status=pending" class="btn btn-success w-100">
+                            <i class="fas fa-search me-2"></i> Review Transactions
+                        </a>
+                        {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-check-circle text-success fa-4x mb-3"></i>
+                            <h5>No transactions pending approval</h5>
+                            <p class="text-muted">All transactions have been reviewed.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STATISTICS SECTION -->
+    <div>
+        <h3 class="border-bottom pb-2 mb-4"><i class="fas fa-chart-pie me-2"></i> Statistics</h3>
+        
+        <!-- First row of charts -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white py-3 border-bottom-0">
+                        <h5 class="mb-0"><i class="fas fa-box fa-fw me-2"></i> Items by Status</h5>
+                        <p class="text-muted mb-0">Total: {{ total_items }} items</p>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="itemsChart" height="250"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white py-3 border-bottom-0">
+                        <h5 class="mb-0"><i class="fas fa-users fa-fw me-2"></i> Users by Status</h5>
+                        <p class="text-muted mb-0">Total: {{ total_users }} users</p>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="usersChart" height="250"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Second row of charts -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white py-3 border-bottom-0">
+                        <h5 class="mb-0"><i class="fas fa-exchange-alt fa-fw me-2"></i> Transactions</h5>
+                        <p class="text-muted mb-0">Total: {{ total_transactions if total_transactions is defined else 0 }} transactions</p>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="transactionsChart" height="250"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white py-3 border-bottom-0">
+                        <h5 class="mb-0"><i class="fas fa-bullhorn fa-fw me-2"></i> Campaigns</h5>
+                        <p class="text-muted mb-0">Total: {{ total_campaigns if total_campaigns is defined else 0 }} campaigns</p>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="campaignsChart" height="250"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.icon-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+}
+
+.icon-box i {
+    font-size: 1.5rem;
+}
+
+.alert-permanent {
+    border-left: 4px solid;
+}
+
+.alert-primary.alert-permanent {
+    border-left-color: var(--bs-primary);
+}
+
+.alert-success.alert-permanent {
+    border-left-color: var(--bs-success);
+}
+
+.bg-primary-subtle {
+    background-color: rgba(13, 110, 253, 0.1);
+}
+
+.bg-success-subtle {
+    background-color: rgba(25, 135, 84, 0.1);
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<!-- Add Chart.js library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script src="{{ url_for('static', path='/js/admin.js') }}"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Items status chart
+    const itemStatusCtx = document.getElementById('itemsChart').getContext('2d');
+    const itemStatusData = {
+        labels: ['Active', 'Pending', 'Rejected', 'Sold', 'Pending Sale'],
+        datasets: [{
+            data: [
+                {{ item_status.active }},
+                {{ item_status.pending }},
+                {{ item_status.rejected }},
+                {{ item_status.sold }},
+                {{ item_status.pending_sale }}
+            ],
+            backgroundColor: [
+                '#4caf50', // Active - green
+                '#ff9800', // Pending - orange
+                '#f44336', // Rejected - red
+                '#2196f3', // Sold - blue
+                '#9c27b0'  // Pending Sale - purple
+            ],
+            borderWidth: 1
+        }]
+    };
+
+    new Chart(itemStatusCtx, {
+        type: 'doughnut',
+        data: itemStatusData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right'
+                }
+            }
+        }
+    });
+
+    // Users status chart
+    const userStatusCtx = document.getElementById('usersChart').getContext('2d');
+    const userStatusData = {
+        labels: ['Active', 'Locked'],
+        datasets: [{
+            data: [
+                {{ user_status.active }},
+                {{ user_status.locked }}
+            ],
+            backgroundColor: [
+                '#4caf50', // Active - green
+                '#f44336'  // Locked - red
+            ],
+            borderWidth: 1
+        }]
+    };
+
+    new Chart(userStatusCtx, {
+        type: 'doughnut',
+        data: userStatusData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right'
+                }
+            }
+        }
+    });
+
+    // Transaction chart - replace with correct data structure
+    const transactionTypesCtx = document.getElementById('transactionsChart').getContext('2d');
+    const transactionTypesData = {
+        labels: ['Purchase', 'Donation'],
+        datasets: [{
+            data: [
+                {{ transaction_types.purchase if transaction_types and 'purchase' in transaction_types else 0 }},
+                {{ transaction_types.donation if transaction_types and 'donation' in transaction_types else 0 }}
+            ],
+            backgroundColor: [
+                '#007bff', // Purchase - blue
+                '#6610f2'  // Donation - indigo
+            ],
+            borderWidth: 1
+        }]
+    };
+
+    new Chart(transactionTypesCtx, {
+        type: 'doughnut',
+        data: transactionTypesData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right'
+                }
+            }
+        }
+    });
+
+    // Campaign chart - replace with correct data structure
+    const campaignCtx = document.getElementById('campaignsChart').getContext('2d');
+    const campaignData = {
+        labels: ['Fundraising', 'Donation', 'Exchange'],
+        datasets: [{
+            data: [
+                {{ campaign_types.fundraising if campaign_types and 'fundraising' in campaign_types else 0 }},
+                {{ campaign_types.donation if campaign_types and 'donation' in campaign_types else 0 }},
+                {{ campaign_types.exchange if campaign_types and 'exchange' in campaign_types else 0 }}
+            ],
+            backgroundColor: [
+                '#28a745', // Fundraising - green
+                '#17a2b8', // Donation - teal
+                '#fd7e14'  // Exchange - orange
+            ],
+            borderWidth: 1
+        }]
+    };
+
+    new Chart(campaignCtx, {
+        type: 'doughnut',
+        data: campaignData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right'
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

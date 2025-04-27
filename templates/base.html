@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}School Exchange Platform{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/main.css') }}">
+    <!-- Add notification sound (hidden) -->
+    <audio id="notification-sound" src="{{ url_for('static', path='/sounds/notification.mp3') }}" preload="auto" style="display: none;"></audio>
+</head>
+<body data-role="{{ user.role if user else 'guest' }}">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="/">School Exchange</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    {% if user %}
+                        {% if user.role == 'admin' %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/dashboard">Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/users">Users</a>
+                        </li>
+                        <!-- <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                Items
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="/admin/items">Items</a></li>
+                                <li><a class="dropdown-item" href="/admin/items/pending">Pending Items</a></li>
+                            </ul>
+                        </li> -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/items">Items</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/transactions">Transactions</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/campaigns">Campaigns</a>
+                        </li>
+                        {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="/dashboard">Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/items">Browse Items</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/items/my">My Items</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/campaigns">Campaigns</a>
+                        </li>
+                        {% endif %}
+                    {% endif %}
+                </ul>
+                <ul class="navbar-nav ms-auto">
+                    {% if user %}
+                    <!-- Add notifications dropdown -->
+                    <li class="nav-item dropdown me-2">
+                        <a class="nav-link dropdown-toggle position-relative" href="#" role="button" data-bs-toggle="dropdown" id="notifications-dropdown">
+                            <i class="fas fa-bell"></i>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger notifications-badge d-none">
+                                0
+                            </span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end notifications-menu" style="width: 350px; max-height: 400px; overflow-y: auto;">
+                            <div class="dropdown-header d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0">Notifications</h6>
+                                <button class="btn btn-sm btn-link text-decoration-none mark-all-read">Mark all as read</button>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <div class="notifications-list">
+                                <div class="text-center py-3">
+                                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item text-center" href="/notifications">View all notifications</a>
+                        </div>
+                    </li>
+                    
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            {{ user.name }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            {% if user.role != 'admin' %}
+                            <li><a class="dropdown-item" href="/profile">My Profile</a></li>
+                            {% endif %}
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/logout">Logout</a></li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/register">Register</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login">Login</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5 pt-3">
+        {% block content %}{% endblock %}
+    </div>
+
+    <footer class="footer mt-5 py-3 bg-light">
+        <div class="container text-center">
+            <span class="text-muted">School Exchange Platform - Exchange, Donate, and Sell Used Items</span>
+        </div>
+    </footer>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.all.min.js"></script>
+    <script src="{{ url_for('static', path='/js/main.js') }}"></script>
+    <script src="{{ url_for('static', path='/js/notifications.js') }}"></script>
+    {% block scripts %}{% endblock %}
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Only execute for logged-in users
+        if (document.getElementById('notifications-dropdown')) {
+            const notificationBadge = document.querySelector('.notifications-badge');
+            const notificationsList = document.querySelector('.notifications-list');
+            const markAllReadBtn = document.querySelector('.mark-all-read');
+            
+            // Function to load recent notifications
+            function loadRecentNotifications() {
+                fetch('/api/notifications/recent')
+                    .then(response => response.json())
+                    .then(data => {
+                        // Update badge count
+                        if (data.unread_count > 0) {
+                            notificationBadge.textContent = data.unread_count > 99 ? '99+' : data.unread_count;
+                            notificationBadge.classList.remove('d-none');
+                        } else {
+                            notificationBadge.classList.add('d-none');
+                        }
+                        
+                        // Update notifications list
+                        let notificationsHtml = '';
+                        if (data.notifications.length === 0) {
+                            notificationsHtml = `
+                                <div class="text-center py-3 text-muted">
+                                    <i class="fas fa-bell-slash fa-2x mb-2"></i>
+                                    <p>No notifications</p>
+                                </div>
+                            `;
+                        } else {
+                            data.notifications.forEach(notification => {
+                                const date = new Date(notification.created_at);
+                                const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+                                const readClass = notification.is_read ? '' : 'bg-light';
+                                
+                                notificationsHtml += `
+                                    <div class="dropdown-item notification-item ${readClass}" data-id="${notification.noti_id}">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <small class="text-muted">${formattedDate}</small>
+                                            ${notification.is_read ? '' : '<span class="badge bg-primary">New</span>'}
+                                        </div>
+                                        <p class="mb-1">${notification.message}</p>
+                                    </div>
+                                    <div class="dropdown-divider"></div>
+                                `;
+                            });
+                        }
+                        
+                        notificationsList.innerHTML = notificationsHtml;
+                        
+                        // Add click event listeners to notification items in dropdown
+                        document.querySelectorAll('.notification-item').forEach(item => {
+                            item.addEventListener('click', function() {
+                                const notiId = this.getAttribute('data-id');
+                                markAsRead(notiId);
+                                
+                                // Check if current user is admin
+                                const isAdmin = document.body.getAttribute('data-role') === 'admin';
+                                
+                                // If there's a related item or transaction, redirect to it
+                                const itemId = this.getAttribute('data-item-id');
+                                const transactionId = this.getAttribute('data-transaction-id');
+                                
+                                if (itemId && itemId !== 'null' && itemId !== '') {
+                                    // Redirect to admin item view for admins
+                                    if (isAdmin) {
+                                        window.location.href = `/admin/items/${itemId}`;
+                                    } else {
+                                        window.location.href = `/items/${itemId}`;
+                                    }
+                                } else if (transactionId && transactionId !== 'null' && transactionId !== '') {
+                                    // Redirect to admin transaction view for admins
+                                    if (isAdmin) {
+                                        window.location.href = `/admin/transactions/${transactionId}`;
+                                    } else {
+                                        window.location.href = `/transactions/${transactionId}`;
+                                    }
+                                } else {
+                                    window.location.href = '/notifications';
+                                }
+                            });
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error fetching notifications:', error);
+                        notificationsList.innerHTML = `
+                            <div class="text-center py-3 text-danger">
+                                <i class="fas fa-exclamation-circle fa-2x mb-2"></i>
+                                <p>Failed to load notifications</p>
+                            </div>
+                        `;
+                    });
+            }
+            
+            // Mark notification as read
+            function markAsRead(notiId) {
+                fetch(`/api/notifications/${notiId}/mark-read`, {
+                    method: 'POST'
+                });
+            }
+            
+            // Mark all as read
+            if (markAllReadBtn) {
+                markAllReadBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    fetch('/api/notifications/mark-all-read', {
+                        method: 'POST'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            loadRecentNotifications();
+                        }
+                    });
+                });
+            }
+            
+            // Load notifications when dropdown is opened
+            const notificationsDropdown = document.getElementById('notifications-dropdown');
+            notificationsDropdown.addEventListener('show.bs.dropdown', loadRecentNotifications);
+            
+            // Initial load of notification count
+            fetch('/api/notifications/unread-count')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.count > 0) {
+                        notificationBadge.textContent = data.count > 99 ? '99+' : data.count;
+                        notificationBadge.classList.remove('d-none');
+                    }
+                });
+                
+            // Refresh notifications every 30 seconds
+            setInterval(() => {
+                fetch('/api/notifications/unread-count')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.count > 0) {
+                            notificationBadge.textContent = data.count > 99 ? '99+' : data.count;
+                            notificationBadge.classList.remove('d-none');
+                        } else {
+                            notificationBadge.classList.add('d-none');
+                        }
+                    });
+            }, 30000);
+        }
+    });
+    </script>
+
+    <style>
+    /* Add additional styling for fixed navbar */
+    body {
+        padding-top: 60px; /* Add padding to body to prevent content from being hidden under navbar */
+    }
+    
+    /* ...existing styles... */
+    </style>
+</body>
+</html>

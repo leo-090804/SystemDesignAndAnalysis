@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Edit User - Admin{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Edit User: {{ edit_user.name }}</h5>
+                </div>
+                <div class="card-body">
+                    <form action="/admin/users/{{ edit_user.user_id }}/edit" method="post">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="username" value="{{ edit_user.username }}" disabled>
+                            <div class="form-text">Username cannot be changed.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Full Name</label>
+                            <input type="text" class="form-control" id="name" name="name" value="{{ edit_user.name }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="role" class="form-label">Role</label>
+                            <select class="form-select" id="role" name="role" required>
+                                <option value="student" {% if edit_user.role == 'student' %}selected{% endif %}>Student</option>
+                                <option value="teacher" {% if edit_user.role == 'teacher' %}selected{% endif %}>Teacher</option>
+                                <option value="admin" {% if edit_user.role == 'admin' %}selected{% endif %}>Admin</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3 role-field student-field">
+                            <label for="grade" class="form-label">Grade</label>
+                            <input type="text" class="form-control" id="grade" name="grade" value="{{ edit_user.grade or '' }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="organization" class="form-label">Organization</label>
+                            <input type="text" class="form-control" id="organization" name="organization" 
+                                value="{{ edit_user.organization or '' }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="is_active" class="form-label">Account Status</label>
+                            <select class="form-select" id="is_active" name="is_active" required>
+                                <option value="1" {% if edit_user.is_active %}selected{% endif %}>Active</option>
+                                <option value="0" {% if not edit_user.is_active %}selected{% endif %}>Locked</option>
+                            </select>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="/admin/users" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const roleSelect = document.getElementById('role');
+    const studentFields = document.querySelectorAll('.student-field');
+    
+    roleSelect.addEventListener('change', function() {
+        // Show/hide fields based on role
+        if (roleSelect.value === 'student') {
+            studentFields.forEach(el => el.style.display = 'block');
+        } else {
+            studentFields.forEach(el => el.style.display = 'none');
+        }
+    });
+    
+    // Initialize based on selected role
+    roleSelect.dispatchEvent(new Event('change'));
+});
+</script>
+{% endblock %}

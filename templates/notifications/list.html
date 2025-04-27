@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}Notifications - School Exchange Platform{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>My Notifications</h2>
+        <button class="btn btn-outline-primary" id="mark-all-read-btn">
+            <i class="fas fa-check-double me-2"></i> Mark All as Read
+        </button>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            {% if notifications %}
+            <ul class="list-group list-group-flush">
+                {% for notification in notifications %}
+                <li class="list-group-item py-3 {% if not notification.is_read %}bg-light{% endif %}" data-id="{{ notification.noti_id }}">
+                    <div class="d-flex justify-content-between">
+                        <small class="text-muted">{{ notification.created_at.split('T')[0] }}</small>
+                        {% if not notification.is_read %}
+                        <span class="badge bg-primary">New</span>
+                        {% endif %}
+                    </div>
+                    <p class="mb-1">{{ notification.message }}</p>
+                    
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <div>
+                            {% if notification.related_item_id %}
+                                {% if user.role == 'admin' %}
+                                <a href="/admin/items/{{ notification.related_item_id }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye me-1"></i> View Item
+                                </a>
+                                {% else %}
+                                <a href="/items/{{ notification.related_item_id }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye me-1"></i> View Item
+                                </a>
+                                {% endif %}
+                            {% endif %}
+                            
+                            {% if notification.related_transaction_id %}
+                                {% if user.role == 'admin' %}
+                                <a href="/admin/transactions/{{ notification.related_transaction_id }}" class="btn btn-sm btn-outline-info">
+                                    <i class="fas fa-receipt me-1"></i> View Transaction
+                                </a>
+                                {% else %}
+                                <a href="/transactions/{{ notification.related_transaction_id }}" class="btn btn-sm btn-outline-info">
+                                    <i class="fas fa-receipt me-1"></i> View Transaction
+                                </a>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                        
+                        <button class="btn btn-sm btn-link mark-read-btn" data-id="{{ notification.noti_id }}" 
+                                {% if notification.is_read %}disabled{% endif %}>
+                            Mark as Read
+                        </button>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            
+            <!-- Pagination -->
+            {% if total_pages > 1 %}
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                        <a class="page-link" href="?page={{ page - 1 }}">Previous</a>
+                    </li>
+                    
+                    {% for p in range(1, total_pages + 1) %}
+                    <li class="page-item {% if p == page %}active{% endif %}">
+                        <a class="page-link" href="?page={{ p }}">{{ p }}</a>
+                    </li>
+                    {% endfor %}
+                    
+                    <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+                        <a class="page-link" href="?page={{ page + 1 }}">Next</a>
+                    </li>
+                </ul>
+            </nav>
+            {% endif %}
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-bell-slash fa-4x text-muted mb-3"></i>
+                <h4>No notifications</h4>
+                <p class="text-muted">You don't have any notifications yet.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Mark single notification as read
+    document.querySelectorAll('.mark-read-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const notiId = this.getAttribute('data-id');
+            const listItem = this.closest('li');
+            
+            fetch(`/api/notifications/${notiId}/mark-read`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    btn.disabled = true;
+                    listItem.classList.remove('bg-light');
+                    listItem.querySelector('.badge')?.remove();
+                }
+            });
+        });
+    });
+    
+    // Mark all as read
+    document.getElementById('mark-all-read-btn').addEventListener('click', function() {
+        fetch('/api/notifications/mark-all-read', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update UI
+                document.querySelectorAll('.list-group-item').forEach(item => {
+                    item.classList.remove('bg-light');
+                });
+                document.querySelectorAll('.badge.bg-primary').forEach(badge => {
+                    badge.remove();
+                });
+                document.querySelectorAll('.mark-read-btn').forEach(btn => {
+                    btn.disabled = true;
+                });
+                
+                // Show success message
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: 'All notifications marked as read',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000
+                });
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

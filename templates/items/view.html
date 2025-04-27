@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}{{ item.name }} - School Exchange Platform{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                {% if item.image_path %}
+                <img src="{{ item.image_path }}" class="card-img-top" alt="{{ item.name }}">
+                {% else %}
+                <div class="card-img-top bg-light text-center p-5">
+                    <i class="fas fa-image fa-5x text-muted"></i>
+                    <p class="mt-3">No Image Available</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="card-title">{{ item.name }}</h2>
+                    <p class="badge bg-info">{{ category.name if category else "Uncategorized" }}</p>
+                    
+                    <p class="fs-3 fw-bold text-primary">${{ "%.2f"|format(item.price) }}</p>
+                    <p><i class="fas fa-user me-2"></i> Posted by: {{ owner.name }}</p>
+                    <p><i class="fas fa-calendar me-2"></i> Posted on: {{ item.created_at.split('T')[0] }}</p>
+                    
+                    {% if item.status == 'active' and user.user_id != item.user_id %}
+                    <div class="d-grid gap-2 my-4">
+                        <button class="btn btn-primary btn-lg" id="buy-btn">
+                            <i class="fas fa-shopping-cart me-2"></i> Buy Now
+                        </button>
+                        <button class="btn btn-outline-primary">
+                            <i class="fas fa-comment me-2"></i> Contact Seller
+                        </button>
+                    </div>
+                    {% elif item.status == 'pending' and user.user_id == item.user_id %}
+                    <div class="alert alert-warning alert-permanent pending-approval-alert">
+                        <i class="fas fa-clock me-2"></i> This item is pending approval by an administrator.
+                    </div>
+                    {% elif item.status == 'rejected' and user.user_id == item.user_id %}
+                    <div class="alert alert-danger item-rejected-alert">
+                        <div class="d-flex">
+                            <div class="me-3">
+                                <i class="fas fa-times-circle fa-2x text-danger"></i>
+                            </div>
+                            <div>
+                                <h5 class="alert-heading">This item was rejected</h5>
+                                {% if item.rejection_reason %}
+                                <p class="mb-1"><strong>Reason:</strong> {{ item.rejection_reason }}</p>
+                                {% endif %}
+                                <p class="mb-0 mt-2 small">You can revise and resubmit this item, or contact an administrator for more information.</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <hr>
+                    <h5>Description:</h5>
+                    <p class="card-text">{{ item.description }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if related_items and item.status == 'active' %}
+    <div class="mt-5">
+        <h3>Related Items</h3>
+        <div class="row">
+            {% for related_item in related_items %}
+            <div class="col-md-3 mb-4">
+                <div class="card h-100">
+                    {% if related_item.image_path %}
+                    <img src="{{ related_item.image_path }}" class="card-img-top" alt="{{ related_item.name }}" style="height: 200px; object-fit: cover;">
+                    {% else %}
+                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                        <i class="fas fa-image fa-3x text-muted"></i>
+                    </div>
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title">{{ related_item.name }}</h5>
+                        <p class="card-text text-primary fw-bold">${{ "%.2f"|format(related_item.price) }}</p>
+                        <a href="/items/{{ related_item.item_id }}" class="btn btn-outline-primary btn-sm">View Details</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Buy Modal - This will be implemented later with the transactions functionality -->
+<div class="modal fade" id="buyModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Purchase</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to purchase <strong>{{ item.name }}</strong> for <strong>${{ "%.2f"|format(item.price) }}</strong>?</p>
+                <p class="text-muted">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirm-purchase">Confirm Purchase</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const buyBtn = document.getElementById('buy-btn');
+    if (buyBtn) {
+        buyBtn.addEventListener('click', function() {
+            const buyModal = new bootstrap.Modal(document.getElementById('buyModal'));
+            buyModal.show();
+        });
+    }
+    
+    // Transaction functionality will be added later
+});
+</script>
+{% endblock %}

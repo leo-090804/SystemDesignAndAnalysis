@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Register - School Exchange Platform{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Register New Account</h4>
+            </div>
+            <div class="card-body">
+                {% if error %}
+                <div class="alert alert-danger">
+                    {{ error }}
+                </div>
+                {% endif %}
+                
+                <form action="/register" method="post">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username" name="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Full Name</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="role" class="form-label">Role</label>
+                        <select class="form-select" id="role" name="role" required>
+                            <option value="student">Student</option>
+                            <option value="teacher">Teacher</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3 role-field student-field">
+                        <label for="grade" class="form-label">Grade</label>
+                        <input type="text" class="form-control" id="grade" name="grade" placeholder="e.g. Grade 10">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="organization" class="form-label">Organization</label>
+                        <input type="text" class="form-control" id="organization" name="organization" 
+                               placeholder="e.g. Student Council, Math Club, etc.">
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Register</button>
+                    </div>
+                </form>
+                
+                <hr>
+                <div class="text-center">
+                    <p>Already have an account? <a href="/login">Login</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const roleSelect = document.getElementById('role');
+    const studentFields = document.querySelectorAll('.student-field');
+    
+    roleSelect.addEventListener('change', function() {
+        // Hide/show grade field based on role
+        if (roleSelect.value === 'student') {
+            studentFields.forEach(el => el.style.display = 'block');
+        } else {
+            studentFields.forEach(el => el.style.display = 'none');
+        }
+    });
+    
+    // Initialize form based on default selected role
+    roleSelect.dispatchEvent(new Event('change'));
+});
+</script>
+{% endblock %}

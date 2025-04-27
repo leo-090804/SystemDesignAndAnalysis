@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Campaigns - School Exchange Platform{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h2 class="mb-4">Active Campaigns</h2>
+
+    <!-- Filter tabs -->
+    <ul class="nav nav-pills mb-4">
+        <li class="nav-item">
+            <a class="nav-link {% if not campaign_type %}active{% endif %}" href="/campaigns">All</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if campaign_type == 'fundraising' %}active{% endif %}" href="/campaigns?campaign_type=fundraising">Fundraising</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if campaign_type == 'donation' %}active{% endif %}" href="/campaigns?campaign_type=donation">Donation</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if campaign_type == 'exchange' %}active{% endif %}" href="/campaigns?campaign_type=exchange">Exchange</a>
+        </li>
+    </ul>
+
+    {% if campaigns %}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for campaign in campaigns %}
+        <div class="col">
+            <div class="card h-100">
+                <div class="card-header {% if campaign.campaign_type == 'fundraising' %}bg-success{% elif campaign.campaign_type == 'donation' %}bg-info{% else %}bg-primary{% endif %} text-white">
+                    <h5 class="mb-0">{{ campaign.name }}</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">{{ campaign.description|truncate(100) }}</p>
+                    
+                    {% if campaign.goal_amount %}
+                    <div class="mb-3">
+                        <p><strong>Goal:</strong> ${{ "%.2f"|format(campaign.goal_amount) }}</p>
+                        <div class="progress">
+                            {% set progress = (campaign.current_amount / campaign.goal_amount * 100)|round|int %}
+                            <div class="progress-bar" role="progressbar" style="width: {{ progress }}%;" 
+                                 aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100">{{ progress }}%</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <p class="mb-1"><small class="text-muted">From: {{ campaign.start_date }}</small></p>
+                    <p><small class="text-muted">To: {{ campaign.end_date }}</small></p>
+                    
+                    <div class="d-grid gap-2 mt-3">
+                        <a href="/campaigns/{{ campaign.campaign_id }}" class="btn btn-outline-primary">View Details</a>
+                    </div>
+                </div>
+                <div class="card-footer text-muted">
+                    <span class="badge {% if campaign.campaign_type == 'fundraising' %}bg-success{% elif campaign.campaign_type == 'donation' %}bg-info{% else %}bg-primary{% endif %}">
+                        {{ campaign.campaign_type|capitalize }}
+                    </span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if total_pages > 1 %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                <a class="page-link" href="?page={{ page - 1 }}{% if campaign_type %}&campaign_type={{ campaign_type }}{% endif %}">Previous</a>
+            </li>
+            
+            {% for p in range(1, total_pages + 1) %}
+            <li class="page-item {% if p == page %}active{% endif %}">
+                <a class="page-link" href="?page={{ p }}{% if campaign_type %}&campaign_type={{ campaign_type }}{% endif %}">{{ p }}</a>
+            </li>
+            {% endfor %}
+            
+            <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+                <a class="page-link" href="?page={{ page + 1 }}{% if campaign_type %}&campaign_type={{ campaign_type }}{% endif %}">Next</a>
+            </li>
+        </ul>
+    </nav>
+    {% endif %}
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-bullhorn fa-4x text-muted mb-3"></i>
+        <h4>No active campaigns</h4>
+        <p class="text-muted">There are no active campaigns at the moment.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

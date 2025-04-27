@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Create Campaign - Admin{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Create New Campaign</h5>
+                </div>
+                <div class="card-body">
+                    <form action="/admin/campaigns/create" method="post">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Campaign Name</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="4" required></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="organizer_id" class="form-label">Campaign Organizer</label>
+                            <select class="form-select" id="organizer_id" name="organizer_id" required>
+                                <option value="" selected disabled>Select an organizer</option>
+                                {% if users %}
+                                    {% for user_option in users %}
+                                    <option value="{{ user_option.user_id }}">
+                                        {{ user_option.name }} ({{ user_option.username }})
+                                    </option>
+                                    {% endfor %}
+                                {% else %}
+                                    <option value="" disabled>No users found in database</option>
+                                {% endif %}
+                            </select>
+                            <div class="form-text">Select the user who will organize this campaign</div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="start_date" class="form-label">Start Date</label>
+                                <input type="date" class="form-control" id="start_date" name="start_date" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="end_date" class="form-label">End Date</label>
+                                <input type="date" class="form-control" id="end_date" name="end_date" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="campaign_type" class="form-label">Campaign Type</label>
+                            <select class="form-select" id="campaign_type" name="campaign_type" required>
+                                <option value="fundraising">Fundraising</option>
+                                <option value="donation">Donation</option>
+                                <option value="exchange">Exchange</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3" id="goal-amount-section">
+                            <label for="goal_amount" class="form-label">Goal Amount ($)</label>
+                            <input type="number" class="form-control" id="goal_amount" name="goal_amount" min="0" step="0.01">
+                            <div class="form-text">Optional for donation and exchange campaigns.</div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="/admin/campaigns" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Create Campaign</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const campaignTypeSelect = document.getElementById('campaign_type');
+    const goalAmountSection = document.getElementById('goal-amount-section');
+    const goalAmountInput = document.getElementById('goal_amount');
+    
+    // Set minimum dates for start and end date
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('start_date').setAttribute('min', today);
+    document.getElementById('end_date').setAttribute('min', today);
+    
+    // Update required state of goal amount based on campaign type
+    campaignTypeSelect.addEventListener('change', function() {
+        if (campaignTypeSelect.value === 'fundraising') {
+            goalAmountInput.setAttribute('required', '');
+            goalAmountSection.style.display = 'block';
+        } else {
+            goalAmountInput.removeAttribute('required');
+            goalAmountSection.style.display = 'block'; // Still show but make optional
+        }
+    });
+    
+    // Initialize form based on default selected type
+    campaignTypeSelect.dispatchEvent(new Event('change'));
+    
+    // Validate that end date is after start date
+    const startDateInput = document.getElementById('start_date');
+    const endDateInput = document.getElementById('end_date');
+    
+    function updateEndDateMin() {
+        const startValue = startDateInput.value;
+        if (startValue) {
+            endDateInput.setAttribute('min', startValue);
+            if (endDateInput.value && endDateInput.value < startValue) {
+                endDateInput.value = startValue;
+            }
+        }
+    }
+    
+    startDateInput.addEventListener('change', updateEndDateMin);
+});
+</script>
+{% endblock %}

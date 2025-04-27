@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+
+{% block title %}Transactions - Admin{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Transactions</h2>
+        <a href="/admin/dashboard" class="btn btn-outline-secondary">Back to Dashboard</a>
+    </div>
+
+    <!-- Filter tabs -->
+    <ul class="nav nav-pills mb-4">
+        <li class="nav-item">
+            <a class="nav-link {% if not status %}active{% endif %}" href="/admin/transactions">All</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if status == 'pending' %}active{% endif %}" href="/admin/transactions?status=pending">
+                Pending
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if status == 'completed' %}active{% endif %}" href="/admin/transactions?status=completed">
+                Completed
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if status == 'cancelled' %}active{% endif %}" href="/admin/transactions?status=cancelled">
+                Cancelled
+            </a>
+        </li>
+    </ul>
+
+    <!-- SECTION 1: REGULAR ITEM TRANSACTIONS -->
+    <div class="card mb-5">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">Item Purchases & Sales</h4>
+        </div>
+        {% if regular_transactions %}
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Item</th>
+                            <th>Amount</th>
+                            <th>Buyer</th>
+                            <th>Seller</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transaction in regular_transactions %}
+                        <tr class="clickable-row" data-href="/admin/transactions/{{ transaction.transaction_id }}" style="cursor: pointer;">
+                            <td>{{ transaction.transaction_id }}</td>
+                            <td>{{ transaction.item.name }}</td>
+                            <td>${{ "%.2f"|format(transaction.amount) }}</td>
+                            <td>{{ transaction.buyer.name }}</td>
+                            <td>{{ transaction.seller.name }}</td>
+                            <td>
+                                {% if transaction.status == 'pending' %}
+                                <span class="badge bg-warning text-dark">Pending</span>
+                                {% elif transaction.status == 'completed' %}
+                                <span class="badge bg-success">Completed</span>
+                                {% elif transaction.status == 'cancelled' %}
+                                <span class="badge bg-danger">Cancelled</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ transaction.transaction_date.split('T')[0] }}</td>
+                            <td>
+                                <a href="/admin/transactions/{{ transaction.transaction_id }}" class="btn btn-sm btn-outline-primary action-btn">View</a>
+                                {% if transaction.status == 'pending' %}
+                                <button class="btn btn-sm btn-outline-success approve-btn action-btn" data-id="{{ transaction.transaction_id }}">Approve</button>
+                                <button class="btn btn-sm btn-outline-danger cancel-btn action-btn" data-id="{{ transaction.transaction_id }}" data-bs-toggle="modal" data-bs-target="#cancelModal{{ transaction.transaction_id }}">Cancel</button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% else %}
+        <div class="card-body text-center py-5">
+            <i class="fas fa-shopping-cart fa-4x text-muted mb-3"></i>
+            <h5>No purchase transactions found</h5>
+            <p class="text-muted">There are no item purchase transactions matching the selected criteria.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- SECTION 2: CAMPAIGN DONATIONS -->
+    <div class="card">
+        <div class="card-header bg-success text-white">
+            <h4 class="mb-0">Campaign Donations</h4>
+        </div>
+        {% if campaign_transactions %}
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Campaign</th>
+                            <th>Amount</th>
+                            <th>Donor</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transaction in campaign_transactions %}
+                        <tr class="clickable-row" data-href="/admin/transactions/{{ transaction.transaction_id }}" style="cursor: pointer;">
+                            <td>{{ transaction.transaction_id }}</td>
+                            <td>{{ transaction.campaign.name }}</td>
+                            <td>${{ "%.2f"|format(transaction.amount) }}</td>
+                            <td>{{ transaction.donor.name }}</td>
+                            <td>
+                                {% if transaction.status == 'pending' %}
+                                <span class="badge bg-warning text-dark">Pending</span>
+                                {% elif transaction.status == 'completed' %}
+                                <span class="badge bg-success">Completed</span>
+                                {% elif transaction.status == 'cancelled' %}
+                                <span class="badge bg-danger">Cancelled</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ transaction.transaction_date.split('T')[0] }}</td>
+                            <td>
+                                <a href="/admin/transactions/{{ transaction.transaction_id }}" class="btn btn-sm btn-outline-primary action-btn">View</a>
+                                <a href="/admin/campaigns/{{ transaction.campaign_id }}" class="btn btn-sm btn-outline-success action-btn">View Campaign</a>
+                                {% if transaction.status == 'pending' %}
+                                <button class="btn btn-sm btn-outline-success approve-btn action-btn" data-id="{{ transaction.transaction_id }}">Approve</button>
+                                <button class="btn btn-sm btn-outline-danger cancel-btn action-btn" data-id="{{ transaction.transaction_id }}" data-bs-toggle="modal" data-bs-target="#cancelModal{{ transaction.transaction_id }}">Cancel</button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% else %}
+        <div class="card-body text-center py-5">
+            <i class="fas fa-hand-holding-heart fa-4x text-muted mb-3"></i>
+            <h5>No donation transactions found</h5>
+            <p class="text-muted">There are no campaign donation transactions matching the selected criteria.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Make rows clickable
+    document.querySelectorAll('.clickable-row').forEach(row => {
+        row.addEventListener('click', function() {
+            window.location.href = this.dataset.href;
+        });
+    });
+    
+    // Prevent row click when clicking on action buttons
+    document.querySelectorAll('.action-btn').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.stopPropagation(); // Prevent row click event from firing
+        });
+    });
+
+    // Approve transaction buttons
+    document.querySelectorAll('.approve-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const transactionId = this.getAttribute('data-id');
+            if (confirm('Are you sure you want to approve this transaction?')) {
+                fetch(`/admin/transactions/${transactionId}/approve`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Transaction Approved',
+                            text: 'The transaction has been successfully approved.'
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: data.message || 'Failed to approve transaction.'
+                        });
+                    }
+                });
+            }
+        });
+    });
+    
+    // Cancel transaction handlers are using the modal forms defined for each transaction
+});
+</script>
+{% endblock %}

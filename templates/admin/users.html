@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}User Management - Admin{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>User Management</h2>
+        <a href="/admin/dashboard" class="btn btn-outline-secondary">Back to Dashboard</a>
+    </div>
+
+    <!-- Filter and search -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="role" class="form-label">Filter by Role</label>
+                    <select class="form-select" id="role" name="role">
+                        <option value="">All Roles</option>
+                        <option value="student" {% if role == 'student' %}selected{% endif %}>Students</option>
+                        <option value="teacher" {% if role == 'teacher' %}selected{% endif %}>Teachers</option>
+                        <!-- <option value="admin" {% if role == 'admin' %}selected{% endif %}>Admins</option> -->
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="status" class="form-label">Filter by Status</label>
+                    <select class="form-select" id="status" name="status">
+                        <option value="all" {% if status == 'all' or status == None %}selected{% endif %}>All Status</option>
+                        <option value="1" {% if status == '1' %}selected{% endif %}>Active</option>
+                        <option value="0" {% if status == '0' %}selected{% endif %}>Locked</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="search" class="form-label">Search</label>
+                    <input type="text" class="form-control" id="search" name="search" placeholder="Username or name" value="{{ search or '' }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-primary d-block">Apply Filters</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Users table -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Name</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in users %}
+                        <tr class="clickable-row" data-href="/admin/users/{{ u.user_id }}/profile" style="cursor: pointer;">
+                            <td>{{ u.user_id }}</td>
+                            <td>{{ u.username }}</td>
+                            <td>{{ u.name }}</td>
+                            <td>{{ u.role|capitalize }}</td>
+                            <td>
+                                {% if u.is_active %}
+                                <span class="badge bg-success">Active</span>
+                                {% else %}
+                                <span class="badge bg-danger">Locked</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <!-- Remove the View Profile button since rows are now clickable -->
+                                <button class="btn btn-sm btn-danger delete-user-btn" data-id="{{ u.user_id }}">
+                                    <i class="fas fa-trash me-1"></i> Delete
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if total_pages > 1 %}
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                        <a class="page-link" href="?page={{ page - 1 }}{% if role %}&role={{ role }}{% endif %}{% if status %}&status={{ status }}{% endif %}{% if search %}&search={{ search }}{% endif %}">Previous</a>
+                    </li>
+                    
+                    {% for p in range(1, total_pages + 1) %}
+                    <li class="page-item {% if p == page %}active{% endif %}">
+                        <a class="page-link" href="?page={{ p }}{% if role %}&role={{ role }}{% endif %}{% if status %}&status={{ status }}{% endif %}{% if search %}&search={{ search }}{% endif %}">{{ p }}</a>
+                    </li>
+                    {% endfor %}
+                    
+                    <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+                        <a class="page-link" href="?page={{ page + 1 }}{% if role %}&role={{ role }}{% endif %}{% if status %}&status={{ status }}{% endif %}{% if search %}&search={{ search }}{% endif %}">Next</a>
+                    </li>
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal for user deletion confirmation -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the user <strong id="delete-user-name"></strong>?</p>
+                <p class="text-danger">This action may be irreversible.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirm-delete">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Make rows clickable
+    document.querySelectorAll('.clickable-row').forEach(row => {
+        row.addEventListener('click', function(e) {
+            // Navigate to the URL specified in data-href
+            window.location.href = this.dataset.href;
+        });
+    });
+    
+    // Prevent row click when clicking on delete button
+    document.querySelectorAll('.delete-user-btn').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.stopPropagation(); // Prevent row click event from firing
+            
+            // Delete user functionality
+            userIdToDelete = this.getAttribute('data-id');
+            // Find the username from the table row
+            const row = this.closest('tr');
+            const userName = row.cells[1].textContent.trim(); // Get username from the second column
+            document.getElementById('delete-user-name').textContent = userName;
+            
+            // Show modal
+            new bootstrap.Modal(document.getElementById('deleteModal')).show();
+        });
+    });
+    
+    // Toggle user status
+    document.querySelectorAll('.toggle-status').forEach(button => {
+        button.addEventListener('click', function() {
+            const userId = this.getAttribute('data-id');
+            const currentStatus = this.getAttribute('data-status');
+            
+            fetch(`/admin/users/${userId}/toggle`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while updating user status');
+            });
+        });
+    });
+    
+    // Delete user
+    let userIdToDelete = null;
+    
+    document.getElementById('confirm-delete').addEventListener('click', function() {
+        if (userIdToDelete) {
+            fetch(`/admin/users/${userIdToDelete}/delete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert('Failed to delete user: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while deleting the user');
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

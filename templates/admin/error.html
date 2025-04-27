@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Error - Admin{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <div class="card">
+                <div class="card-body">
+                    <i class="fas fa-exclamation-triangle fa-4x text-danger mb-4"></i>
+                    <h3 class="mb-4">An Error Occurred</h3>
+                    <p class="lead">{{ message }}</p>
+                    <div class="mt-4">
+                        <a href="/admin/dashboard" class="btn btn-primary me-2">Back to Dashboard</a>
+                        <button class="btn btn-outline-secondary" onclick="history.back()">Go Back</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
