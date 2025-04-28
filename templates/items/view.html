@@ -123,7 +123,68 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Transaction functionality will be added later
+    // Add confirm purchase functionality for the modal
+    const confirmPurchaseBtn = document.getElementById('confirm-purchase');
+    if (confirmPurchaseBtn) {
+        confirmPurchaseBtn.addEventListener('click', function() {
+            // Disable button to prevent multiple clicks
+            confirmPurchaseBtn.disabled = true;
+            confirmPurchaseBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+            
+            // Send purchase request to server
+            fetch(`/items/{{ item.item_id }}/purchase`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Re-enable button
+                confirmPurchaseBtn.disabled = false;
+                confirmPurchaseBtn.textContent = 'Confirm Purchase';
+                
+                if (data.success) {
+                    // Close the modal
+                    const buyModal = bootstrap.Modal.getInstance(document.getElementById('buyModal'));
+                    if (buyModal) {
+                        buyModal.hide();
+                    }
+                    
+                    // Show success message
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Purchase Request Submitted',
+                        text: data.message || 'Your purchase request has been submitted and is awaiting admin approval.',
+                        confirmButtonColor: '#28a745'
+                    }).then(() => {
+                        // Redirect to transactions page
+                        window.location.href = '/transactions';
+                    });
+                } else {
+                    // Show error message
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Purchase Failed',
+                        text: data.message || 'There was an error processing your purchase.',
+                        confirmButtonColor: '#dc3545'
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                confirmPurchaseBtn.disabled = false;
+                confirmPurchaseBtn.textContent = 'Confirm Purchase';
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Network Error',
+                    text: 'There was a problem connecting to the server. Please try again.',
+                    confirmButtonColor: '#dc3545'
+                });
+            });
+        });
+    }
 });
 </script>
 {% endblock %}
