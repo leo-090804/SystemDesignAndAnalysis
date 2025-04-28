@@ -130,7 +130,7 @@
                             </td>
                             <td>{{ transaction.transaction_date.split('T')[0] }}</td>
                             <td>
-                                <a href="/admin/transactions/{{ transaction.transaction_id }}" class="btn btn-sm btn-outline-primary action-btn">View</a>
+                                <!-- <a href="/admin/transactions/{{ transaction.transaction_id }}" class="btn btn-sm btn-outline-primary action-btn">View</a> -->
                                 <a href="/admin/campaigns/{{ transaction.campaign_id }}" class="btn btn-sm btn-outline-success action-btn">View Campaign</a>
                                 {% if transaction.status == 'pending' %}
                                 <button class="btn btn-sm btn-outline-success approve-btn action-btn" data-id="{{ transaction.transaction_id }}">Approve</button>
