@@ -357,7 +357,7 @@ async def reject_item(item_id: int = Path(...), admin: dict = Depends(admin_requ
                 "created_at": datetime.now().isoformat(),
                 "is_read": False,
                 # "noti_id": await get_next_id(db, "notifications", "noti_id")
-                "noti_id": str(uuid.uuid4().int),
+                "noti_id": int(str(uuid.uuid4().int)[:9]),
                 "user_id": item["user_id"],
                 "related_item_id": item_id,
                 "related_transaction_id": None,
