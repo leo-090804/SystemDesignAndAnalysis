@@ -116,7 +116,7 @@ async def create_item(
     db = Database.db
 
     # Get next item ID
-    last_item = await db.items.find_one(sort=[("item_id", -1)])
+    # last_item = await db.items.find_one(sort=[("item_id", -1)])
     # next_item_id = 1 if not last_item else last_item["item_id"] + 1
     next_item_id = int(str(uuid.uuid4().int)[:9])
 
