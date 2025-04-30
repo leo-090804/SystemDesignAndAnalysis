@@ -1,4 +1,3 @@
-from re import A
 from fastapi import APIRouter, Depends, HTTPException, Request, Form, Query, Path, UploadFile, File
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -7,15 +6,14 @@ from app.database.mongodb import Database
 from app.services.auth import get_current_user
 from datetime import datetime, timedelta
 import os
-import shutil
 import uuid
 
 router = APIRouter(prefix="/items", tags=["items"])
 templates = Jinja2Templates(directory="templates")
 
 # Make sure this directory exists
-UPLOAD_DIR = "static/uploads/items"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+# UPLOAD_DIR = "static/uploads/items"
+# os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
 # Middleware to check user is logged in and active
@@ -32,7 +30,7 @@ async def user_required(request: Request):
 async def browse_items(
     request: Request,
     user: dict = Depends(user_required),
-    category: Optional[int] = None,
+    category: Optional[str] = None,  # Changed from Optional[int] to Optional[str]
     search: Optional[str] = None,
     sort_by: str = "latest",
     page: int = Query(1, ge=1),
@@ -48,8 +46,15 @@ async def browse_items(
     # Exclude pending, rejected, pending_sale, and sold items
     query = {"status": "active"}
 
-    if category:
-        query["cate_id"] = category
+    # Handle category filter - convert to int only if it has a value
+    if category and category.strip():
+        try:
+            category_int = int(category)
+            query["cate_id"] = category_int
+        except ValueError:
+            # If category isn't a valid integer, ignore it
+            pass
+
     if search:
         query["$or"] = [
             {"name": {"$regex": search, "$options": "i"}},
@@ -116,30 +121,12 @@ async def create_item(
     db = Database.db
 
     # Get next item ID
-    # last_item = await db.items.find_one(sort=[("item_id", -1)])
-    # next_item_id = 1 if not last_item else last_item["item_id"] + 1
     next_item_id = int(str(uuid.uuid4().int)[:9])
 
-    # Handle image upload if provided
-    image_path = None
-    if image and image.filename:
-        # Generate unique filename
-        file_ext = os.path.splitext(image.filename)[1]
-        unique_filename = f"{uuid.uuid4()}{file_ext}"
-        file_path = os.path.join(UPLOAD_DIR, unique_filename)
-
-        # Save the file
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(image.file, buffer)
-
-        # Store the relative path
-        image_path = f"/static/uploads/items/{unique_filename}"
-
-    # Create item
+    # Create the basic item document
     new_item = {
         "name": name,
         "description": description,
-        "image_path": image_path,
         "price": price,
         "status": "pending",  # Items need admin approval
         "created_at": datetime.now().isoformat(),
@@ -150,6 +137,22 @@ async def create_item(
         "cate_id": category,
     }
 
+    # Handle image upload - store directly in the items document
+    if image and image.filename:
+        # Read the file content
+        contents = await image.read()
+        
+        # Add the image data and metadata to the item document
+        new_item["image_data"] = contents
+        new_item["image_content_type"] = image.content_type
+        new_item["image_filename"] = image.filename
+        
+        # Create a URL path for templates to use
+        new_item["image_path"] = f"/api/items/{next_item_id}/image"
+    else:
+        new_item["image_path"] = None
+
+    # Insert the item into the database
     result = await db.items.insert_one(new_item)
 
     if result.inserted_id:
@@ -399,4 +402,4 @@ async def purchased_items(request: Request, user: dict = Depends(user_required),
     return templates.TemplateResponse(
         "items/purchased.html",
         {"request": request, "user": user, "items": purchased_items, "page": page, "total_pages": total_pages},
-)
+    )

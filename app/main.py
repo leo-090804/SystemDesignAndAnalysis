@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from jose import JWTError, jwt
 from app.database.mongodb import Database
-from app.routers import auth, admin, items, campaigns, profile, notifications, admin_transactions, transactions
+from app.routers import auth, admin, images, items, campaigns, profile, notifications, admin_transactions, transactions
 from app.services.auth import SECRET_KEY, ALGORITHM, get_password_hash, get_current_user
 from datetime import datetime
 import logging
@@ -28,6 +28,7 @@ app.include_router(profile.router)
 app.include_router(notifications.router)
 app.include_router(admin_transactions.router)
 app.include_router(transactions.router)
+app.include_router(images.router)
 
 # Initialize logger
 logging.basicConfig(level=logging.INFO)
