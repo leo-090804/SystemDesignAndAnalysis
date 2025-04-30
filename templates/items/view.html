@@ -93,7 +93,56 @@
     {% endif %}
 </div>
 
-<!-- Buy Modal - This will be implemented later with the transactions functionality -->
+<!-- Add a timeline section for user's view -->
+{% if user.user_id == item.user_id or user.role == 'admin' %}
+<div class="card mt-4">
+    <div class="card-header">
+        <h5><i class="fas fa-history me-2"></i> Item History</h5>
+    </div>
+    <div class="card-body">
+        <ul class="list-group list-group-flush timeline">
+            <li class="list-group-item">
+                <div class="timeline-badge bg-primary"></div>
+                <strong>Item Posted</strong>
+                <p class="mb-0">{{ item.created_at.split('T')[0] if item.created_at else "Unknown" }}</p>
+            </li>
+            
+            {% if item.status == 'active' and item.approved_at %}
+            <li class="list-group-item">
+                <div class="timeline-badge bg-success"></div>
+                <strong>Item Approved</strong>
+                <p class="mb-0">{{ item.approved_at.split('T')[0] }}</p>
+            </li>
+            {% elif item.status == 'rejected' and item.rejection_date %}
+            <li class="list-group-item">
+                <div class="timeline-badge bg-danger"></div>
+                <strong>Item Rejected</strong>
+                <p class="mb-0">{{ item.rejection_date.split('T')[0] }}</p>
+                {% if item.user_id == user.user_id %}
+                <p class="mb-0 text-muted">Reason: {{ item.rejection_reason }}</p>
+                {% endif %}
+            </li>
+            {% elif item.status == 'pending_sale' %}
+            <li class="list-group-item">
+                <div class="timeline-badge bg-warning"></div>
+                <strong>Purchase Initiated</strong>
+                <p class="mb-0">{{ item.status_updated_at.split('T')[0] if item.status_updated_at else "Unknown" }}</p>
+            </li>
+            {% elif item.status == 'sold' and item.sold_at %}
+            <li class="list-group-item">
+                <div class="timeline-badge bg-info"></div>
+                <strong>Item Sold</strong>
+                <p class="mb-0">{{ item.sold_at.split('T')[0] }}</p>
+            </li>
+            {% endif %}
+        </ul>
+    </div>
+</div>
+{% endif %}
+</div>
+</div>
+
+<!-- Related items section and modals -->
 <div class="modal fade" id="buyModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -187,4 +236,25 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+
+<style>
+/* Timeline styling */
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+.timeline-badge {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    position: absolute;
+    left: -20px;
+    top: 15px;
+}
+.timeline .list-group-item {
+    padding-left: 10px;
+    border-left: 2px solid #dee2e6;
+    margin-left: 6px;
+}
+</style>
 {% endblock %}

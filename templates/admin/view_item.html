@@ -17,7 +17,8 @@
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body p-0 d-flex align-items-center justify-content-center">
                     {% if item.image_path %}
-                    <img src="{{ item.image_path }}" alt="{{ item.name }}" class="img-fluid rounded">
+                    <!-- <img src="{{ item.image_path }}" alt="{{ item.name }}" class="img-fluid rounded"> -->
+                    <img src="{{ item.image_path }}" alt="{{ item.name }}" class="img-fluid rounded" style="max-width: 100%; max-height: 400px; object-fit: cover;">
                     {% else %}
                     <div class="text-center py-5 w-100">
                         <i class="fas fa-image fa-5x text-muted mb-3"></i>
@@ -118,6 +119,51 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Add Timeline Card -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Item Timeline</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush timeline">
+                        <li class="list-group-item">
+                            <div class="timeline-badge bg-primary"></div>
+                            <strong>Item Created</strong>
+                            <p class="mb-0">{{ item.created_at.split('T')[0] if item.created_at else "Unknown" }}</p>
+                        </li>
+                        
+                        {% if item.status == 'active' and item.approved_at %}
+                        <li class="list-group-item">
+                            <div class="timeline-badge bg-success"></div>
+                            <strong>Item Approved</strong>
+                            <p class="mb-0">{{ item.approved_at.split('T')[0] }}</p>
+                        </li>
+                        {% elif item.status == 'rejected' and item.rejection_date %}
+                        <li class="list-group-item">
+                            <div class="timeline-badge bg-danger"></div>
+                            <strong>Item Rejected</strong>
+                            <p class="mb-0">{{ item.rejection_date.split('T')[0] }}</p>
+                            <p class="mb-0 text-muted">Reason: {{ item.rejection_reason }}</p>
+                        </li>
+                        {% elif item.status == 'pending_sale' and item.transaction_id %}
+                        <li class="list-group-item">
+                            <div class="timeline-badge bg-warning"></div>
+                            <strong>Purchase Initiated</strong>
+                            <p class="mb-0">{{ item.status_updated_at.split('T')[0] if item.status_updated_at else "Unknown" }}</p>
+                        </li>
+                        {% elif item.status == 'sold' and item.sold_at %}
+                        <li class="list-group-item">
+                            <div class="timeline-badge bg-info"></div>
+                            <strong>Item Sold</strong>
+                            <p class="mb-0">{{ item.sold_at.split('T')[0] }}</p>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -144,6 +190,27 @@
         </div>
     </div>
 </div>
+
+<style>
+/* Add timeline styling if not already present */
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+.timeline-badge {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    position: absolute;
+    left: -20px;
+    top: 15px;
+}
+.timeline .list-group-item {
+    padding-left: 10px;
+    border-left: 2px solid #dee2e6;
+    margin-left: 6px;
+}
+</style>
 {% endblock %}
 
 {% block scripts %}
