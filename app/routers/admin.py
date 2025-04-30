@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, Form, Query, Path
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from typing import Optional
 from app.database.mongodb import Database
@@ -327,7 +327,7 @@ async def approve_item(item_id: int = Path(...), admin: dict = Depends(admin_req
                 "created_at": datetime.now().isoformat(),
                 "is_read": False,
                 # "noti_id": await get_next_id(db, "notifications", "noti_id"),
-                "noti_id": str(uuid.uuid4().int),
+                "noti_id": int(str(uuid.uuid4().int)[:9]),
                 "user_id": item["user_id"],
                 "related_item_id": item_id,
                 "related_transaction_id": None,
@@ -345,7 +345,7 @@ async def reject_item(item_id: int = Path(...), admin: dict = Depends(admin_requ
 
     # Update item status to rejected
     result = await db.items.update_one(
-        {"item_id": item_id}, {"$set": {"status": "rejected", "rejection_reason": reason}}
+        {"item_id": item_id}, {"$set": {"status": "rejected", "rejection_reason": reason, "rejected_at": datetime.now().isoformat()}}
     )
 
     if result.modified_count:
@@ -368,6 +368,23 @@ async def reject_item(item_id: int = Path(...), admin: dict = Depends(admin_requ
     else:
         raise HTTPException(status_code=500, detail="Failed to reject item")
 
+
+@router.get("/items/{item_id}/image")
+async def get_item_image(item_id: int, admin: dict = Depends(admin_required)):
+    """Serve item images directly from MongoDB"""
+    db = Database.db
+    
+    # Find the item
+    item = await db.items.find_one({"item_id": item_id})
+    
+    if not item or "image_data" not in item:
+        raise HTTPException(status_code=404, detail="Image not found")
+    
+    # Return the image with appropriate content type
+    return Response(
+        content=item["image_data"], 
+        media_type=item.get("image_content_type", "image/jpeg")
+    )
 
 # Campaign Management
 @router.get("/campaigns", response_class=HTMLResponse)
