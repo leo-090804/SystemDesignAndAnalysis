@@ -54,7 +54,7 @@
                             <th>Name</th>
                             <th>Role</th>
                             <th>Status</th>
-                            <th>Actions</th>
+                            <!-- <th>Actions</th> -->
                         </tr>
                     </thead>
                     <tbody>
@@ -71,12 +71,11 @@
                                 <span class="badge bg-danger">Locked</span>
                                 {% endif %}
                             </td>
-                            <td>
-                                <!-- Remove the View Profile button since rows are now clickable -->
+                            <!-- <td>
                                 <button class="btn btn-sm btn-danger delete-user-btn" data-id="{{ u.user_id }}">
                                     <i class="fas fa-trash me-1"></i> Delete
                                 </button>
-                            </td>
+                            </td> -->
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -138,21 +137,21 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Prevent row click when clicking on delete button
-    document.querySelectorAll('.delete-user-btn').forEach(button => {
-        button.addEventListener('click', function(e) {
-            e.stopPropagation(); // Prevent row click event from firing
+    // document.querySelectorAll('.delete-user-btn').forEach(button => {
+    //     button.addEventListener('click', function(e) {
+    //         e.stopPropagation(); // Prevent row click event from firing
             
-            // Delete user functionality
-            userIdToDelete = this.getAttribute('data-id');
-            // Find the username from the table row
-            const row = this.closest('tr');
-            const userName = row.cells[1].textContent.trim(); // Get username from the second column
-            document.getElementById('delete-user-name').textContent = userName;
+    //         // Delete user functionality
+    //         userIdToDelete = this.getAttribute('data-id');
+    //         // Find the username from the table row
+    //         const row = this.closest('tr');
+    //         const userName = row.cells[1].textContent.trim(); // Get username from the second column
+    //         document.getElementById('delete-user-name').textContent = userName;
             
-            // Show modal
-            new bootstrap.Modal(document.getElementById('deleteModal')).show();
-        });
-    });
+    //         // Show modal
+    //         new bootstrap.Modal(document.getElementById('deleteModal')).show();
+    //     });
+    // });
     
     // Toggle user status
     document.querySelectorAll('.toggle-status').forEach(button => {

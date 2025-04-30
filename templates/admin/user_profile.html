@@ -59,13 +59,17 @@
                     </ul>
                 </div>
                 <div class="card-footer bg-white">
-                    <div class="d-grid gap-2">
-                        <button class="btn btn-warning toggle-status-btn" data-id="{{ profile_user.user_id }}" data-status="{{ profile_user.is_active }}">
+                    <div class="d-flex gap-2">
+                        <a href="#" class="btn btn-warning w-100" id="lockAccountBtn">
+                            <i class="fas fa-lock me-2"></i> 
                             {% if profile_user.is_active %}
-                            <i class="fas fa-lock me-2"></i> Lock Account
+                            Lock Account
                             {% else %}
-                            <i class="fas fa-unlock me-2"></i> Unlock Account
+                            Unlock Account
                             {% endif %}
+                        </a>
+                        <button type="button" class="btn btn-danger w-100" id="deleteAccountBtn">
+                            <i class="fas fa-trash me-2"></i> Delete Account
                         </button>
                     </div>
                 </div>
@@ -90,12 +94,12 @@
                                     <th>Price</th>
                                     <th>Category</th>
                                     <th>Status</th>
-                                    <th>Actions</th>
+                                    <!-- <th>Actions</th> -->
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for item in user_items %}
-                                <tr>
+                                <tr class="clickable-row" data-href="/admin/items/{{ item.item_id }}" style="cursor: pointer;">
                                     <td>{{ item.item_id }}</td>
                                     <td>
                                         {% if item.image_path %}
@@ -124,11 +128,11 @@
                                         <span class="badge bg-secondary">{{ item.status }}</span>
                                         {% endif %}
                                     </td>
-                                    <td>
+                                    <!-- <td>
                                         <a href="/admin/items/{{ item.item_id }}" class="btn btn-sm btn-primary">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                    </td>
+                                    </td> -->
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -165,12 +169,12 @@
                                     <th>Role</th>
                                     <th>Status</th>
                                     <th>Date</th>
-                                    <th>Actions</th>
+                                    <!-- <th>Actions</th> -->
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for transaction in purchase_transactions %}
-                                <tr>
+                                <tr class="clickable-row" data-href="/admin/transactions/{{ transaction.transaction_id }}" style="cursor: pointer;">
                                     <td>{{ transaction.transaction_id }}</td>
                                     <td>${{ "%.2f"|format(transaction.amount) }}</td>
                                     <td>
@@ -192,11 +196,11 @@
                                         {% endif %}
                                     </td>
                                     <td>{{ transaction.transaction_date.split('T')[0] if transaction.transaction_date else "Unknown" }}</td>
-                                    <td>
+                                    <!-- <td>
                                         <a href="/admin/transactions/{{ transaction.transaction_id }}" class="btn btn-sm btn-primary">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                    </td>
+                                    </td> -->
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -233,12 +237,12 @@
                                     <th>Amount</th>
                                     <th>Status</th>
                                     <th>Date</th>
-                                    <th>Actions</th>
+                                    <!-- <th>Actions</th> -->
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for transaction in donation_transactions %}
-                                <tr>
+                                <tr class="clickable-row" data-href="/admin/transactions/{{ transaction.transaction_id }}" style="cursor: pointer;">
                                     <td>{{ transaction.transaction_id }}</td>
                                     <td>
                                         {% if transaction.campaign_id %}
@@ -265,9 +269,9 @@
                                     </td>
                                     <td>{{ transaction.transaction_date.split('T')[0] if transaction.transaction_date else "Unknown" }}</td>
                                     <td>
-                                        <a href="/admin/transactions/{{ transaction.transaction_id }}" class="btn btn-sm btn-primary">
+                                        <!-- <a href="/admin/transactions/{{ transaction.transaction_id }}" class="btn btn-sm btn-primary">
                                             <i class="fas fa-eye"></i>
-                                        </a>
+                                        </a> -->
                                         {% if transaction.campaign_id %}
                                         <a href="/admin/campaigns/{{ transaction.campaign_id }}" class="btn btn-sm btn-success">
                                             <i class="fas fa-bullhorn"></i>
@@ -400,8 +404,129 @@
     </div>
 </div>
 
+<!-- Add delete confirmation modal -->
+<div class="modal fade" id="deleteUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm User Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the user <strong>{{ profile_user.name }}</strong>?</p>
+                <p class="text-danger">This action cannot be undone. All user's data will be permanently deleted.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteUser">Delete User</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add lock confirmation modal after the delete modal -->
+<div class="modal fade" id="lockUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="lockModalTitle">
+                    {% if profile_user.is_active %}Lock Account{% else %}Unlock Account{% endif %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to 
+                    {% if profile_user.is_active %}lock{% else %}unlock{% endif %} 
+                    the account for <strong>{{ profile_user.name }}</strong>?
+                </p>
+                <p class="{% if profile_user.is_active %}text-warning{% else %}text-success{% endif %}">
+                    {% if profile_user.is_active %}
+                    This will prevent the user from logging in or performing any actions.
+                    {% else %}
+                    This will restore the user's access to the system.
+                    {% endif %}
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn {% if profile_user.is_active %}btn-warning{% else %}btn-success{% endif %}" 
+                        id="confirmLockUser">
+                    {% if profile_user.is_active %}Lock Account{% else %}Unlock Account{% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Make table rows clickable
+    document.querySelectorAll('.clickable-row').forEach(row => {
+        row.addEventListener('click', function() {
+            window.location.href = this.getAttribute('data-href');
+        });
+    });
+
+    // Handle lockAccountBtn click to show the lock modal
+    const lockAccountBtn = document.getElementById('lockAccountBtn');
+    if (lockAccountBtn) {
+        lockAccountBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const lockModal = new bootstrap.Modal(document.getElementById('lockUserModal'));
+            lockModal.show();
+        });
+    }
+    
+    // Handle confirmation of lock/unlock action
+    const confirmLockUser = document.getElementById('confirmLockUser');
+    if (confirmLockUser) {
+        confirmLockUser.addEventListener('click', function() {
+            // Disable button and show loading state
+            this.disabled = true;
+            const isCurrentlyActive = {{ 'true' if profile_user.is_active == 1 else 'false' }};
+            this.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> ${isCurrentlyActive ? 'Locking...' : 'Unlocking...'}`;
+            
+            fetch('/admin/users/{{ profile_user.user_id }}/toggle', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: isCurrentlyActive ? 'Account Locked' : 'Account Unlocked',
+                        text: isCurrentlyActive ? 
+                            'The user account has been successfully locked.' : 
+                            'The user account has been successfully unlocked.'
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message || `Failed to ${isCurrentlyActive ? 'lock' : 'unlock'} user account.`
+                    });
+                    this.disabled = false;
+                    this.innerHTML = isCurrentlyActive ? 'Lock Account' : 'Unlock Account';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Network Error',
+                    text: 'There was a problem connecting to the server. Please try again.'
+                });
+                this.disabled = false;
+                this.innerHTML = isCurrentlyActive ? 'Lock Account' : 'Unlock Account';
+            });
+        });
+    }
+    
     // Handle toggle status button
     document.querySelectorAll('.toggle-status-btn').forEach(btn => {
         btn.addEventListener('click', function() {
@@ -423,6 +548,61 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+    
+    // Delete account button
+    const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+    if (deleteAccountBtn) {
+        deleteAccountBtn.addEventListener('click', function() {
+            const deleteModal = new bootstrap.Modal(document.getElementById('deleteUserModal'));
+            deleteModal.show();
+        });
+    }
+    
+    // Confirm delete user action
+    const confirmDeleteUser = document.getElementById('confirmDeleteUser');
+    if (confirmDeleteUser) {
+        confirmDeleteUser.addEventListener('click', function() {
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Deleting...';
+            
+            fetch('/admin/users/{{ user.user_id }}/delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'User Deleted',
+                        text: 'The user has been successfully deleted.'
+                    }).then(() => {
+                        window.location.href = '/admin/users';
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message || 'Failed to delete user.'
+                    });
+                    this.disabled = false;
+                    this.innerHTML = 'Delete User';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Network Error',
+                    text: 'There was a problem connecting to the server. Please try again.'
+                });
+                this.disabled = false;
+                this.innerHTML = 'Delete User';
+            });
+        });
+    }
 });
 </script>
 {% endblock %}
