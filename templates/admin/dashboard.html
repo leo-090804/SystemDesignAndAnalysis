@@ -215,21 +215,23 @@ document.addEventListener('DOMContentLoaded', function() {
     // Items status chart
     const itemStatusCtx = document.getElementById('itemsChart').getContext('2d');
     const itemStatusData = {
-        labels: ['Active', 'Pending', 'Rejected', 'Sold', 'Pending Sale'],
+        labels: ['Active', 'Pending', 'Rejected', 'Sold', 'Pending Sale', 'Pending Donation'],
         datasets: [{
             data: [
                 {{ item_status.active }},
                 {{ item_status.pending }},
                 {{ item_status.rejected }},
                 {{ item_status.sold }},
-                {{ item_status.pending_sale }}
+                {{ item_status.pending_sale }},
+                {{ item_status.donation_pending }}
             ],
             backgroundColor: [
                 '#4caf50', // Active - green
                 '#ff9800', // Pending - orange
                 '#f44336', // Rejected - red
                 '#2196f3', // Sold - blue
-                '#9c27b0'  // Pending Sale - purple
+                '#9c27b0',  // Pending Sale - purple
+                '#ffc107'   // Pending Donation - yellow
             ],
             borderWidth: 1
         }]
@@ -314,17 +316,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // Campaign chart - replace with correct data structure
     const campaignCtx = document.getElementById('campaignsChart').getContext('2d');
     const campaignData = {
-        labels: ['Fundraising', 'Donation', 'Exchange'],
+        labels: ['Fundraising', 'Donation'],
         datasets: [{
             data: [
                 {{ campaign_types.fundraising if campaign_types and 'fundraising' in campaign_types else 0 }},
                 {{ campaign_types.donation if campaign_types and 'donation' in campaign_types else 0 }},
-                {{ campaign_types.exchange if campaign_types and 'exchange' in campaign_types else 0 }}
+                // {{ campaign_types.exchange if campaign_types and 'exchange' in campaign_types else 0 }}
             ],
             backgroundColor: [
                 '#28a745', // Fundraising - green
                 '#17a2b8', // Donation - teal
-                '#fd7e14'  // Exchange - orange
+                // '#fd7e14'  // Exchange - orange
             ],
             borderWidth: 1
         }]

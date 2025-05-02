@@ -58,6 +58,22 @@
                     </div>
                     {% endif %}
                     
+                    {% if item.status == 'active' %}
+                        <span class="badge bg-success">Active</span>
+                    {% elif item.status == 'pending' %}
+                        <span class="badge bg-warning">Pending</span>
+                    {% elif item.status == 'rejected' %}
+                        <span class="badge bg-danger">Rejected</span>
+                    {% elif item.status == 'sold' %}
+                        <span class="badge bg-info">Sold</span>
+                    {% elif item.status == 'pending_sale' %}
+                        <span class="badge bg-primary">Sale Pending</span>
+                    {% elif item.status == 'donation_pending' %}
+                        <span class="badge bg-warning text-dark">Donation Pending</span>
+                    {% else %}
+                        <span class="badge bg-secondary">{{ item.status }}</span>
+                    {% endif %}
+                    
                     <hr>
                     <h5>Description:</h5>
                     <p class="card-text">{{ item.description }}</p>

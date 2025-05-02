@@ -19,12 +19,39 @@
                 <form action="/register" method="post">
                     <div class="mb-3">
                         <label for="username" class="form-label">Username</label>
-                        <input type="text" class="form-control" id="username" name="username" required>
+                        <input type="text" class="form-control" id="username" name="username" 
+                               pattern="^[a-zA-Z0-9_]{5,20}$" 
+                               title="Username must be 5-20 characters and can only contain letters, numbers, and underscores"
+                               required>
+                        <div class="form-text">Username must be 5-20 characters and can only contain letters, numbers, and underscores.</div>
                     </div>
+
                     <div class="mb-3">
                         <label for="password" class="form-label">Password</label>
-                        <input type="password" class="form-control" id="password" name="password" required>
+                        <input type="password" class="form-control" id="password" name="password"
+                               pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
+                               title="Password must be at least 8 characters and include uppercase, lowercase, number, and special character"
+                               required>
+                        <div class="form-text">
+                            Password requirements:
+                            <ul class="mb-0 ps-3">
+                                <li>At least 8 characters long</li>
+                                <li>Must include uppercase letter</li>
+                                <li>Must include lowercase letter</li>
+                                <li>Must include a number</li>
+                                <li>Must include a special character (@$!%*?&)</li>
+                            </ul>
+                        </div>
                     </div>
+
+                    <div class="mb-3">
+                        <label for="confirm_password" class="form-label">Confirm Password</label>
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                        <div class="invalid-feedback" id="password-match-error">
+                            Passwords do not match.
+                        </div>
+                    </div>
+
                     <div class="mb-3">
                         <label for="name" class="form-label">Full Name</label>
                         <input type="text" class="form-control" id="name" name="name" required>
@@ -64,20 +91,69 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const roleSelect = document.getElementById('role');
-    const studentFields = document.querySelectorAll('.student-field');
+    const form = document.querySelector('form');
+    const password = document.getElementById('password');
+    const confirmPassword = document.getElementById('confirm_password');
     
-    roleSelect.addEventListener('change', function() {
-        // Hide/show grade field based on role
-        if (roleSelect.value === 'student') {
-            studentFields.forEach(el => el.style.display = 'block');
+    // Check if passwords match when confirm password field changes
+    confirmPassword.addEventListener('input', function() {
+        if (password.value !== confirmPassword.value) {
+            confirmPassword.setCustomValidity('Passwords do not match');
+            document.getElementById('password-match-error').style.display = 'block';
         } else {
-            studentFields.forEach(el => el.style.display = 'none');
+            confirmPassword.setCustomValidity('');
+            document.getElementById('password-match-error').style.display = 'none';
         }
     });
     
-    // Initialize form based on default selected role
-    roleSelect.dispatchEvent(new Event('change'));
+    // For real-time password strength indicators
+    password.addEventListener('input', function() {
+        const value = password.value;
+        let meetsRequirements = true;
+        
+        // Check for minimum length
+        if (value.length < 8) {
+            meetsRequirements = false;
+        }
+        
+        // Check for uppercase
+        if (!/[A-Z]/.test(value)) {
+            meetsRequirements = false;
+        }
+        
+        // Check for lowercase
+        if (!/[a-z]/.test(value)) {
+            meetsRequirements = false;
+        }
+        
+        // Check for numbers
+        if (!/[0-9]/.test(value)) {
+            meetsRequirements = false;
+        }
+        
+        // Check for special characters
+        if (!/[@$!%*?&]/.test(value)) {
+            meetsRequirements = false;
+        }
+        
+        if (meetsRequirements) {
+            password.classList.add('is-valid');
+            password.classList.remove('is-invalid');
+        } else {
+            password.classList.add('is-invalid');
+            password.classList.remove('is-valid');
+        }
+    });
+    
+    // Final validation before form submission
+    form.addEventListener('submit', function(event) {
+        if (password.value !== confirmPassword.value) {
+            event.preventDefault();
+            confirmPassword.setCustomValidity('Passwords do not match');
+        } else {
+            confirmPassword.setCustomValidity('');
+        }
+    });
 });
 </script>
 {% endblock %}

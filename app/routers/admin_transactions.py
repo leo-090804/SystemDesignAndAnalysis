@@ -68,8 +68,13 @@ async def list_transactions(
         transaction["campaign"] = campaign if campaign else {"name": "Unknown Campaign"}
         
         # Get donor info
-        donor = await db.users.find_one({"user_id": transaction["buyer_user_id"]})
-        transaction["donor"] = donor if donor else {"name": "Unknown User"}
+        if campaign["campaign_type"] == "fundraising":
+            donor = await db.users.find_one({"user_id": transaction["buyer_user_id"]})
+            transaction["donor"] = donor if donor else {"name": "Unknown User"}
+            
+        elif campaign["campaign_type"] == "donation":
+            donor = await db.users.find_one({"user_id": transaction["seller_user_id"]})
+            transaction["donor"] = donor if donor else {"name": "Unknown User"}
     
     return templates.TemplateResponse(
         "admin/transactions.html",
@@ -196,57 +201,89 @@ async def approve_transaction(
         if not campaign:
             return {"success": False, "message": "Campaign not found"}
 
-        # Get donor
-        donor = await db.users.find_one({"user_id": transaction["buyer_user_id"]})
-        if not donor:
-            return {"success": False, "message": "Donor not found"}
+        # Get donor for fundrasing campaign
+        if campaign["campaign_type"] == "fundraising": 
+            donor = await db.users.find_one({"user_id": transaction["buyer_user_id"]})
+            if not donor:
+                return {"success": False, "message": "Donor not found"}
 
-        # Update transaction status
-        await db.transactions.update_one(
-            {"transaction_id": transaction_id},
-            {"$set": {
-                "status": "completed",
-                "status_updated_at": now
-            }}
-        )
+            # Update transaction status
+            await db.transactions.update_one(
+                {"transaction_id": transaction_id},
+                {"$set": {
+                    "status": "completed",
+                    "status_updated_at": now
+                }}
+            )
 
-        # Update campaign amount now that donation is approved
-        new_amount = campaign.get("current_amount", 0) + transaction["amount"]
-        await db.campaigns.update_one(
-            {"campaign_id": transaction["campaign_id"]},
-            {"$set": {"current_amount": new_amount}}
-        )
+            # Update campaign amount now that donation is approved
+            new_amount = campaign.get("current_amount", 0) + transaction["amount"]
+            await db.campaigns.update_one(
+                {"campaign_id": transaction["campaign_id"]},
+                {"$set": {"current_amount": new_amount}}
+            )
 
-        # Send notifications
-        # To donor
-        await db.notifications.insert_one(
-            {
-                "message": f"Your donation of ${transaction['amount']:.2f} to '{campaign['name']}' has been approved.",
-                "created_at": now,
-                "is_read": False,
-                "is_seen": False,
-                # "noti_id": await get_next_id(db, "notifications", "noti_id"),
-                "noti_id": int(str(uuid.uuid4().int)[:9]),
-                "user_id": donor["user_id"],
-                "related_item_id": None,
-                "related_transaction_id": transaction_id,
-            }
-        )
+            # Send notifications
+            # To donor
+            await db.notifications.insert_one(
+                {
+                    "message": f"Your donation of ${transaction['amount']:.2f} to '{campaign['name']}' has been approved.",
+                    "created_at": now,
+                    "is_read": False,
+                    "is_seen": False,
+                    # "noti_id": await get_next_id(db, "notifications", "noti_id"),
+                    "noti_id": int(str(uuid.uuid4().int)[:9]),
+                    "user_id": donor["user_id"],
+                    "related_item_id": None,
+                    "related_transaction_id": transaction_id,
+                }
+            )
 
-        # To campaign creator
-        await db.notifications.insert_one(
-            {
-                "message": f"A donation of ${transaction['amount']:.2f} from {donor['name']} to '{campaign['name']}' has been approved.",
-                "created_at": now,
-                "is_read": False,
-                "is_seen": False,
-                # "noti_id": await get_next_id(db, "notifications", "noti_id"),
-                "noti_id": int(str(uuid.uuid4().int)[:9]),
-                "user_id": campaign["created_by"],
-                "related_item_id": None,
-                "related_transaction_id": transaction_id,
-            }
-        )
+            # To campaign creator
+            await db.notifications.insert_one(
+                {
+                    "message": f"A donation of ${transaction['amount']:.2f} from {donor['name']} to '{campaign['name']}' has been approved.",
+                    "created_at": now,
+                    "is_read": False,
+                    "is_seen": False,
+                    # "noti_id": await get_next_id(db, "notifications", "noti_id"),
+                    "noti_id": int(str(uuid.uuid4().int)[:9]),
+                    "user_id": campaign["created_by"],
+                    "related_item_id": None,
+                    "related_transaction_id": transaction_id,
+                }
+            )
+            
+        # Get donor for donation campaign
+        elif campaign["campaign_type"] == "donation":
+            donor = await db.users.find_one({"user_id": transaction["seller_user_id"]})
+            if not donor:
+                return {"success": False, "message": "Donor not found"}
+
+            # Update transaction status
+            await db.transactions.update_one(
+                {"transaction_id": transaction_id},
+                {"$set": {
+                    "status": "completed",
+                    "status_updated_at": now
+                }}
+            )
+
+            # Send notifications
+            # To donor
+            await db.notifications.insert_one(
+                {
+                    "message": f"Your donation of item {transaction['item_id']} to '{campaign['name']}' has been approved.",
+                    "created_at": now,
+                    "is_read": False,
+                    "is_seen": False,
+                    # "noti_id": await get_next_id(db, "notifications", "noti_id"),
+                    "noti_id": int(str(uuid.uuid4().int)[:9]),
+                    "user_id": donor["user_id"],
+                    "related_item_id": None,
+                    "related_transaction_id": transaction_id,
+                }
+            )
 
     else:
         return {"success": False, "message": f"Unknown transaction type: {transaction['transaction_type']}"}

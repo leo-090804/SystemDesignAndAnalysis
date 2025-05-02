@@ -29,7 +29,7 @@
             </div>
         </div>
 
-        <!-- Item Details -->
+        <!-- Item Details -->   
         <div class="col-md-6 mb-4">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-header bg-white py-3">
@@ -49,7 +49,9 @@
                         {% elif item.status == 'sold' %}
                         <span class="badge bg-info">Sold</span>
                         {% elif item.status == 'pending_sale' %}
-                        <span class="badge bg-primary">Pending Sale</span>
+                        <span class="badge bg-primary">Sale Pending</span>
+                        {% elif item.status == 'donation_pending' %}
+                        <span class="badge bg-warning text-dark">Donation Pending</span>
                         {% else %}
                         <span class="badge bg-secondary">{{ item.status }}</span>
                         {% endif %}

@@ -60,7 +60,13 @@
                     <div class="card-body">
                         <h5 class="card-title">{{ item.name }}</h5>
                         <p class="card-text text-truncate">{{ item.description }}</p>
+                        
+                        <!-- Modified price display to handle Exchange Only items -->
+                        {% if item.type == "exchange" %}
+                        <p class="card-text"><span class="badge bg-info">Exchange Only</span></p>
+                        {% else %}
                         <p class="card-text"><strong>${{ "%.2f"|format(item.price) }}</strong></p>
+                        {% endif %}
                     </div>
                     <div class="card-footer">
                         <a href="/items/{{ item.item_id }}" class="btn btn-primary w-100">View Details</a>

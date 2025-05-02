@@ -31,7 +31,7 @@
                                 </li>
                                 <li class="list-group-item d-flex justify-content-between">
                                     <span>Organizer:</span>
-                                    <span>{{ campaign.organizer }}</span>
+                                    <span>{{ organizer }}</span>
                                 </li>
                                 <li class="list-group-item d-flex justify-content-between">
                                     <span>Status:</span>
@@ -49,7 +49,7 @@
                                 </li>
                                 <li class="list-group-item d-flex justify-content-between">
                                     <span>Created By:</span>
-                                    <span>{{ creator.name if creator else "Unknown" }}</span>
+                                    <span>{{ campaign.created_by if campaign.created_by else "Unknown" }}</span>
                                 </li>
                                 <li class="list-group-item d-flex justify-content-between">
                                     <span>Created On:</span>
@@ -181,8 +181,8 @@
                                 <span class="badge bg-warning text-dark">Pending</span>
                                 {% elif item.status == 'sold' %}
                                 <span class="badge bg-info">Sold</span>
-                                {% else %}
-                                <span class="badge bg-secondary">{{ item.status|capitalize }}</span>
+                                {% elif item.status == 'donation_pending' %}
+                                <span class="badge bg-warning text-dark">Pending Donation</span>
                                 {% endif %}
                             </td>
                             <td>

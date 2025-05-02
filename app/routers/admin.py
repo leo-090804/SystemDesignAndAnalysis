@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, Form, Query, Path
-from fastapi.responses import HTMLResponse, RedirectResponse, Response
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from typing import Optional
 from app.database.mongodb import Database
@@ -41,6 +41,7 @@ async def admin_dashboard(request: Request, admin: dict = Depends(admin_required
     rejected_items = await db.items.count_documents({"status": "rejected"})
     sold_items = await db.items.count_documents({"status": "sold"})
     pending_sale_items = await db.items.count_documents({"status": "pending_sale"})
+    pending_donations = await db.items.count_documents({"status": "pending_donation"})
 
     # Item status breakdown for charts
     item_status = {
@@ -49,6 +50,7 @@ async def admin_dashboard(request: Request, admin: dict = Depends(admin_required
         "rejected": rejected_items,
         "sold": sold_items,
         "pending_sale": pending_sale_items,
+        "donation_pending": pending_donations
     }
 
     # Transaction statistics - Make sure these queries are running correctly
@@ -369,22 +371,22 @@ async def reject_item(item_id: int = Path(...), admin: dict = Depends(admin_requ
         raise HTTPException(status_code=500, detail="Failed to reject item")
 
 
-@router.get("/items/{item_id}/image")
-async def get_item_image(item_id: int, admin: dict = Depends(admin_required)):
-    """Serve item images directly from MongoDB"""
-    db = Database.db
+# @router.get("/items/{item_id}/image")
+# async def get_item_image(item_id: int, admin: dict = Depends(admin_required)):
+#     """Serve item images directly from MongoDB"""
+#     db = Database.db
     
-    # Find the item
-    item = await db.items.find_one({"item_id": item_id})
+#     # Find the item
+#     item = await db.items.find_one({"item_id": item_id})
     
-    if not item or "image_data" not in item:
-        raise HTTPException(status_code=404, detail="Image not found")
+#     if not item or "image_data" not in item:
+#         raise HTTPException(status_code=404, detail="Image not found")
     
-    # Return the image with appropriate content type
-    return Response(
-        content=item["image_data"], 
-        media_type=item.get("image_content_type", "image/jpeg")
-    )
+#     # Return the image with appropriate content type
+#     return Response(
+#         content=item["image_data"], 
+#         media_type=item.get("image_content_type", "image/jpeg")
+#     )
 
 # Campaign Management
 @router.get("/campaigns", response_class=HTMLResponse)
@@ -430,6 +432,7 @@ async def create_campaign_form(request: Request, admin: dict = Depends(admin_req
 
     # Get all users (not just active ones) to make sure we get some data
     users = await db.users.find({"is_active": 1}).sort("name", 1).to_list(length=100)
+    users = [user for user in users if user.get("role") != "admin"]  # Exclude admin users from the dropdown
 
     # Log the number of users found for debugging
     logger.info(f"Found {len(users)} users for campaign organizer dropdown")
@@ -451,7 +454,7 @@ async def create_campaign(
     admin: dict = Depends(admin_required),
     name: str = Form(...),
     description: str = Form(...),
-    organizer_id: int = Form(...),  # Changed from organizer text to organizer_id
+    organizer_id: int = Form(...),
     start_date: str = Form(...),
     end_date: str = Form(...),
     campaign_type: str = Form(...),
@@ -462,12 +465,12 @@ async def create_campaign(
     try:
         # Validate the organizer exists
         organizer = await db.users.find_one({"user_id": int(organizer_id)})
-        if not organizer:
-            users = await db.users.find({"is_active": True}).sort("name", 1).to_list(length=100)
-            return templates.TemplateResponse(
-                "admin/create_campaign.html",
-                {"request": request, "user": admin, "users": users, "error": "Selected organizer not found"},
-            )
+# if not organizer:
+#     users = await db.users.find({"is_active": True}).sort("name", 1).to_list(length=100)
+            #     return templates.TemplateResponse(
+#         "admin/create_campaign.html",
+#         {"request": request, "user": admin, "users": users, "error": "Selected organizer not found"},
+#     )
 
         # Continue with campaign creation using the organizer information
         # ...existing code...
@@ -482,8 +485,8 @@ async def create_campaign(
             "current_amount": 0.0,
             "status": "active",
             "created_at": datetime.now().isoformat(),
-            "created_by": organizer["user_id"],
-            "organizer_name": organizer["name"],
+            "created_by": "System Administrator",
+            "organizer_id": organizer["user_id"],  # Use the organizer ID from the form
             # "campaign_id": await get_next_id(db, "campaigns", "campaign_id")
             "campaign_id": int(str(uuid.uuid4().int)[:9]),
         }
@@ -516,10 +519,16 @@ async def view_campaign(request: Request, campaign_id: int = Path(...), admin: d
                 "admin/error.html", {"request": request, "user": admin, "message": "Campaign not found"}
             )
 
-        # Get creator info (safely)
-        creator = None
-        if "created_by" in campaign:
-            creator = await db.users.find_one({"user_id": campaign["created_by"]})
+        # Get organizer info (safely)
+        organizer = None
+        organizer_name = "Unknown"
+        if "organizer_id" in campaign:
+            organizer = await db.users.find_one({"user_id": campaign["organizer_id"]})
+            print(f"Organizer: {organizer}")
+            if organizer:
+                organizer_name = organizer.get("name", "Unknown")
+        # elif "organizer_name" in campaign:
+        #     organizer_name = campaign["organizer_name"]
 
         # Get items associated with this campaign (safely)
         campaign_items = []
@@ -542,8 +551,8 @@ async def view_campaign(request: Request, campaign_id: int = Path(...), admin: d
         total_value = sum(item.get("price", 0) for item in campaign_items)
 
         # Handle missing fields
-        if "organizer" not in campaign:
-            campaign["organizer"] = "Unknown"
+        # if "organizer" not in campaign:
+        #     campaign["organizer"] = "Unknown"
 
         return templates.TemplateResponse(
             "admin/view_campaign.html",
@@ -551,7 +560,8 @@ async def view_campaign(request: Request, campaign_id: int = Path(...), admin: d
                 "request": request,
                 "user": admin,
                 "campaign": campaign,
-                "creator": creator,
+                "created_by": campaign.get("created_by", "System Adminístrator"),
+                "organizer": organizer_name,
                 "campaign_items": campaign_items,
                 "total_value": total_value,
                 "now": datetime.now,

@@ -72,14 +72,23 @@
                                 <li class="list-group-item">
                                     <div class="d-flex justify-content-between">
                                         {% if transaction.transaction_type == 'donation' %}
-                                        <span>Donor:</span>
-                                        <span>{{ buyer.name }}</span>
+                                            {% if transaction.amount == 0 %}
+                                            <span>Donor:</span>
+                                            <span>{{ seller.name }}</span>
+                                            {% else %}
+                                            <span>Donor:</span>
+                                            <span>{{ buyer.name }}</span>
+                                            {% endif %}
                                         {% else %}
                                         <span>Buyer:</span>
                                         <span>{{ buyer.name }}</span>
                                         {% endif %}
                                     </div>
+                                    {% if transaction.transaction_type == 'donation' and transaction.amount == 0 %}
+                                    <small class="text-muted">ID: {{ seller.user_id }}</small>
+                                    {% else %}
                                     <small class="text-muted">ID: {{ buyer.user_id }}</small>
+                                    {% endif %}
                                 </li>
                                 <li class="list-group-item">
                                     <div class="d-flex justify-content-between">

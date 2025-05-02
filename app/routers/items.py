@@ -5,7 +5,6 @@ from typing import Optional
 from app.database.mongodb import Database
 from app.services.auth import get_current_user
 from datetime import datetime, timedelta
-import os
 import uuid
 
 router = APIRouter(prefix="/items", tags=["items"])
@@ -30,7 +29,7 @@ async def user_required(request: Request):
 async def browse_items(
     request: Request,
     user: dict = Depends(user_required),
-    category: Optional[str] = None,  # Changed from Optional[int] to Optional[str]
+    category: Optional[str] = None,  
     search: Optional[str] = None,
     sort_by: str = "latest",
     page: int = Query(1, ge=1),
@@ -101,8 +100,19 @@ async def create_item_form(request: Request, user: dict = Depends(user_required)
 
     db = Database.db
     categories = await db.categories.find({}).to_list(length=100)
+    
+    # Fetch active campaigns for donation items
+    active_campaigns = await db.campaigns.find({"status": "active"}).to_list(length=100)
 
-    return templates.TemplateResponse("items/create.html", {"request": request, "user": user, "categories": categories})
+    return templates.TemplateResponse(
+        "items/create.html", 
+        {
+            "request": request, 
+            "user": user, 
+            "categories": categories,
+            "active_campaigns": active_campaigns
+        }
+    )
 
 
 @router.post("/create")
@@ -113,6 +123,9 @@ async def create_item(
     description: str = Form(...),
     price: float = Form(...),
     category: int = Form(...),
+    transaction_type: str = Form(...),
+    campaign_id: Optional[int] = Form(None),
+    exchange_requirements: Optional[str] = Form(None),
     image: UploadFile = File(None),
 ):
     if user["role"] == "admin":
@@ -135,18 +148,94 @@ async def create_item(
         "item_id": next_item_id,
         "user_id": user["user_id"],
         "cate_id": category,
+        "transaction_type": transaction_type,  # Save as transaction_type, not type
     }
+    
+    # Add exchange requirements if provided
+    if exchange_requirements:
+        new_item["exchange_requirements"] = exchange_requirements
+
+    # Handle campaign selection
+    campaign_type = None
+    if transaction_type == "for_campaign" and campaign_id:
+        try:
+            campaign_id_int = int(campaign_id)
+            # Look up the campaign to get its type
+            campaign = await db.campaigns.find_one({"campaign_id": campaign_id_int})
+            if campaign:
+                new_item["campaign_id"] = campaign_id_int
+                campaign_type = campaign.get("campaign_type")
+                
+                # For donation campaigns, create a transaction directly
+                if campaign_type == "donation":
+                    # Mark the item specially
+                    new_item["donated"] = True
+                    new_item["status"] = "donation_pending"
+                    
+                    # Create donation transaction
+                    transaction_id = int(str(uuid.uuid4().int)[:9])
+                    
+                    donation_transaction = {
+                        "transaction_id": transaction_id,
+                        "item_id": next_item_id,
+                        "buyer_user_id": None,  # No buyer for donations
+                        "seller_user_id": user["user_id"],
+                        "transaction_type": "donation",
+                        "amount": 0,  # No monetary value for item donation
+                        "transaction_date": datetime.now().isoformat(),
+                        "status": "pending",  # Needs admin approval
+                        "status_updated_at": datetime.now().isoformat(),
+                        "campaign_id": campaign_id_int,
+                        "message": f"Item donation for campaign: {campaign.get('name', 'Unknown Campaign')}"
+                    }
+                    
+                    # Insert the transaction
+                    await db.transactions.insert_one(donation_transaction)
+                    
+                    # Add transaction reference to item
+                    new_item["transaction_id"] = transaction_id
+                    
+                    # Notify admin about the donation
+                    admin_users = await db.users.find({"role": "admin"}).to_list(length=100)
+                    for admin in admin_users:
+                        admin_notification = {
+                            "message": f"New item donation for campaign '{campaign.get('name', 'Unknown')}' requires approval.",
+                            "created_at": datetime.now().isoformat(),
+                            "is_read": False,
+                            "is_seen": False,
+                            "noti_id": int(str(uuid.uuid4().int)[:9]),
+                            "user_id": admin["user_id"],
+                            "related_item_id": next_item_id,
+                            "related_transaction_id": transaction_id,
+                        }
+                        await db.notifications.insert_one(admin_notification)
+                    
+                    # Create notification for the donor
+                    donor_notification = {
+                        "message": f"Your item '{name}' has been submitted as a donation to '{campaign.get('name', 'Unknown')}' campaign.",
+                        "created_at": datetime.now().isoformat(),
+                        "is_read": False,
+                        "is_seen": False,
+                        "noti_id": int(str(uuid.uuid4().int)[:9]),
+                        "user_id": user["user_id"],
+                        "related_item_id": next_item_id,
+                        "related_transaction_id": transaction_id,
+                    }
+                    await db.notifications.insert_one(donor_notification)
+        except ValueError:
+            # Handle invalid campaign_id
+            pass
 
     # Handle image upload - store directly in the items document
     if image and image.filename:
         # Read the file content
         contents = await image.read()
-        
+
         # Add the image data and metadata to the item document
         new_item["image_data"] = contents
         new_item["image_content_type"] = image.content_type
         new_item["image_filename"] = image.filename
-        
+
         # Create a URL path for templates to use
         new_item["image_path"] = f"/api/items/{next_item_id}/image"
     else:

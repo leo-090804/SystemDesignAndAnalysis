@@ -28,6 +28,21 @@
                             <p class="card-text text-truncate">{{ item.description }}</p>
                             <p class="card-text"><small class="text-muted">Posted by: {{ item.user_name }}</small></p>
                             <p class="card-text"><strong>Price: ${{ "%.2f"|format(item.price) }}</strong></p>
+                            {% if item.status == 'active' %}
+                                <span class="badge bg-success">Active</span>
+                            {% elif item.status == 'pending' %}
+                                <span class="badge bg-warning">Pending</span>
+                            {% elif item.status == 'rejected' %}
+                                <span class="badge bg-danger">Rejected</span>
+                            {% elif item.status == 'sold' %}
+                                <span class="badge bg-info">Sold</span>
+                            {% elif item.status == 'pending_sale' %}
+                                <span class="badge bg-primary">Sale Pending</span>
+                            {% elif item.status == 'donation_pending' %}
+                                <span class="badge bg-warning text-dark">Donation Pending</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ item.status }}</span>
+                            {% endif %}
                         </div>
                         <div class="card-footer">
                             <div class="d-grid gap-2">
