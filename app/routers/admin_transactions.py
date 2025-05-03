@@ -223,6 +223,14 @@ async def approve_transaction(
                 {"$set": {"current_amount": new_amount}}
             )
 
+            await db.items.update_one(
+                {"item_id": transaction["item_id"]}, 
+                {"$set": 
+                    {"status": "sold", 
+                     "sold_at": now
+                }}
+            )
+
             # Send notifications
             # To donor
             await db.notifications.insert_one(
@@ -253,7 +261,7 @@ async def approve_transaction(
                     "related_transaction_id": transaction_id,
                 }
             )
-            
+
         # Get donor for donation campaign
         elif campaign["campaign_type"] == "donation":
             donor = await db.users.find_one({"user_id": transaction["seller_user_id"]})
@@ -266,6 +274,14 @@ async def approve_transaction(
                 {"$set": {
                     "status": "completed",
                     "status_updated_at": now
+                }}
+            )
+
+            await db.items.update_one(
+                {"item_id": transaction["item_id"]}, 
+                {"$set": 
+                    {"status": "donated", 
+                     "donated_at": now
                 }}
             )
 
