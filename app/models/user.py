@@ -17,6 +17,7 @@ class UserInDB(UserBase):
     password_hash: str
     is_active: int = 1
     created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
+    has_profile_image: bool = False  # Indicates if the user has a profile image
 
 class UserResponse(UserBase):
     user_id: int

@@ -69,6 +69,7 @@ async def create_user(user: UserCreate):
 
     # Create user document
     user_dict = user.dict()
+
     hashed_password = get_password_hash(user_dict.pop("password"))
 
     user_in_db = UserInDB(**user_dict, user_id=next_user_id, password_hash=hashed_password)

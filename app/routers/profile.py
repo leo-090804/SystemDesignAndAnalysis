@@ -8,7 +8,8 @@ import os
 import shutil
 import uuid
 
-router = APIRouter(tags=["profile"])
+# Change to use a prefix for consistent routing
+router = APIRouter(prefix="/profile", tags=["profile"])
 templates = Jinja2Templates(directory="templates")
 
 # Ensure upload directory exists
@@ -22,7 +23,8 @@ async def user_required(request: Request):
         raise HTTPException(status_code=401, detail="Authentication required")
     return user
 
-@router.get("/profile", response_class=HTMLResponse)
+# Change from "/profile" to "/" since we have the prefix
+@router.get("/", response_class=HTMLResponse)
 async def view_profile(request: Request, user: dict = Depends(user_required)):
     # Admin should be redirected to admin dashboard
     if user["role"] == "admin":
@@ -33,7 +35,8 @@ async def view_profile(request: Request, user: dict = Depends(user_required)):
         {"request": request, "user": user}
     )
 
-@router.get("/profile/edit", response_class=HTMLResponse)
+# Change from "/profile/edit" to "/edit"
+@router.get("/edit", response_class=HTMLResponse)
 async def edit_profile_form(request: Request, user: dict = Depends(user_required)):
     # Admin should be redirected to admin dashboard
     if user["role"] == "admin":
@@ -44,7 +47,8 @@ async def edit_profile_form(request: Request, user: dict = Depends(user_required
         {"request": request, "user": user}
     )
 
-@router.post("/profile/edit")
+# Change from "/profile/edit" to "/edit"
+@router.post("/edit")
 async def update_profile(
     request: Request,
     user: dict = Depends(user_required),
@@ -78,8 +82,8 @@ async def update_profile(
             error = "Current password is incorrect"
         elif new_password != confirm_password:
             error = "New passwords do not match"
-        elif len(new_password) < 6:
-            error = "New password must be at least 6 characters"
+        elif len(new_password) < 8:
+            error = "New password must be at least 8 characters"
         else:
             # Hash new password
             update_data["password_hash"] = get_password_hash(new_password)
@@ -113,3 +117,71 @@ async def update_profile(
     
     # Redirect to profile view
     return RedirectResponse(url="/profile", status_code=303)
+
+# These routes are already correct with the prefix
+@router.get("/welcome", response_class=HTMLResponse)
+async def welcome_page(request: Request, user: dict = Depends(user_required)):
+    """Welcome page for first-time users with optional profile image upload."""
+    return templates.TemplateResponse(
+        "profile/welcome.html", 
+        {"request": request, "user": user}
+    )
+
+@router.post("/skip-profile-image")
+async def skip_profile_image(request: Request, user: dict = Depends(user_required)):
+    """Handle when user skips setting profile image."""
+    # Mark that the user has gone through the profile image process
+    db = Database.db
+    await db.users.update_one(
+        {"user_id": user["user_id"]},
+        {"$set": {"has_profile_image": True}}
+    )
+    
+    # Redirect to dashboard
+    return RedirectResponse(url="/dashboard", status_code=303)
+
+# Change from "/upload-welcome-image" to "/upload-welcome-image" to match form action
+@router.post("/upload-welcome-image")
+async def upload_welcome_image(
+    request: Request,
+    user: dict = Depends(user_required),
+    profile_image: UploadFile = File(None),
+):
+    """Handle welcome page profile image upload."""
+    db = Database.db
+    
+    # Always update has_profile_image to True
+    update_data = {"has_profile_image": True}
+    
+    # Only process image if one was provided
+    if profile_image and profile_image.filename:
+        try:
+            # Read image data
+            contents = await profile_image.read()
+            
+            # Add image data to update
+            update_data.update({
+                "profile_image_data": contents,
+                "profile_image_content_type": profile_image.content_type,
+                "profile_image_filename": profile_image.filename,
+                "profile_image_path": f"/api/users/{user['user_id']}/profile-image"
+            })
+            
+        except Exception as e:
+            return templates.TemplateResponse(
+                "profile/welcome.html",
+                {
+                    "request": request,
+                    "user": user,
+                    "error": f"Error uploading image: {str(e)}"
+                },
+            )
+    
+    # Update user document
+    await db.users.update_one(
+        {"user_id": user["user_id"]},
+        {"$set": update_data}
+    )
+    
+    # Redirect to dashboard
+    return RedirectResponse(url="/dashboard", status_code=303)

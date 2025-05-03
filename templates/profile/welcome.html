@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome - School Exchange Platform{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Welcome to the School Exchange Platform!</h4>
+                </div>
+                
+                <div class="card-body py-4">
+                    <div class="text-center mb-4">
+                        <h2>Hello, {{ user.name }}!</h2>
+                        <p class="lead mb-4">Would you like to add a profile picture?</p>
+                    </div>
+                    
+                    {% if error %}
+                    <div class="alert alert-danger">{{ error }}</div>
+                    {% endif %}
+                    
+                    <form action="/profile/upload-welcome-image" method="post" enctype="multipart/form-data">
+                        <div class="text-center mb-4">
+                            <div class="profile-picture-preview rounded-circle mx-auto mb-3"
+                                 style="width: 150px; height: 150px; background-color: #f0f0f0; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                                <i class="fas fa-user fa-5x text-secondary" id="default-icon"></i>
+                                <img id="preview-image" style="display: none; width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                            
+                            <div class="mb-4">
+                                <input class="form-control" type="file" id="profile_image" name="profile_image" accept="image/*">
+                                <div class="form-text">JPEG, PNG or GIF. Max 2MB.</div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                            <a href="#" onclick="event.preventDefault(); document.getElementById('skip-form').submit();" class="btn btn-outline-secondary me-md-2 px-4">Skip</a>
+                            <button type="submit" class="btn btn-primary px-4">Save & Continue</button>
+                        </div>
+                    </form>
+                    
+                    <!-- Hidden form for skip action -->
+                    <form id="skip-form" action="/profile/skip-profile-image" method="post" style="display: none;"></form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('profile_image');
+    const previewImage = document.getElementById('preview-image');
+    const defaultIcon = document.getElementById('default-icon');
+    
+    fileInput.addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImage.src = e.target.result;
+                previewImage.style.display = 'block';
+                defaultIcon.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+});
+</script>
+{% endblock %}

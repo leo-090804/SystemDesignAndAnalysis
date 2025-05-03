@@ -215,7 +215,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Items status chart
     const itemStatusCtx = document.getElementById('itemsChart').getContext('2d');
     const itemStatusData = {
-        labels: ['Active', 'Pending', 'Rejected', 'Sold', 'Pending Sale', 'Pending Donation'],
+        labels: ['Active', 'Pending Approval', 'Rejected', 'Sold', 'Pending Sale', 'Pending Donation'],
         datasets: [{
             data: [
                 {{ item_status.active }},
@@ -347,4 +347,45 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+
+<!-- Item Status Chart Section -->
+<!-- <script>
+    // Item Status Chart
+    const itemStatusChart = new Chart(
+        document.getElementById('itemStatusChart').getContext('2d'),
+        {
+            type: 'doughnut',
+            data: {
+                labels: [
+                    'Active', 
+                    'Pending', 
+                    'Rejected', 
+                    'Sold', 
+                    'Pending Sale',
+                    'Donation Pending'  // Make sure this label is included
+                ],
+                datasets: [{
+                    data: [
+                        {{ item_status.active }}, 
+                        {{ item_status.pending }}, 
+                        {{ item_status.rejected }}, 
+                        {{ item_status.sold }}, 
+                        {{ item_status.pending_sale }},
+                        {{ item_status.donation_pending }}  // Include donation_pending data
+                    ],
+                    backgroundColor: [
+                        '#28a745',  // Active - green
+                        '#ffc107',  // Pending - yellow
+                        '#dc3545',  // Rejected - red
+                        '#17a2b8',  // Sold - teal
+                        '#007bff',  // Pending Sale - blue
+                        '#fd7e14'   // Donation Pending - orange
+                    ],
+                    hoverOffset: 4
+                }]
+            },
+            // ...existing chart options...
+        }
+    );
+</script> -->
 {% endblock %}

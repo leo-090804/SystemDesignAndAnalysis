@@ -41,7 +41,9 @@ async def admin_dashboard(request: Request, admin: dict = Depends(admin_required
     rejected_items = await db.items.count_documents({"status": "rejected"})
     sold_items = await db.items.count_documents({"status": "sold"})
     pending_sale_items = await db.items.count_documents({"status": "pending_sale"})
-    pending_donations = await db.items.count_documents({"status": "pending_donation"})
+    
+    # Fix: Use consistent naming for donation_pending status
+    donation_pending_items = await db.items.count_documents({"status": "donation_pending"})
 
     # Item status breakdown for charts
     item_status = {
@@ -50,7 +52,7 @@ async def admin_dashboard(request: Request, admin: dict = Depends(admin_required
         "rejected": rejected_items,
         "sold": sold_items,
         "pending_sale": pending_sale_items,
-        "donation_pending": pending_donations
+        "donation_pending": donation_pending_items  # Use the correct variable
     }
 
     # Transaction statistics - Make sure these queries are running correctly

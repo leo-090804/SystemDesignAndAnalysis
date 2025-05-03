@@ -37,8 +37,17 @@ async def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends
         access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = create_access_token(data={"sub": user["username"]}, expires_delta=access_token_expires)
 
-        # Redirect admin to admin dashboard, other users to regular dashboard
-        redirect_url = "/admin/dashboard" if user["role"] == "admin" else "/dashboard"
+        # Check if this is the user's first login (has_profile_image is not set or is False)
+        is_first_login = "has_profile_image" not in user or user["has_profile_image"] == False
+        
+        # Determine redirect URL
+        if user["role"] == "admin":
+            redirect_url = "/admin/dashboard"
+        elif is_first_login:
+            redirect_url = "/profile/welcome"  # New welcome page with optional image upload
+        else:
+            redirect_url = "/dashboard"
+            
         response = RedirectResponse(url=redirect_url, status_code=status.HTTP_303_SEE_OTHER)
         response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=True)
         return response
@@ -72,7 +81,7 @@ async def register(
         role=role,
         grade=grade,
         subject=subject,
-        organization=organization,
+        organization=organization      
     )
 
     user = await create_user(user_create)

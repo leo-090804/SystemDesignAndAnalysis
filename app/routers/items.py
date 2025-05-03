@@ -374,7 +374,6 @@ async def purchase_item(item_id: int = Path(...), user: dict = Depends(user_requ
         expiration_date = (now + timedelta(days=2)).isoformat()
 
         # Create transaction record
-        # transaction_id = await get_next_id(db, "transactions", "transaction_id")
         transaction_id = int(str(uuid.uuid4().int)[:9])
 
         transaction = {
@@ -382,7 +381,7 @@ async def purchase_item(item_id: int = Path(...), user: dict = Depends(user_requ
             "transaction_type": "purchase",
             "amount": item["price"],
             "transaction_date": now.isoformat(),
-            "status": "pending",  # Changed from "processing" to "pending"
+            "status": "pending",
             "status_updated_at": now.isoformat(),
             "expiration_date": expiration_date,
             "cancellation_reason": None,
@@ -391,8 +390,13 @@ async def purchase_item(item_id: int = Path(...), user: dict = Depends(user_requ
             "item_id": item_id,
             "campaign_id": None,
         }
-
-        await db.transactions.insert_one(transaction)
+        
+        campaign_id = item.get("campaign_id")
+        if campaign_id:
+            transaction["campaign_id"] = campaign_id
+            transaction["transaction_type"] = "donation"
+        
+        db.transactions.insert_one(transaction)
 
         # Update item status to pending_sale
         await db.items.update_one(
@@ -444,6 +448,28 @@ async def purchase_item(item_id: int = Path(...), user: dict = Depends(user_requ
             "related_transaction_id": transaction_id,
         }
         await db.notifications.insert_one(buyer_notification)
+
+        # If it's a fundraising purchase, create additional notifications
+        if transaction.get("campaign_id"):
+            campaign = await db.campaigns.find_one({"campaign_id": transaction["campaign_id"]})
+            if campaign:
+                organizer_notification = {
+                    "message": f"Item '{item['name']}' has been purchased by {user['name']} for your campaign '{campaign.get('name')}'. Pending admin approval.",
+                    "created_at": now.isoformat(),
+                    "is_read": False,
+                    "is_seen": False,
+                    "noti_id": int(str(uuid.uuid4().int)[:9]),
+                    "user_id": campaign["organizer_id"],
+                    "related_item_id": item_id,
+                    "related_transaction_id": transaction_id,
+                    "priority": "high",
+                }
+                await db.notifications.insert_one(organizer_notification)
+                
+                # Also update admin notification to indicate this is a fundraising purchase
+                for admin in admin_users:
+                    admin_notification["message"] = f"New fundraising purchase: '{item['name']}' by {user['name']} for campaign '{campaign.get('name')}'. Needs approval."
+                    await db.notifications.insert_one(admin_notification)
 
         return {
             "success": True,
