@@ -52,6 +52,8 @@
                         <span class="badge bg-primary">Sale Pending</span>
                         {% elif item.status == 'donation_pending' %}
                         <span class="badge bg-warning text-dark">Donation Pending</span>
+                        {% elif item.status == 'donated' %}
+                        <span class="badge bg-success">Donated</span>
                         {% else %}
                         <span class="badge bg-secondary">{{ item.status }}</span>
                         {% endif %}
