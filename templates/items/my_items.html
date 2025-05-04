@@ -57,7 +57,21 @@
                             {{ item.name }}
                         </div>
                     </td>
-                    <td>${{ "%.2f"|format(item.price) }}</td>
+                    <td>
+                        {% if item.transaction_type == 'sale' %}
+                        ${{ "%.2f"|format(item.price) }}
+                        {% elif item.transaction_type == 'exchange' %}
+                        <span>Exchange Only</span>
+                        {% elif item.transaction_type == 'for_campaign' and item.campaign_type == 'fundraising' %}
+                        ${{ "%.2f (For fundraising)"|format(item.price) }}
+                        {% elif item.transaction_type == 'for_campaign' and item.campaign_type == 'donation' %}
+                        <span>Donation</span>
+                        {% elif item.transaction_type == 'exchange_sale' %}
+                        ${{ "%.2f (Exchange Available)"|format(item.price) }}
+                        {% else %}
+                        <span class="badge bg-secondary">Unknown</span>
+                        {% endif %}
+                    </td>
                     <td>
                         {% if item.status == 'active' %}
                         <span class="badge bg-success">Active</span>

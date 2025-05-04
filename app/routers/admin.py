@@ -1,3 +1,4 @@
+from app.models import campaign
 from fastapi import APIRouter, Depends, HTTPException, Request, Form, Query, Path
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -286,6 +287,9 @@ async def pending_items(request: Request, admin: dict = Depends(admin_required),
     for item in items:
         user = await db.users.find_one({"user_id": item["user_id"]})
         item["user_name"] = user.get("name", "Unknown User") if user else "Unknown User"
+        
+        campaign = await db.campaigns.find_one({"campaign_id": item.get("campaign_id")})
+        item['campaign_type'] = campaign.get("campaign_type", "Unknown") if campaign else "Unknown"
 
     return templates.TemplateResponse(
         "admin/pending_items.html",
@@ -546,6 +550,11 @@ async def view_campaign(request: Request, campaign_id: int = Path(...), admin: d
                         item["user_name"] = user.get("name", "Unknown")
                     else:
                         item["user_name"] = "Unknown"
+                
+                campaign_type = await db.campaigns.find_one({"campaign_id": item.get("campaign_id")})
+                if campaign_type:
+                    item['campaign_type'] = campaign_type.get("campaign_type", "Unknown")
+                
         except Exception as e:
             print(f"Error fetching campaign items: {str(e)}")
 
@@ -695,6 +704,9 @@ async def list_items(
 
         category_info = await db.categories.find_one({"cate_id": item.get("cate_id")})
         item["category_name"] = category_info.get("name", "Uncategorized") if category_info else "Uncategorized"
+        
+        campaign = await db.campaigns.find_one({"campaign_id": item.get("campaign_id")})
+        item["campaign_type"] = campaign.get("campaign_type") if campaign else "No Campaign"
 
     return templates.TemplateResponse(
         "admin/items.html",
@@ -724,7 +736,10 @@ async def view_user_profile(request: Request, user_id: int = Path(...), admin: d
 
     # Get user's items
     user_items = await db.items.find({"user_id": user_id}).sort("created_at", -1).to_list(length=100)
-
+    for item in user_items:
+        campaign = await db.campaigns.find_one({"campaign_id": item.get("campaign_id")})
+        item["campaign_type"] = campaign.get("campaign_type") if campaign else "No Campaign"
+        
     # Get categories for items
     categories = {}
     category_docs = await db.categories.find({}).to_list(length=100)

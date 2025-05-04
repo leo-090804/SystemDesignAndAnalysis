@@ -168,7 +168,7 @@
             </div>
             <div class="modal-body">
                 <p>Are you sure you want to purchase <strong>{{ item.name }}</strong> for <strong>${{ "%.2f"|format(item.price) }}</strong>?</p>
-                <p class="text-muted">This action cannot be undone.</p>
+                <!-- <p class="text-muted">This action cannot be undone.</p> -->
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -243,8 +243,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 Swal.fire({
                     icon: 'error',
-                    title: 'Network Error',
-                    text: 'There was a problem connecting to the server. Please try again.',
+                    title: error.name,
+                    text: error.message,
                     confirmButtonColor: '#dc3545'
                 });
             });

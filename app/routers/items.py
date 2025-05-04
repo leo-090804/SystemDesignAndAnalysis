@@ -1,3 +1,4 @@
+from app.models import campaign
 from fastapi import APIRouter, Depends, HTTPException, Request, Form, Query, Path, UploadFile, File
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -76,7 +77,14 @@ async def browse_items(
 
     # Get categories for filter dropdown
     categories = await db.categories.find({}).to_list(length=100)
-
+    
+    for item in items:
+        campaign = await db.campaigns.find_one({"campaign_id": item.get("campaign_id")})
+        if campaign:
+            item['campaign_type'] = campaign.get("campaign_type")
+        else:
+            item['campaign_type'] = None
+        
     return templates.TemplateResponse(
         "items/browse.html",
         {
@@ -297,6 +305,13 @@ async def my_items(
     items = await db.items.find(query).skip(skip).limit(limit).to_list(length=limit)
     total_items = await db.items.count_documents(query)
     total_pages = (total_items + limit - 1) // limit if total_items > 0 else 1
+    
+    for item in items:
+        campaign_id = await db.campaigns.find_one({"campaign_id": item.get("campaign_id")})
+        if campaign_id:
+            item['campaign_type'] = campaign_id.get("campaign_type")
+        else:
+            item['campaign_type'] = None
 
     return templates.TemplateResponse(
         "items/my_items.html",
@@ -410,7 +425,6 @@ async def purchase_item(item_id: int = Path(...), user: dict = Depends(user_requ
             "created_at": now.isoformat(),
             "is_read": False,
             "is_seen": False,
-            # "noti_id": await get_next_id(db, "notifications", "noti_id"),
             "noti_id": int(str(uuid.uuid4().int)[:9]),
             "user_id": seller["user_id"],
             "related_item_id": item_id,
@@ -450,41 +464,36 @@ async def purchase_item(item_id: int = Path(...), user: dict = Depends(user_requ
         await db.notifications.insert_one(buyer_notification)
 
         # If it's a fundraising purchase, create additional notifications
-        if transaction.get("campaign_id"):
-            campaign = await db.campaigns.find_one({"campaign_id": transaction["campaign_id"]})
-            if campaign:
-                organizer_notification = {
-                    "message": f"Item '{item['name']}' has been purchased by {user['name']} for your campaign '{campaign.get('name')}'. Pending admin approval.",
-                    "created_at": now.isoformat(),
-                    "is_read": False,
-                    "is_seen": False,
-                    "noti_id": int(str(uuid.uuid4().int)[:9]),
-                    "user_id": campaign["organizer_id"],
-                    "related_item_id": item_id,
-                    "related_transaction_id": transaction_id,
-                    "priority": "high",
-                }
-                await db.notifications.insert_one(organizer_notification)
+        # if transaction.get("campaign_id"):
+        #     campaign = await db.campaigns.find_one({"campaign_id": transaction["campaign_id"]})
+        #     if campaign:
+        #         organizer_notification = {
+        #             "message": f"Item '{item['name']}' has been purchased by {user['name']} for your campaign '{campaign.get('name')}'. Pending admin approval.",
+        #             "created_at": now.isoformat(),
+        #             "is_read": False,
+        #             "is_seen": False,
+        #             "noti_id": int(str(uuid.uuid4().int)[:9]),
+        #             "user_id": campaign["organizer_id"],
+        #             "related_item_id": item_id,
+        #             "related_transaction_id": transaction_id,
+        #             "priority": "high",
+        #         }
+        #         await db.notifications.insert_one(organizer_notification)
                 
-                # Also update admin notification to indicate this is a fundraising purchase
-                for admin in admin_users:
-                    admin_notification["message"] = f"New fundraising purchase: '{item['name']}' by {user['name']} for campaign '{campaign.get('name')}'. Needs approval."
-                    await db.notifications.insert_one(admin_notification)
+        #         # Also update admin notification to indicate this is a fundraising purchase
+        #         for admin in admin_users:
+        #             admin_notification["message"] = f"New fundraising purchase: '{item['name']}' by {user['name']} for campaign '{campaign.get('name')}'. Needs approval."
+        #             await db.notifications.insert_one(admin_notification)
 
         return {
             "success": True,
             "message": "Purchase request submitted! Waiting for admin approval.",
             "transaction_id": transaction_id,
         }
+        
     except Exception as e:
         print(f"Error processing purchase: {str(e)}")
         return {"success": False, "message": "An error occurred during purchase."}
-
-
-# Helper function to get next ID if not already defined
-# async def get_next_id(db, collection_name, id_field):
-#     last_doc = await db[collection_name].find_one(sort=[(id_field, -1)])
-#     return 1 if not last_doc else last_doc[id_field] + 1
 
 
 @router.get("/purchased", response_class=HTMLResponse)
