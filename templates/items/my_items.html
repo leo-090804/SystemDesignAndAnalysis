@@ -76,7 +76,7 @@
                         <div class="btn-group">
                             <a href="/items/{{ item.item_id }}" class="btn btn-sm btn-outline-primary">View</a>
                             {% if item.status == 'active' or item.status == 'pending' %}
-                            <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete('{{ item.item_id }}, {{ item.name }}')">Delete</button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete('{{ item.item_id }}', '{{ item.name }}')">Delete</button>
                             {% endif %}
                         </div>
                     </td>

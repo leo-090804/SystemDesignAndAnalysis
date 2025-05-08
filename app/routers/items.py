@@ -399,4 +399,18 @@ async def purchased_items(request: Request, user: dict = Depends(user_required),
     return templates.TemplateResponse(
         "items/purchased.html",
         {"request": request, "user": user, "items": purchased_items, "page": page, "total_pages": total_pages},
-)
+    )
+
+
+@router.get("/{item_id}/delete")
+async def delete_item(request: Request, item_id: int = Path(...), user: dict = Depends(user_required)):
+    db = Database.db
+    item = await db.items.find_one({"item_id": item_id})
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    if item["user_id"] != user["user_id"]:
+        raise HTTPException(status_code=403, detail="You do not have permission to delete this item")
+    if item["status"] == "sold":
+        raise HTTPException(status_code=400, detail="Cannot delete a sold item")
+    await db.items.delete_one({"item_id": item_id})
+    return RedirectResponse(url="/items/my", status_code=303)
