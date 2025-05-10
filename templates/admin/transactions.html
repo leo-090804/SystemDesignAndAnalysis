@@ -117,13 +117,7 @@
                         <tr class="clickable-row" data-href="/admin/transactions/{{ transaction.transaction_id }}" style="cursor: pointer;">
                             <td>{{ transaction.transaction_id }}</td>
                             <td>{{ transaction.campaign.name }}</td>
-                            <td>
-                                {% if transaction.campaign.campaign_type == 'donation' %}
-                                <span>Donation</span>
-                                {% else %}
-                                ${{ "%.2f"|format(transaction.amount) }}
-                                {% endif %}
-                            </td>
+                            <td>${{ "%.2f"|format(transaction.amount) }}</td>
                             <td>{{ transaction.donor.name }}</td>
                             <td>
                                 {% if transaction.status == 'pending' %}
@@ -132,13 +126,11 @@
                                 <span class="badge bg-success">Completed</span>
                                 {% elif transaction.status == 'cancelled' %}
                                 <span class="badge bg-danger">Cancelled</span>
-                                {% elif transaction.status == 'donation_pending' %}
-                                <span class="badge bg-warning text-dark">Donation Pending</span>
                                 {% endif %}
                             </td>
                             <td>{{ transaction.transaction_date.split('T')[0] }}</td>
                             <td>
-                                <!-- <a href="/admin/transactions/{{ transaction.transaction_id }}" class="btn btn-sm btn-outline-primary action-btn">View</a> -->
+                                <a href="/admin/transactions/{{ transaction.transaction_id }}" class="btn btn-sm btn-outline-primary action-btn">View</a>
                                 <a href="/admin/campaigns/{{ transaction.campaign_id }}" class="btn btn-sm btn-outline-success action-btn">View Campaign</a>
                                 {% if transaction.status == 'pending' %}
                                 <button class="btn btn-sm btn-outline-success approve-btn action-btn" data-id="{{ transaction.transaction_id }}">Approve</button>
@@ -160,6 +152,34 @@
         {% endif %}
     </div>
 </div>
+
+<!-- Cancel Modals for all campaign donation transactions (rendered outside table) -->
+{% for transaction in campaign_transactions %}
+    {% if transaction.status == 'pending' %}
+    <div class="modal fade" id="cancelModal{{ transaction.transaction_id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Cancel Donation Transaction</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form class="cancel-form" data-id="{{ transaction.transaction_id }}">
+                        <div class="mb-3">
+                            <label for="reason{{ transaction.transaction_id }}" class="form-label">Cancellation Reason:</label>
+                            <textarea class="form-control" id="reason{{ transaction.transaction_id }}" name="reason" rows="3" required></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-danger confirm-cancel-btn" data-id="{{ transaction.transaction_id }}">Confirm Cancellation</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+{% endfor %}
 {% endblock %}
 
 {% block scripts %}
@@ -212,7 +232,44 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Cancel transaction handlers are using the modal forms defined for each transaction
+    // Cancel transaction for campaign donation
+    document.querySelectorAll('.confirm-cancel-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const transactionId = this.getAttribute('data-id');
+            const reason = document.getElementById('reason' + transactionId).value.trim();
+            if (!reason) {
+                alert('Please provide a reason for cancellation');
+                return;
+            }
+            fetch(`/admin/transactions/${transactionId}/cancel`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams({
+                    'reason': reason
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Transaction Cancelled',
+                        text: 'The donation transaction has been cancelled.'
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message || 'Failed to cancel transaction.'
+                    });
+                }
+            });
+        });
+    });
 });
 </script>
 {% endblock %}

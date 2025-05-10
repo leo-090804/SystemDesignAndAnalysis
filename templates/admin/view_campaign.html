@@ -60,7 +60,7 @@
                         
                         <div class="col-md-6">
                             <h5>Campaign Progress</h5>
-                            {% if campaign.goal_amount %}
+                            {% if campaign.campaign_type == 'fundraising' and campaign.goal_amount %}
                             <div class="card">
                                 <div class="card-body">
                                     <h6 class="card-title">Fundraising Goal</h6>
@@ -72,13 +72,27 @@
                                     </div>
                                 </div>
                             </div>
+                            {% elif campaign.campaign_type == 'donation' and campaign.goal_item %}
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title">Donation Goal</h6>
+                                    <p class="fs-4">{{ campaign_items|length }} of {{ campaign.goal_item }} items</p>
+                                    <div class="progress">
+                                        {% set progress = (campaign_items|length / campaign.goal_item * 100)|round|int %}
+                                        <div class="progress-bar" role="progressbar" style="width: {{ progress }}%;" 
+                                             aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100">{{ progress }}%</div>
+                                    </div>
+                                </div>
+                            </div>
                             {% endif %}
                             
                             <div class="card mt-3">
                                 <div class="card-body">
                                     <h6 class="card-title">Items in Campaign</h6>
                                     <p class="fs-4">{{ campaign_items|length }} items</p>
+                                    {% if campaign.campaign_type == 'fundraising' %}
                                     <p><strong>Total Value:</strong> ${{ "%.2f"|format(total_value) }}</p>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -256,7 +270,12 @@
                     <div class="mb-3" id="goal-amount-section">
                         <label for="goal_amount" class="form-label">Goal Amount ($)</label>
                         <input type="number" class="form-control" id="goal_amount" name="goal_amount" min="0" step="0.01" value="{{ campaign.goal_amount if campaign.goal_amount else '' }}">
-                        <div class="form-text">Optional for donation and exchange campaigns.</div>
+                        <div class="form-text">Only for fundraising campaigns.</div>
+                    </div>
+                    <div class="mb-3" id="goal-item-section" style="display:none;">
+                        <label for="goal_item" class="form-label">Goal Item (number of items)</label>
+                        <input type="number" class="form-control" id="goal_item" name="goal_item" min="1" value="{{ campaign.goal_item if campaign.goal_item else '' }}">
+                        <div class="form-text">Only for donation campaigns.</div>
                     </div>
                     
                     <div class="mb-3">
@@ -328,5 +347,31 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const campaignType = '{{ campaign.campaign_type }}';
+    const goalAmountSection = document.getElementById('goal-amount-section');
+    const goalAmountInput = document.getElementById('goal_amount');
+    const goalItemSection = document.getElementById('goal-item-section');
+    const goalItemInput = document.getElementById('goal_item');
+    if (campaignType === 'fundraising') {
+        goalAmountSection.style.display = 'block';
+        goalAmountInput.setAttribute('required', '');
+        goalItemSection.style.display = 'none';
+        goalItemInput.removeAttribute('required');
+    } else if (campaignType === 'donation') {
+        goalAmountSection.style.display = 'none';
+        goalAmountInput.removeAttribute('required');
+        goalItemSection.style.display = 'block';
+        goalItemInput.setAttribute('required', '');
+    } else {
+        goalAmountSection.style.display = 'none';
+        goalAmountInput.removeAttribute('required');
+        goalItemSection.style.display = 'none';
+        goalItemInput.removeAttribute('required');
+    }
+});
+</script>
 
 {% endblock %}

@@ -250,6 +250,14 @@ async def delete_user(user_id: int = Path(...), admin: dict = Depends(admin_requ
     if not user_to_delete:
         raise HTTPException(status_code=404, detail="User not found")
 
+    # Không cho phép admin xóa chính mình (so sánh kiểu int)
+    if int(user_to_delete["user_id"]) == int(admin["user_id"]):
+        logging.warning(f"Admin {admin['user_id']} attempted to delete their own account.")
+        return {"success": False, "message": "You cannot delete your own account while logged in."}
+
+    # Log lại user_id admin và user bị xóa
+    logging.info(f"Admin {admin['user_id']} is deleting user {user_to_delete['user_id']} (role: {user_to_delete.get('role')})")
+
     # Check if user has items or transactions
     items = await db.items.find_one({"user_id": user_id})
     transactions = await db.transactions.find_one({"$or": [{"buyer_user_id": user_id}, {"seller_user_id": user_id}]})
@@ -465,47 +473,43 @@ async def create_campaign(
     end_date: str = Form(...),
     campaign_type: str = Form(...),
     goal_amount: Optional[float] = Form(None),
+    goal_item: Optional[str] = Form(None),
 ):
     db = Database.db
-
     try:
-        # Validate the organizer exists
         organizer = await db.users.find_one({"user_id": int(organizer_id)})
-# if not organizer:
-#     users = await db.users.find({"is_active": True}).sort("name", 1).to_list(length=100)
-            #     return templates.TemplateResponse(
-#         "admin/create_campaign.html",
-#         {"request": request, "user": admin, "users": users, "error": "Selected organizer not found"},
-#     )
-
-        # Continue with campaign creation using the organizer information
-        # ...existing code...
-
+        # Xử lý goal_item rỗng hoặc không hợp lệ
+        if goal_item in (None, ""): 
+            goal_item = None
+        else:
+            try:
+                goal_item = int(goal_item)
+            except Exception:
+                goal_item = None
         campaign = {
             "name": name,
             "description": description,
             "start_date": start_date,
             "end_date": end_date,
             "campaign_type": campaign_type,
-            "goal_amount": goal_amount,
             "current_amount": 0.0,
             "status": "active",
             "created_at": datetime.now().isoformat(),
             "created_by": "System Administrator",
-            "organizer_id": organizer["user_id"],  # Use the organizer ID from the form
-            # "campaign_id": await get_next_id(db, "campaigns", "campaign_id")
+            "organizer_id": organizer["user_id"],
             "campaign_id": int(str(uuid.uuid4().int)[:9]),
         }
-
+        if campaign_type == "fundraising":
+            campaign["goal_amount"] = goal_amount
+        elif campaign_type == "donation":
+            campaign["goal_item"] = goal_item
         result = await db.campaigns.insert_one(campaign)
-
         if result.inserted_id:
             return RedirectResponse(url="/admin/campaigns", status_code=303)
         else:
             return templates.TemplateResponse(
                 "admin/error.html", {"request": request, "user": admin, "message": "Failed to create campaign"}
             )
-
     except Exception as e:
         print(f"Error creating campaign: {str(e)}")
         return templates.TemplateResponse(
@@ -596,36 +600,34 @@ async def edit_campaign(
     start_date: str = Form(...),
     end_date: str = Form(...),
     goal_amount: Optional[float] = Form(None),
+    goal_item: Optional[int] = Form(None),
     status: str = Form(...),
 ):
     db = Database.db
-
     try:
-        # Update campaign with new data
         update_data = {
             "name": name,
             "description": description,
             "organizer": organizer,
             "start_date": start_date,
             "end_date": end_date,
-            "goal_amount": goal_amount,
             "status": status,
         }
-
+        campaign = await db.campaigns.find_one({"campaign_id": campaign_id})
+        if campaign and campaign.get("campaign_type") == "fundraising":
+            update_data["goal_amount"] = goal_amount
+            update_data["goal_item"] = None
+        elif campaign and campaign.get("campaign_type") == "donation":
+            update_data["goal_item"] = goal_item
+            update_data["goal_amount"] = None
         result = await db.campaigns.update_one({"campaign_id": campaign_id}, {"$set": update_data})
-
         if result.modified_count:
-            # Create notification about campaign update
-            # (We'll implement notifications in a future update)
-
-            # Redirect to the campaign view
             return RedirectResponse(url=f"/admin/campaigns/{campaign_id}", status_code=303)
         else:
             return templates.TemplateResponse(
                 "admin/error.html",
                 {"request": request, "user": admin, "message": "Failed to update campaign. Campaign may not exist."},
             )
-
     except Exception as e:
         print(f"Error updating campaign: {str(e)}")
         return templates.TemplateResponse(

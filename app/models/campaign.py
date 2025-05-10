@@ -9,6 +9,7 @@ class CampaignBase(BaseModel):
     end_date: str
     campaign_type: str  # 'fundraising', 'donation', 'exchange'
     goal_amount: Optional[float] = None
+    goal_item: Optional[int] = None
 
 class CampaignCreate(CampaignBase):
     pass
@@ -19,6 +20,7 @@ class CampaignUpdate(BaseModel):
     start_date: Optional[str] = None
     end_date: Optional[str] = None
     goal_amount: Optional[float] = None
+    goal_item: Optional[int] = None
     status: Optional[str] = None  # 'active', 'completed', 'cancelled'
 
 class CampaignInDB(CampaignBase):

@@ -52,9 +52,11 @@
                             <a href="/items/create?campaign={{ campaign.campaign_id }}" class="btn btn-primary">
                                 <i class="fas fa-plus"></i> Add Item to Campaign
                             </a>
+                            {% if campaign.campaign_type == 'donation' %}
                             <button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#donateModal">
                                 <i class="fas fa-donate"></i> Make Donation
                             </button>
+                            {% endif %}
                         </div>
                     </div>
                     {% endif %}
@@ -133,7 +135,8 @@
     </div>
 </div>
 
-<!-- Update the donation modal form -->
+{% if campaign.campaign_type == 'donation' %}
+<!-- Modal và JS chỉ cho donation -->
 <div class="modal fade" id="donateModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -161,7 +164,6 @@
         </div>
     </div>
 </div>
-
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -169,37 +171,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const completeBtn = document.getElementById('complete-donation-btn');
     const donationForm = document.getElementById('donation-form');
     const donationAlert = document.getElementById('donation-alert');
-    
-    // Flag to prevent duplicate submissions
     let isSubmitting = false;
-    
     completeBtn.addEventListener('click', function() {
-        // If already submitting, don't process again
         if (isSubmitting) return;
-        
-        // Get form values
         const amount = parseFloat(document.getElementById('donation-amount').value);
         const message = document.getElementById('donation-message').value;
-        
-        // Basic validation
         if (!amount || isNaN(amount) || amount <= 0) {
             showAlert('Please enter a valid donation amount');
             return;
         }
-        
-        // Set submitting flag
         isSubmitting = true;
-        
-        // Show loading state
         completeBtn.disabled = true;
         completeBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
-        
-        // Create form data for submission
         const formData = new FormData();
         formData.append('amount', amount);
         formData.append('message', message);
-        
-        // Send donation to server
         fetch('/campaigns/{{ campaign.campaign_id }}/donate', {
             method: 'POST',
             body: formData
@@ -208,25 +194,18 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             completeBtn.disabled = false;
             completeBtn.innerHTML = 'Complete Donation';
-            
             if (data.success) {
-                // Close modal
                 donateModal.hide();
-                
-                // Show success message
                 Swal.fire({
                     icon: 'success',
                     title: 'Thank You!',
                     text: 'Your donation has been processed successfully.',
                     confirmButtonColor: '#28a745'
                 }).then(() => {
-                    // Update the campaign amount display without refreshing
                     if (data.new_amount !== undefined) {
                         const amountDisplay = document.querySelector('.campaign-amount');
                         if (amountDisplay) {
                             amountDisplay.textContent = '$' + data.new_amount.toFixed(2);
-                            
-                            // Update progress bar if applicable
                             if (data.goal_amount) {
                                 const progress = Math.round((data.new_amount / data.goal_amount) * 100);
                                 const progressBar = document.querySelector('.progress-bar');
@@ -239,32 +218,20 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }
                 });
-                
-                // Reset form
                 donationForm.reset();
             } else {
-                // Show error message
                 showAlert(data.message || 'An error occurred while processing your donation');
             }
-            
-            // Reset submitting flag after a delay to prevent rapid resubmission
-            setTimeout(() => {
-                isSubmitting = false;
-            }, 2000);
+            setTimeout(() => { isSubmitting = false; }, 2000);
         })
         .catch(error => {
             completeBtn.disabled = false;
             completeBtn.innerHTML = 'Complete Donation';
             showAlert('Network error. Please try again later.');
             console.error('Error:', error);
-            
-            // Reset submitting flag
-            setTimeout(() => {
-                isSubmitting = false;
-            }, 2000);
+            setTimeout(() => { isSubmitting = false; }, 2000);
         });
     });
-    
     function showAlert(message) {
         donationAlert.textContent = message;
         donationAlert.classList.remove('d-none');
@@ -275,4 +242,5 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% endblock %}
+{% endif %}
 {% endblock %}

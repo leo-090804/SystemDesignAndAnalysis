@@ -35,8 +35,8 @@
                                 <li class="list-group-item d-flex justify-content-between">
                                     <span>Status:</span>
                                     <span>
-                                        {% if transaction.status == 'pending' %}
-                                        <span class="badge bg-warning text-dark">Pending</span>
+                                        {% if transaction.status == 'processing' %}
+                                        <span class="badge bg-warning text-dark">Processing</span>
                                         {% elif transaction.status == 'completed' %}
                                         <span class="badge bg-success">Completed</span>
                                         {% elif transaction.status == 'cancelled' %}
@@ -71,37 +71,17 @@
                             <ul class="list-group list-group-flush mb-3">
                                 <li class="list-group-item">
                                     <div class="d-flex justify-content-between">
-                                        {% if transaction.transaction_type == 'donation' %}
-                                            {% if transaction.amount == 0 %}
-                                            <span>Donor:</span>
-                                            <span>{{ seller.name }}</span>
-                                            {% else %}
-                                            <span>Donor:</span>
-                                            <span>{{ buyer.name }}</span>
-                                            {% endif %}
-                                        {% else %}
                                         <span>Buyer:</span>
                                         <span>{{ buyer.name }}</span>
-                                        {% endif %}
                                     </div>
-                                    {% if transaction.transaction_type == 'donation' and transaction.amount == 0 %}
-                                    <small class="text-muted">ID: {{ seller.user_id }}</small>
-                                    {% else %}
                                     <small class="text-muted">ID: {{ buyer.user_id }}</small>
-                                    {% endif %}
                                 </li>
                                 <li class="list-group-item">
                                     <div class="d-flex justify-content-between">
-                                        {% if transaction.transaction_type != 'donation' %}
                                         <span>Seller:</span>
                                         <span>{{ seller.name }}</span>
-                                        {% endif %}
                                     </div>
-                                    <small class="text-muted">
-                                        {% if transaction.transaction_type != 'donation' %}
-                                        ID: {{ seller.user_id }}
-                                        {% endif %}
-                                    </small>
+                                    <small class="text-muted">ID: {{ seller.user_id }}</small>
                                 </li>
                             </ul>
                             

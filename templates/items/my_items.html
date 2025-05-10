@@ -94,7 +94,7 @@
                         <div class="btn-group">
                             <a href="/items/{{ item.item_id }}" class="btn btn-sm btn-outline-primary">View</a>
                             {% if item.status == 'active' or item.status == 'pending' %}
-                            <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete('{{ item.item_id }}, {{ item.name }}')">Delete</button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete('{{ item.item_id }}', '{{ item.name|escape }}')">Delete</button>
                             {% endif %}
                         </div>
                     </td>
@@ -154,6 +154,7 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.all.min.js"></script>
 <script>
 let itemIdToDelete = null;
 
@@ -166,8 +167,40 @@ function confirmDelete(itemId, itemName) {
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('confirm-delete').addEventListener('click', function() {
         if (itemIdToDelete) {
-            // We'll implement item deletion in a future update
-            window.location.href = `/items/${itemIdToDelete}/delete`;
+            fetch(`/items/${itemIdToDelete}/delete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Deleted!',
+                        text: 'Item has been deleted successfully.',
+                        timer: 1500,
+                        showConfirmButton: false
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                    setTimeout(() => window.location.reload(), 1600);
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message || 'Failed to delete item.'
+                    });
+                }
+            })
+            .catch(() => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Failed to delete item.'
+                });
+            });
         }
     });
 });

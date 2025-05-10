@@ -132,7 +132,7 @@ async def create_item(
     price: float = Form(...),
     category: int = Form(...),
     transaction_type: str = Form(...),
-    campaign_id: Optional[int] = Form(None),
+    campaign_id: Optional[str] = Form(None),
     exchange_requirements: Optional[str] = Form(None),
     image: UploadFile = File(None),
 ):
@@ -143,6 +143,15 @@ async def create_item(
 
     # Get next item ID
     next_item_id = int(str(uuid.uuid4().int)[:9])
+
+    # Xử lý campaign_id rỗng hoặc không hợp lệ
+    if campaign_id in (None, ""): 
+        campaign_id = None
+    else:
+        try:
+            campaign_id = int(campaign_id)
+        except Exception:
+            campaign_id = None
 
     # Create the basic item document
     new_item = {
@@ -167,11 +176,10 @@ async def create_item(
     campaign_type = None
     if transaction_type == "for_campaign" and campaign_id:
         try:
-            campaign_id_int = int(campaign_id)
             # Look up the campaign to get its type
-            campaign = await db.campaigns.find_one({"campaign_id": campaign_id_int})
+            campaign = await db.campaigns.find_one({"campaign_id": campaign_id})
             if campaign:
-                new_item["campaign_id"] = campaign_id_int
+                new_item["campaign_id"] = campaign_id
                 campaign_type = campaign.get("campaign_type")
                 
                 # For donation campaigns, create a transaction directly
@@ -193,7 +201,7 @@ async def create_item(
                         "transaction_date": datetime.now().isoformat(),
                         "status": "pending",  # Needs admin approval
                         "status_updated_at": datetime.now().isoformat(),
-                        "campaign_id": campaign_id_int,
+                        "campaign_id": campaign_id,
                         "message": f"Item donation for campaign: {campaign.get('name', 'Unknown Campaign')}"
                     }
                     
@@ -527,3 +535,21 @@ async def purchased_items(request: Request, user: dict = Depends(user_required),
         "items/purchased.html",
         {"request": request, "user": user, "items": purchased_items, "page": page, "total_pages": total_pages},
     )
+
+
+@router.post("/{item_id}/delete")
+async def delete_item(item_id: int = Path(...), user: dict = Depends(user_required)):
+    db = Database.db
+    item = await db.items.find_one({"item_id": item_id})
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    if item["user_id"] != user["user_id"]:
+        raise HTTPException(status_code=403, detail="You do not have permission to delete this item")
+    if item["status"] in ["sold", "pending_sale", "donation_pending"]:
+        raise HTTPException(status_code=400, detail="Cannot delete item with active or completed transaction")
+    # Xóa item
+    result = await db.items.delete_one({"item_id": item_id})
+    if result.deleted_count:
+        return {"success": True}
+    else:
+        raise HTTPException(status_code=500, detail="Failed to delete item")

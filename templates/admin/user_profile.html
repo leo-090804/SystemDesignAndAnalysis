@@ -588,7 +588,7 @@ document.addEventListener('DOMContentLoaded', function() {
             this.disabled = true;
             this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Deleting...';
             
-            fetch('/admin/users/{{ user.user_id }}/delete', {
+            fetch('/admin/users/{{ profile_user.user_id }}/delete', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

@@ -62,7 +62,12 @@
                         <div class="mb-3" id="goal-amount-section">
                             <label for="goal_amount" class="form-label">Goal Amount ($)</label>
                             <input type="number" class="form-control" id="goal_amount" name="goal_amount" min="0" step="0.01">
-                            <div class="form-text">Optional for donation and exchange campaigns.</div>
+                            <div class="form-text">Only for fundraising campaigns.</div>
+                        </div>
+                        <div class="mb-3" id="goal-item-section" style="display:none;">
+                            <label for="goal_item" class="form-label">Goal Item (number of items)</label>
+                            <input type="number" class="form-control" id="goal_item" name="goal_item" min="1">
+                            <div class="form-text">Only for donation campaigns.</div>
                         </div>
                         
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end">
@@ -81,6 +86,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const campaignTypeSelect = document.getElementById('campaign_type');
     const goalAmountSection = document.getElementById('goal-amount-section');
     const goalAmountInput = document.getElementById('goal_amount');
+    const goalItemSection = document.getElementById('goal-item-section');
+    const goalItemInput = document.getElementById('goal_item');
     
     // Set minimum dates for start and end date
     const today = new Date().toISOString().split('T')[0];
@@ -90,11 +97,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // Update required state of goal amount based on campaign type
     campaignTypeSelect.addEventListener('change', function() {
         if (campaignTypeSelect.value === 'fundraising') {
-            goalAmountInput.setAttribute('required', '');
             goalAmountSection.style.display = 'block';
-        } else {
+            goalAmountInput.setAttribute('required', '');
+            goalItemSection.style.display = 'none';
+            goalItemInput.removeAttribute('required');
+        } else if (campaignTypeSelect.value === 'donation') {
+            goalAmountSection.style.display = 'none';
             goalAmountInput.removeAttribute('required');
-            goalAmountSection.style.display = 'block'; // Still show but make optional
+            goalItemSection.style.display = 'block';
+            goalItemInput.setAttribute('required', '');
+        } else {
+            goalAmountSection.style.display = 'none';
+            goalAmountInput.removeAttribute('required');
+            goalItemSection.style.display = 'none';
+            goalItemInput.removeAttribute('required');
         }
     });
     
