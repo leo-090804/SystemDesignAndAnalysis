@@ -52,7 +52,7 @@
                             <a href="/items/create?campaign={{ campaign.campaign_id }}" class="btn btn-primary">
                                 <i class="fas fa-plus"></i> Add Item to Campaign
                             </a>
-                            {% if campaign.campaign_type == 'donation' %}
+                            {% if campaign.campaign_type == 'fundraising' %}
                             <button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#donateModal">
                                 <i class="fas fa-donate"></i> Make Donation
                             </button>
@@ -135,8 +135,8 @@
     </div>
 </div>
 
-{% if campaign.campaign_type == 'donation' %}
-<!-- Modal và JS chỉ cho donation -->
+{% if campaign.campaign_type == 'fundraising' %}
+<!-- Modal và JS chỉ cho fundraising -->
 <div class="modal fade" id="donateModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
