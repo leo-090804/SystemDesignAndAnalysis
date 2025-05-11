@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+{% block title %}Báo cáo thống kê - Admin{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <h2 class="mb-4">Báo cáo thống kê</h2>
+    <form method="get" class="row g-3 mb-4">
+        <div class="col-md-3">
+            <label for="month" class="form-label">Tháng</label>
+            <select class="form-select" id="month" name="month">
+                <option value="">Tất cả</option>
+                {% for m in range(1, 13) %}
+                <option value="{{ m }}" {% if month==m %}selected{% endif %}>{{ m }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="year" class="form-label">Năm</label>
+            <select class="form-select" id="year" name="year">
+                <option value="">Tất cả</option>
+                {% for y in years %}
+                <option value="{{ y }}" {% if year==y %}selected{% endif %}>{{ y }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3 align-self-end">
+            <button type="submit" class="btn btn-primary">Xem báo cáo</button>
+        </div>
+    </form>
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white"><h5 class="mb-0">1. Thống kê bài đăng</h5></div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <b>Phân loại bài đăng:</b>
+                        <table class="table table-sm table-bordered mt-2">
+                            <thead><tr><th>Danh mục</th><th class="text-end">Số lượng</th></tr></thead>
+                            <tbody>
+                            {% for cat, count in category_stats.items() %}
+                            <tr><td>{{ cat }}</td><td class="text-end"><span class="badge bg-info">{{ count }}</span></td></tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mb-3">
+                        <b>Phân loại theo hoạt động:</b>
+                        <table class="table table-sm table-bordered mt-2">
+                            <thead><tr><th>Loại</th><th class="text-end">Số lượng</th></tr></thead>
+                            <tbody>
+                            {% for act, count in activity_stats.items() %}
+                            <tr><td>{{ act }}</td><td class="text-end"><span class="badge bg-secondary">{{ count }}</span></td></tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mb-3">
+                        <b>Tỷ lệ duyệt bài:</b> <span class="badge bg-success">{{ approval_rate }}%</span>
+                    </div>
+                    <div class="mb-3">
+                        <b>Top thành viên đăng nhiều nhất:</b>
+                        <table class="table table-sm table-striped mt-2">
+                            <thead><tr><th>Thành viên</th><th class="text-end">Số bài</th></tr></thead>
+                            <tbody>
+                            {% for u in top_users %}
+                            <tr><td>{{ user_names[u._id] }}</td><td class="text-end">{{ u.count }}</td></tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-success text-white"><h5 class="mb-0">2. Thống kê giao dịch</h5></div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <b>Số lượng giao dịch hoàn thành:</b> <span class="badge bg-primary">{{ completed_transactions }}</span>
+                    </div>
+                    <div class="mb-3">
+                        <b>Tổng giá trị giao dịch:</b> <span class="badge bg-warning text-dark">{{ "{:,}".format(completed_value|int) }} VNĐ</span>
+                    </div>
+                    <div class="mb-3">
+                        <b>Giao dịch theo danh mục:</b>
+                        <table class="table table-sm table-bordered mt-2">
+                            <thead><tr><th>Danh mục</th><th class="text-end">Số giao dịch</th></tr></thead>
+                            <tbody>
+                            {% for cat, count in category_trans_stats.items() %}
+                            <tr><td>{{ cat }}</td><td class="text-end">{{ count }}</td></tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mb-3">
+                        <b>Thời gian giao dịch trung bình:</b> <span class="badge bg-info">{{ avg_time }} giờ</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-info text-white"><h5 class="mb-0">3. Thống kê hoạt động gây quỹ/quyên góp</h5></div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <b>Tổng số chiến dịch:</b> <span class="badge bg-primary">{{ total_campaigns }}</span>
+                    </div>
+                    <div class="mb-3">
+                        <b>Chiến dịch theo loại:</b>
+                        <table class="table table-sm table-bordered mt-2">
+                            <thead><tr><th>Loại</th><th class="text-end">Số lượng</th></tr></thead>
+                            <tbody>
+                            {% for ctype, count in campaign_type_stats.items() %}
+                            <tr><td>{{ ctype }}</td><td class="text-end">{{ count }}</td></tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mb-3">
+                        <b>Tham gia chiến dịch (số thành viên):</b>
+                        <table class="table table-sm table-bordered mt-2">
+                            <thead><tr><th>ID Chiến dịch</th><th>Tên chiến dịch</th><th class="text-end">Số thành viên</th></tr></thead>
+                            <tbody>
+                            {% for cid, mem in campaign_member_stats.items() %}
+                            <tr><td>{{ cid }}</td><td>{{ campaign_names[cid] if campaign_names[cid] else '' }}</td><td class="text-end">{{ mem }}</td></tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mb-3">
+                        <b>Kết quả chiến dịch (tổng tiền/quy mô):</b>
+                        <table class="table table-sm table-bordered mt-2">
+                            <thead><tr><th>ID Chiến dịch</th><th>Tên chiến dịch</th><th class="text-end">Tổng giá trị (VNĐ)</th></tr></thead>
+                            <tbody>
+                            {% for cid, val in campaign_result_stats.items() %}
+                            <tr><td>{{ cid }}</td><td>{{ campaign_names[cid] if campaign_names[cid] else '' }}</td><td class="text-end">{{ "{:,}".format(val|int) }}</td></tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mb-3">
+                        <b>Hiệu quả chiến dịch (tỷ lệ hoàn thành mục tiêu):</b>
+                        <table class="table table-sm table-bordered mt-2">
+                            <thead><tr><th>ID Chiến dịch</th><th>Tên chiến dịch</th><th class="text-end">Tỷ lệ (%)</th></tr></thead>
+                            <tbody>
+                            {% for cid, rate in campaign_goal_stats.items() %}
+                            <tr><td>{{ cid }}</td><td>{{ campaign_names[cid] if campaign_names[cid] else '' }}</td><td class="text-end">{{ rate }}</td></tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-secondary text-white"><h5 class="mb-0">4. Đánh giá thành viên</h5></div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <b>Xếp hạng thành viên (top đăng bài):</b>
+                        <table class="table table-sm table-striped mt-2">
+                            <thead><tr><th>Thành viên</th><th>Tên thành viên</th><th class="text-end">Số bài</th></tr></thead>
+                            <tbody>
+                            {% for u in user_rank %}
+                            <tr><td>{{ u._id }}</td><td>{{ member_names[u._id] if member_names[u._id] else '' }}</td><td class="text-end">{{ u.posts }}</td></tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mb-3">
+                        <b>Thành viên vi phạm (bị từ chối nhiều):</b>
+                        <table class="table table-sm table-striped mt-2">
+                            <thead><tr><th>Thành viên</th><th>Tên thành viên</th><th class="text-end">Số lần bị từ chối</th></tr></thead>
+                            <tbody>
+                            {% for u in user_violation %}
+                            <tr><td>{{ u._id }}</td><td>{{ member_names[u._id] if member_names[u._id] else '' }}</td><td class="text-end">{{ u.rejected }}</td></tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark text-white"><h5 class="mb-0">5. Báo cáo quỹ chung</h5></div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <b>Quỹ thu từ phí giao dịch:</b> <span class="badge bg-success">{{ "{:,}".format(total_fund|int) }} VNĐ</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

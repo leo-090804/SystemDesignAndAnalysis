@@ -784,3 +784,215 @@ async def view_user_profile(request: Request, user_id: int = Path(...), admin: d
             "created_campaigns": created_campaigns,
         },
     )
+
+
+@router.get("/report", response_class=HTMLResponse)
+async def admin_report(request: Request, admin: dict = Depends(admin_required), month: Optional[int] = None, year: Optional[int] = None):
+    db = Database.db
+    # Lấy danh sách năm có dữ liệu
+    years = await db.transactions.distinct("transaction_date")
+    years = sorted({int(dt[:4]) for dt in years if dt})
+    # Tạo filter thời gian
+    date_filter = {}
+    item_date_filter = {}
+    campaign_date_filter = {}
+    if month and year:
+        date_filter = {"$expr": {"$and": [
+            {"$eq": [{"$month": {"$dateFromString": {"dateString": "$transaction_date"}}}, month]},
+            {"$eq": [{"$year": {"$dateFromString": {"dateString": "$transaction_date"}}}, year]}
+        ]}}
+        item_date_filter = {"$expr": {"$and": [
+            {"$eq": [{"$month": {"$dateFromString": {"dateString": "$created_at"}}}, month]},
+            {"$eq": [{"$year": {"$dateFromString": {"dateString": "$created_at"}}}, year]}
+        ]}}
+        campaign_date_filter = {"$expr": {"$and": [
+            {"$eq": [{"$month": {"$dateFromString": {"dateString": "$created_at"}}}, month]},
+            {"$eq": [{"$year": {"$dateFromString": {"dateString": "$created_at"}}}, year]}
+        ]}}
+    elif year:
+        date_filter = {"$expr": {"$eq": [{"$year": {"$dateFromString": {"dateString": "$transaction_date"}}}, year]}}
+        item_date_filter = {"$expr": {"$eq": [{"$year": {"$dateFromString": {"dateString": "$created_at"}}}, year]}}
+        campaign_date_filter = {"$expr": {"$eq": [{"$year": {"$dateFromString": {"dateString": "$created_at"}}}, year]}}
+    # 1. Thống kê bài đăng
+    # Phân loại bài đăng theo danh mục và loại hoạt động
+    categories = await db.categories.find({}).to_list(length=100)
+    category_stats = {}
+    for cat in categories:
+        count = await db.items.count_documents({"cate_id": cat["cate_id"], **item_date_filter})
+        category_stats[cat["name"]] = count
+    # Loại hoạt động (map lại cho đúng giá trị thực tế)
+    activity_type_map = {
+        "sale": "Bán",
+        "exchange": "Trao đổi",
+        "exchange_sale": "Bán/Trao đổi",
+        "for_campaign": "Gây quỹ/Quyên góp"
+    }
+    activity_stats = {v: 0 for v in activity_type_map.values()}
+    for k, v in activity_type_map.items():
+        count = await db.items.count_documents({"transaction_type": k, **item_date_filter})
+        activity_stats[v] = count
+    # Tỷ lệ duyệt bài
+    total_posts = await db.items.count_documents(item_date_filter)
+    approved_posts = await db.items.count_documents({"status": "active", **item_date_filter})
+    approval_rate = round(approved_posts / total_posts * 100, 2) if total_posts else 0
+    # Top người đăng tích cực
+    top_users = await db.items.aggregate([
+        {"$match": item_date_filter},
+        {"$group": {"_id": "$user_id", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": 5}
+    ]).to_list(length=5)
+    user_names = {}
+    for u in top_users:
+        user = await db.users.find_one({"user_id": u["_id"]})
+        user_names[u["_id"]] = user["name"] if user else str(u["_id"])
+    # 2. Thống kê giao dịch
+    if date_filter:
+        completed_transactions = await db.transactions.count_documents({**date_filter, "status": "completed"})
+        completed_value = 0
+        async for t in db.transactions.find({**date_filter, "status": "completed"}):
+            completed_value += t.get("amount", 0)
+        # Giao dịch theo danh mục (fix: lấy cate_id từ items)
+        category_trans_stats = {cat["name"]: 0 for cat in categories}
+        async for t in db.transactions.find({**date_filter, "status": "completed"}):
+            item = await db.items.find_one({"item_id": t["item_id"]})
+            if item:
+                for cat in categories:
+                    if item.get("cate_id") == cat["cate_id"]:
+                        category_trans_stats[cat["name"]] += 1
+                        break
+        # Thời gian giao dịch trung bình
+        total_time = 0
+        count_time = 0
+        async for t in db.transactions.find({**date_filter, "status": "completed"}):
+            item = await db.items.find_one({"item_id": t["item_id"]})
+            if item and item.get("approved_at"):
+                try:
+                    t1 = datetime.fromisoformat(item["approved_at"])
+                    t2 = datetime.fromisoformat(t["transaction_date"])
+                    total_time += (t2 - t1).total_seconds()
+                    count_time += 1
+                except:
+                    pass
+        avg_time = round(total_time / count_time / 3600, 2) if count_time else 0  # giờ
+    else:
+        completed_transactions = await db.transactions.count_documents({"status": "completed"})
+        completed_value = 0
+        async for t in db.transactions.find({"status": "completed"}):
+            completed_value += t.get("amount", 0)
+        category_trans_stats = {cat["name"]: 0 for cat in categories}
+        async for t in db.transactions.find({"status": "completed"}):
+            item = await db.items.find_one({"item_id": t["item_id"]})
+            if item:
+                for cat in categories:
+                    if item.get("cate_id") == cat["cate_id"]:
+                        category_trans_stats[cat["name"]] += 1
+                        break
+        total_time = 0
+        count_time = 0
+        async for t in db.transactions.find({"status": "completed"}):
+            item = await db.items.find_one({"item_id": t["item_id"]})
+            if item and item.get("approved_at"):
+                try:
+                    t1 = datetime.fromisoformat(item["approved_at"])
+                    t2 = datetime.fromisoformat(t["transaction_date"])
+                    total_time += (t2 - t1).total_seconds()
+                    count_time += 1
+                except:
+                    pass
+        avg_time = round(total_time / count_time / 3600, 2) if count_time else 0
+    # 3. Thống kê hoạt động gây quỹ/quyên góp
+    total_campaigns = await db.campaigns.count_documents(campaign_date_filter)
+    # Số lượng chiến dịch theo loại
+    campaign_types = ["fundraising", "donation"]
+    campaign_type_stats = {}
+    for ctype in campaign_types:
+        campaign_type_stats[ctype] = await db.campaigns.count_documents({"campaign_type": ctype, **campaign_date_filter})
+    # Tham gia chiến dịch
+    campaign_participation = await db.transactions.aggregate([
+        {"$match": {"transaction_type": "donation", **date_filter}},
+        {"$group": {"_id": "$campaign_id", "members": {"$addToSet": "$buyer_user_id"}}}
+    ]).to_list(length=100)
+    campaign_member_stats = {c["_id"]: len(c["members"]) for c in campaign_participation}
+    # Kết quả chiến dịch (tổng tiền/quy mô đạt được)
+    campaign_results = await db.transactions.aggregate([
+        {"$match": {"transaction_type": "donation", **date_filter}},
+        {"$group": {"_id": "$campaign_id", "total": {"$sum": "$amount"}}}
+    ]).to_list(length=100)
+    campaign_result_stats = {c["_id"]: c["total"] for c in campaign_results}
+    # Hiệu quả chiến dịch (tỷ lệ hoàn thành mục tiêu)
+    campaign_goal_stats = {}
+    async for camp in db.campaigns.find(campaign_date_filter):
+        cid = camp["campaign_id"]
+        if camp.get("goal_amount"):
+            achieved = campaign_result_stats.get(cid, 0)
+            goal = camp["goal_amount"]
+            campaign_goal_stats[cid] = round(achieved / goal * 100, 2) if goal else 0
+    # 4. Đánh giá thành viên
+    # Xếp hạng thành viên
+    user_rank = await db.items.aggregate([
+        {"$match": item_date_filter},
+        {"$group": {"_id": "$user_id", "posts": {"$sum": 1}}},
+        {"$sort": {"posts": -1}},
+        {"$limit": 5}
+    ]).to_list(length=5)
+    # Thành viên vi phạm (bị từ chối nhiều lần)
+    user_violation = await db.items.aggregate([
+        {"$match": {"status": "rejected", **item_date_filter}},
+        {"$group": {"_id": "$user_id", "rejected": {"$sum": 1}}},
+        {"$sort": {"rejected": -1}},
+        {"$limit": 5}
+    ]).to_list(length=5)
+    # 5. Báo cáo quỹ chung
+    if date_filter:
+        total_fund = 0
+        async for t in db.transactions.find({**date_filter, "status": "completed"}):
+            total_fund += t.get("fee", 0)
+    else:
+        total_fund = 0
+        async for t in db.transactions.find({"status": "completed"}):
+            total_fund += t.get("fee", 0)
+    # Lấy tên chiến dịch cho các campaign_id xuất hiện trong các bảng
+    campaign_ids = set(list(campaign_member_stats.keys()) + list(campaign_result_stats.keys()) + list(campaign_goal_stats.keys()))
+    campaign_names = {}
+    if campaign_ids:
+        async for camp in db.campaigns.find({"campaign_id": {"$in": list(campaign_ids)}}):
+            campaign_names[camp["campaign_id"]] = camp.get("name", str(camp["campaign_id"]))
+    # Lấy tên thành viên cho các user_id xuất hiện trong các bảng
+    member_ids = set([u["_id"] for u in user_rank] + [u["_id"] for u in user_violation])
+    for u in top_users:
+        member_ids.add(u["_id"])
+    member_names = {}
+    if member_ids:
+        async for mem in db.users.find({"user_id": {"$in": list(member_ids)}}):
+            member_names[mem["user_id"]] = mem.get("name", str(mem["user_id"]))
+    # Trả về template
+    return templates.TemplateResponse(
+        "admin/report.html",
+        {
+            "request": request,
+            "user": admin,
+            "month": month,
+            "year": year,
+            "years": years,
+            "category_stats": category_stats,
+            "activity_stats": activity_stats,
+            "approval_rate": approval_rate,
+            "top_users": top_users,
+            "user_names": user_names,
+            "completed_transactions": completed_transactions,
+            "completed_value": completed_value,
+            "category_trans_stats": category_trans_stats,
+            "avg_time": avg_time,
+            "total_campaigns": total_campaigns,
+            "campaign_type_stats": campaign_type_stats,
+            "campaign_member_stats": campaign_member_stats,
+            "campaign_result_stats": campaign_result_stats,
+            "campaign_goal_stats": campaign_goal_stats,
+            "user_rank": user_rank,
+            "user_violation": user_violation,
+            "total_fund": total_fund,
+            "campaign_names": campaign_names,
+            "member_names": member_names,
+        },
+    )
