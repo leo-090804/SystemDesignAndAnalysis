@@ -550,6 +550,21 @@ async def delete_item(item_id: int = Path(...), user: dict = Depends(user_requir
     # Xóa item
     result = await db.items.delete_one({"item_id": item_id})
     if result.deleted_count:
+        # Nếu item đã được duyệt (status == 'active'), gửi thông báo cho admin
+        if item["status"] == "active":
+            admin_users = await db.users.find({"role": "admin"}).to_list(length=100)
+            for admin in admin_users:
+                admin_notification = {
+                    "message": f"User '{user['name']}' has deleted an approved item: '{item['name']}' (ID: {item_id})!",
+                    "created_at": datetime.now().isoformat(),
+                    "is_read": False,
+                    "is_seen": False,
+                    "noti_id": int(str(uuid.uuid4().int)[:9]),
+                    "user_id": admin["user_id"],
+                    "related_item_id": item_id,
+                    "related_transaction_id": None,
+                }
+                await db.notifications.insert_one(admin_notification)
         return {"success": True}
     else:
         raise HTTPException(status_code=500, detail="Failed to delete item")
