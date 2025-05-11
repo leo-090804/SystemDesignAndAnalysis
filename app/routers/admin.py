@@ -951,6 +951,48 @@ async def admin_report(request: Request, admin: dict = Depends(admin_required), 
             achieved = campaign_result_stats.get(cid, 0)
             goal = camp["goal_amount"]
             campaign_goal_stats[cid] = round(achieved / goal * 100, 2) if goal else 0
+    # 5. Báo cáo quỹ chung
+    fundraising_total = 0
+    if item_date_filter:
+        total_fund = 0
+        campaign_fees = 0
+        sale_fees = 0
+        async for t in db.transactions.find({**item_date_filter, "status": "completed"}):
+            fee = t.get("fee", 0)
+            total_fund += fee
+            if t.get("transaction_type") == "donation":
+                campaign_fees += fee
+            elif t.get("transaction_type") == "purchase":
+                sale_fees += fee
+        # Tính tổng số tiền giao dịch trong các campaign fundraising
+        async for t in db.transactions.find({**item_date_filter, "status": "completed", "transaction_type": "donation"}):
+            campaign = await db.campaigns.find_one({"campaign_id": t.get("campaign_id")})
+            if campaign and campaign.get("campaign_type") == "fundraising":
+                fundraising_total += t.get("amount", 0)
+        total_fund = total_fee + fundraising_total
+    else:
+        total_fund = 0
+        campaign_fees = 0
+        sale_fees = 0
+        async for t in db.transactions.find({"status": "completed"}):
+            fee = t.get("fee", 0)
+            total_fund += fee
+            if t.get("transaction_type") == "donation":
+                campaign_fees += fee
+            elif t.get("transaction_type") == "purchase":
+                sale_fees += fee
+        # Tính tổng số tiền giao dịch trong các campaign fundraising
+        async for t in db.transactions.find({"status": "completed", "transaction_type": "donation"}):
+            campaign = await db.campaigns.find_one({"campaign_id": t.get("campaign_id")})
+            if campaign and campaign.get("campaign_type") == "fundraising":
+                fundraising_total += t.get("amount", 0)
+        total_fund = total_fee + fundraising_total
+    # Lấy tên chiến dịch cho các campaign_id xuất hiện trong các bảng
+    campaign_ids = set(list(campaign_member_stats.keys()) + list(campaign_result_stats.keys()) + list(campaign_goal_stats.keys()))
+    campaign_names = {}
+    if campaign_ids:
+        async for camp in db.campaigns.find({"campaign_id": {"$in": list(campaign_ids)}}):
+            campaign_names[camp["campaign_id"]] = camp.get("name", str(camp["campaign_id"]))
     # 4. Đánh giá thành viên
     # Xếp hạng thành viên
     user_rank = await db.items.aggregate([
@@ -966,23 +1008,8 @@ async def admin_report(request: Request, admin: dict = Depends(admin_required), 
         {"$sort": {"rejected": -1}},
         {"$limit": 5}
     ]).to_list(length=5)
-    # 5. Báo cáo quỹ chung
-    if item_date_filter:
-        total_fund = 0
-        async for t in db.transactions.find({**item_date_filter, "status": "completed"}):
-            total_fund += t.get("fee", 0)
-    else:
-        total_fund = 0
-        async for t in db.transactions.find({"status": "completed"}):
-            total_fund += t.get("fee", 0)
-    # Lấy tên chiến dịch cho các campaign_id xuất hiện trong các bảng
-    campaign_ids = set(list(campaign_member_stats.keys()) + list(campaign_result_stats.keys()) + list(campaign_goal_stats.keys()))
-    campaign_names = {}
-    if campaign_ids:
-        async for camp in db.campaigns.find({"campaign_id": {"$in": list(campaign_ids)}}):
-            campaign_names[camp["campaign_id"]] = camp.get("name", str(camp["campaign_id"]))
     # Lấy tên thành viên cho các user_id xuất hiện trong các bảng
-    member_ids = set([u["_id"] for u in user_rank] + [u["_id"] for u in user_violation])
+    member_ids = set([u["_id"] for u in top_users] + [u["_id"] for u in user_violation])
     for u in top_users:
         member_ids.add(u["_id"])
     member_names = {}
@@ -1016,7 +1043,10 @@ async def admin_report(request: Request, admin: dict = Depends(admin_required), 
             "user_violation": user_violation,
             "total_fund": total_fund,
             "total_fee": total_fee,
+            "campaign_fees": campaign_fees,
+            "sale_fees": sale_fees,
             "campaign_names": campaign_names,
             "member_names": member_names,
+            "fundraising_total": fundraising_total,
         },
     )

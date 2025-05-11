@@ -67,14 +67,14 @@
                         {% elif item.transaction_type == 'exchange' %}
                         <span>Exchange Only</span>
                         {% if item.transaction_fee %}
-                        <br><small class="text-muted">Phí giao dịch: {{ "{:,}".format(item.transaction_fee|int) }} VNĐ</small>
+                        <br><small class="text-muted">Transaction Fee: {{ "{:,}".format(item.transaction_fee|int) }} VNĐ</small>
                         {% endif %}
                         {% elif item.transaction_type == 'for_campaign' and item.campaign_type == 'fundraising' %}
                         ${{ "%.2f (For fundraising)"|format(item.price) }}
                         {% elif item.transaction_type == 'exchange_sale' %}
                         ${{ "%.2f (Exchange Available)"|format(item.price) }}
                         {% if item.transaction_fee %}
-                        <br><small class="text-muted">Phí giao dịch: {{ "{:,}".format(item.transaction_fee|int) }} VNĐ</small>
+                        <br><small class="text-muted">Transaction Fee: {{ "{:,}".format(item.transaction_fee|int) }} VNĐ</small>
                         {% endif %}
                         {% else %}
                         <span class="badge bg-secondary">Unknown</span>

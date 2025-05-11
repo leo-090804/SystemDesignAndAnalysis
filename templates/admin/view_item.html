@@ -173,18 +173,18 @@
     {% if exchange_proposals %}
     <div class="card mt-4">
         <div class="card-header bg-warning text-dark">
-            <h5 class="mb-0"><i class="fas fa-exchange-alt me-2"></i> Đề xuất trao đổi liên quan</h5>
+            <h5 class="mb-0"><i class="fas fa-exchange-alt me-2"></i> Related Exchange Proposals</h5>
         </div>
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-bordered align-middle">
                     <thead class="table-light">
                         <tr>
-                            <th>Thành viên đề xuất</th>
-                            <th>Tên sản phẩm đề xuất</th>
-                            <th>Ngày gửi</th>
-                            <th>Trạng thái</th>
-                            <th>Hành động</th>
+                            <th>Proposed By</th>
+                            <th>Proposed Item Name</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -209,7 +209,7 @@
                             <td>
                                 {% if proposal.status == 'accepted' %}
                                 <form method="post" action="/items/admin/items/{{ item.item_id }}/exchange-complete/{{ proposal.transaction_id }}" style="display:inline-block">
-                                    <button class="btn btn-primary btn-sm" type="submit">Xác nhận hoàn tất</button>
+                                    <button class="btn btn-primary btn-sm" type="submit">Confirm Completion</button>
                                 </form>
                                 {% else %}
                                     <span class="text-muted">-</span>
@@ -236,7 +236,7 @@
             <div class="modal-body">
                 <form id="reject-form">
                     <div class="mb-3">
-                        <label for="rejection-reason" class="form-label">Please provide a reason for rejection:</label>
+                        <label for="rejection-reason" class="form-label">Please provide a reason for rejecting "{{ item.name }}":</label>
                         <textarea class="form-control" id="rejection-reason" rows="3" required></textarea>
                     </div>
                 </form>

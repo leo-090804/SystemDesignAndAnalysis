@@ -35,12 +35,9 @@
                             <i class="fas fa-shopping-cart me-2"></i> Buy Now
                         </button>
                         {% endif %}
-                        <button class="btn btn-outline-primary">
-                            <i class="fas fa-comment me-2"></i> Contact Seller
-                        </button>
                         {% if item.transaction_type in ['exchange', 'exchange_sale'] %}
                         <button class="btn btn-warning btn-lg" id="exchange-btn">
-                            <i class="fas fa-exchange-alt me-2"></i> Trao đổi
+                            <i class="fas fa-exchange-alt me-2"></i> Exchange
                         </button>
                         {% endif %}
                     </div>
@@ -191,30 +188,30 @@
         <div class="modal-content">
             <form id="exchange-proposal-form" method="post" enctype="multipart/form-data" action="/items/{{ item.item_id }}/exchange-proposal">
                 <div class="modal-header">
-                    <h5 class="modal-title">Gửi đề xuất trao đổi</h5>
+                    <h5 class="modal-title">Send Exchange Proposal</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="your_item_name" class="form-label">Tên sản phẩm của bạn</label>
+                        <label for="your_item_name" class="form-label">Your Item Name</label>
                         <input type="text" class="form-control" id="your_item_name" name="your_item_name" required>
                     </div>
                     <div class="mb-3">
-                        <label for="your_item_condition" class="form-label">Tình trạng sản phẩm</label>
+                        <label for="your_item_condition" class="form-label">Item Condition</label>
                         <input type="text" class="form-control" id="your_item_condition" name="your_item_condition" required>
                     </div>
                     <div class="mb-3">
-                        <label for="your_item_image" class="form-label">Hình ảnh sản phẩm</label>
+                        <label for="your_item_image" class="form-label">Item Image</label>
                         <input type="file" class="form-control" id="your_item_image" name="your_item_image" accept="image/*">
                     </div>
                     <div class="mb-3">
-                        <label for="message" class="form-label">Lời nhắn (nếu cần)</label>
+                        <label for="message" class="form-label">Message (optional)</label>
                         <textarea class="form-control" id="message" name="message" rows="2"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-warning">Gửi đề xuất</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning">Send Proposal</button>
                 </div>
             </form>
         </div>
@@ -328,20 +325,20 @@ document.addEventListener('DOMContentLoaded', function() {
 {% if user.user_id == item.user_id and exchange_proposals %}
 <div class="card mt-4">
     <div class="card-header bg-warning text-dark">
-        <h5 class="mb-0"><i class="fas fa-exchange-alt me-2"></i> Đề xuất trao đổi cho sản phẩm này</h5>
+        <h5 class="mb-0"><i class="fas fa-exchange-alt me-2"></i> Exchange Proposals for this Item</h5>
     </div>
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-bordered align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th>Thành viên đề xuất</th>
-                        <th>Tên sản phẩm</th>
-                        <th>Tình trạng</th>
-                        <th>Hình ảnh</th>
-                        <th>Lời nhắn</th>
-                        <th>Ngày gửi</th>
-                        <th>Hành động</th>
+                        <th>Proposed By</th>
+                        <th>Item Name</th>
+                        <th>Condition</th>
+                        <th>Image</th>
+                        <th>Message</th>
+                        <th>Date</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -352,9 +349,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         <td>{{ proposal.proposal.your_item_condition }}</td>
                         <td>
                             {% if proposal.proposal.image_data %}
-                                <img src="data:{{ proposal.proposal.image_content_type }};base64,{{ proposal.proposal.image_data|b64encode }}" alt="Ảnh sản phẩm" style="max-width:80px;max-height:80px;">
+                                <img src="data:{{ proposal.proposal.image_content_type }};base64,{{ proposal.proposal.image_data|b64encode }}" alt="Item Image" style="max-width:80px;max-height:80px;">
                             {% else %}
-                                <span class="text-muted">Không có</span>
+                                <span class="text-muted">None</span>
                             {% endif %}
                         </td>
                         <td>{{ proposal.proposal.message or '' }}</td>
@@ -362,10 +359,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         <td>
                             {% if proposal.status == 'pending' %}
                             <form method="post" action="/items/{{ item.item_id }}/exchange-proposal/{{ proposal.transaction_id }}/accept" style="display:inline-block">
-                                <button class="btn btn-success btn-sm" type="submit">Chấp nhận</button>
+                                <button class="btn btn-success btn-sm" type="submit">Accept</button>
                             </form>
                             <form method="post" action="/items/{{ item.item_id }}/exchange-proposal/{{ proposal.transaction_id }}/reject" style="display:inline-block;margin-left:4px;">
-                                <button class="btn btn-danger btn-sm" type="submit">Từ chối</button>
+                                <button class="btn btn-danger btn-sm" type="submit">Reject</button>
                             </form>
                             {% else %}
                                 <span class="badge bg-secondary">{{ proposal.status|capitalize }}</span>
