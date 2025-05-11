@@ -57,35 +57,8 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="price" class="form-label">Giá (VNĐ)</label>
-                            <input type="number" class="form-control" id="price" name="price" min="0" required>
-                            <div class="invalid-feedback">Vui lòng nhập giá hợp lệ</div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="images" class="form-label">Hình ảnh</label>
-                            <input type="file" class="form-control" id="images" name="images" multiple accept="image/*" required>
-                            <div class="invalid-feedback">Vui lòng chọn ít nhất một hình ảnh</div>
-                            <small class="text-muted">Có thể chọn nhiều hình ảnh</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-4">
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <h5 class="card-title">Thông tin bổ sung</h5>
-                        
-                        <div class="mb-3">
-                            <label for="location" class="form-label">Vị trí</label>
-                            <input type="text" class="form-control" id="location" name="location" required>
-                            <div class="invalid-feedback">Vui lòng nhập vị trí</div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="exchange_type" class="form-label">Loại giao dịch</label>
-                            <select class="form-select" id="exchange_type" name="transaction_type" required>
+                            <label for="transaction_type" class="form-label">Loại giao dịch</label>
+                            <select class="form-select" id="transaction_type" name="transaction_type" required>
                                 <option value="">Chọn loại giao dịch</option>
                                 <option value="sale">Bán</option>
                                 <option value="exchange">Đổi</option>
@@ -95,16 +68,22 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="tags" class="form-label">Thẻ</label>
-                            <input type="text" class="form-control" id="tags" name="tags" placeholder="Nhập các thẻ, phân cách bằng dấu phẩy">
-                            <small class="text-muted">Ví dụ: điện thoại, samsung, mới</small>
+                            <label for="price" class="form-label">Giá (VNĐ)</label>
+                            <input type="number" class="form-control" id="price" name="price" min="0" required>
+                            <div class="invalid-feedback">Vui lòng nhập giá hợp lệ</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="image" class="form-label">Hình ảnh sản phẩm</label>
+                            <input type="file" class="form-control" id="image" name="image" accept="image/*" required>
+                            <div class="invalid-feedback">Vui lòng chọn một hình ảnh</div>
+                            <small class="text-muted">Chỉ chọn 1 ảnh đại diện cho sản phẩm</small>
+                        </div>
+                        <div class="d-grid gap-2 d-md-flex justify-content-start mt-4">
+                            <button type="submit" class="btn btn-primary">Đăng sản phẩm</button>
+                            <a href="/items/browse" class="btn btn-outline-secondary">Hủy</a>
                         </div>
                     </div>
-                </div>
-
-                <div class="d-grid gap-2">
-                    <button type="submit" class="btn btn-primary">Đăng sản phẩm</button>
-                    <a href="/items/browse" class="btn btn-outline-secondary">Hủy</a>
                 </div>
             </div>
         </div>
