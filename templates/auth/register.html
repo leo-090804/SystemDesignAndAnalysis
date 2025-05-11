@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 
-{% block title %}Register - School Exchange Platform{% endblock %}
+{% block title %}Đăng ký - Nền tảng Trao Đổi Trường Học{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-8 col-lg-6">
         <div class="card shadow">
             <div class="card-header bg-primary text-white">
-                <h4 class="mb-0">Register New Account</h4>
+                <h4 class="mb-0">Đăng ký tài khoản mới</h4>
             </div>
             <div class="card-body">
                 {% if error %}
@@ -18,37 +18,37 @@
                 
                 <form action="/register" method="post">
                     <div class="mb-3">
-                        <label for="username" class="form-label">Username</label>
+                        <label for="username" class="form-label">Tên đăng nhập</label>
                         <input type="text" class="form-control" id="username" name="username" 
                                pattern="^[a-zA-Z0-9_]{5,20}$" 
-                               title="Username must be 5-20 characters and can only contain letters, numbers, and underscores"
-                               required>
-                        <div class="form-text">Username must be 5-20 characters and can only contain letters, numbers, and underscores.</div>
+                               title="Tên đăng nhập phải từ 5-20 ký tự, chỉ bao gồm chữ cái, số và dấu gạch dưới"
+                               required placeholder="Nhập tên đăng nhập">
+                        <div class="form-text">Tên đăng nhập phải từ 5-20 ký tự, chỉ bao gồm chữ cái, số và dấu gạch dưới.</div>
                     </div>
 
                     <div class="mb-3">
-                        <label for="password" class="form-label">Password</label>
+                        <label for="password" class="form-label">Mật khẩu</label>
                         <input type="password" class="form-control" id="password" name="password"
                                pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
-                               title="Password must be at least 8 characters and include uppercase, lowercase, number, and special character"
-                               required>
+                               title="Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt"
+                               required placeholder="Nhập mật khẩu">
                         <div class="form-text">
-                            Password requirements:
+                            Yêu cầu mật khẩu:
                             <ul class="mb-0 ps-3">
-                                <li>At least 8 characters long</li>
-                                <li>Must include uppercase letter</li>
-                                <li>Must include lowercase letter</li>
-                                <li>Must include a number</li>
-                                <li>Must include a special character (@$!%*?&)</li>
+                                <li>Tối thiểu 8 ký tự</li>
+                                <li>Có ít nhất 1 chữ hoa</li>
+                                <li>Có ít nhất 1 chữ thường</li>
+                                <li>Có ít nhất 1 số</li>
+                                <li>Có ít nhất 1 ký tự đặc biệt (@$!%*?&)</li>
                             </ul>
                         </div>
                     </div>
 
                     <div class="mb-3">
-                        <label for="confirm_password" class="form-label">Confirm Password</label>
-                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                        <label for="confirm_password" class="form-label">Nhập lại mật khẩu</label>
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" required placeholder="Nhập lại mật khẩu">
                         <div class="invalid-feedback" id="password-match-error">
-                            Passwords do not match.
+                            Mật khẩu nhập lại không khớp.
                         </div>
                     </div>
 

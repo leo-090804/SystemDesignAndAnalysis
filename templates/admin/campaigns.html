@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 
-{% block title %}Campaigns - Admin{% endblock %}
+{% block title %}Quản lý chiến dịch - Quản trị viên{% endblock %}
 
 {% block content %}
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Campaigns</h2>
+        <h2>Chiến dịch</h2>
         <div>
-            <a href="/admin/campaigns/create" class="btn btn-success me-2">Create Campaign</a>
-            <a href="/admin/dashboard" class="btn btn-outline-secondary">Back to Dashboard</a>
+            <a href="/admin/campaigns/create" class="btn btn-success me-2">Tạo chiến dịch</a>
+            <a href="/admin/dashboard" class="btn btn-outline-secondary">Quay lại trang quản trị</a>
         </div>
     </div>
 
@@ -16,17 +16,17 @@
         <div class="card-body">
             <form method="get" class="row g-3">
                 <div class="col-md-4">
-                    <label for="status" class="form-label">Filter by Status</label>
+                    <label for="status" class="form-label">Lọc theo trạng thái</label>
                     <select class="form-select" id="status" name="status">
-                        <option value="">All Campaigns</option>
-                        <option value="active" {% if status == 'active' %}selected{% endif %}>Active</option>
-                        <option value="completed" {% if status == 'completed' %}selected{% endif %}>Completed</option>
-                        <option value="cancelled" {% if status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                        <option value="">Tất cả chiến dịch</option>
+                        <option value="active" {% if status == 'active' %}selected{% endif %}>Đang diễn ra</option>
+                        <option value="completed" {% if status == 'completed' %}selected{% endif %}>Đã hoàn thành</option>
+                        <option value="cancelled" {% if status == 'cancelled' %}selected{% endif %}>Đã hủy</option>
                     </select>
                 </div>
                 <div class="col-md-2">
                     <label class="form-label">&nbsp;</label>
-                    <button type="submit" class="btn btn-primary d-block">Apply Filter</button>
+                    <button type="submit" class="btn btn-primary d-block">Áp dụng lọc</button>
                 </div>
             </form>
         </div>
@@ -39,13 +39,13 @@
                 <table class="table table-hover">
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Name</th>
-                            <th>Type</th>
-                            <th>Start Date</th>
-                            <th>End Date</th>
-                            <th>Status</th>
-                            <th>Action</th>
+                            <th>Mã</th>
+                            <th>Tên chiến dịch</th>
+                            <th>Loại</th>
+                            <th>Ngày bắt đầu</th>
+                            <th>Ngày kết thúc</th>
+                            <th>Trạng thái</th>
+                            <th>Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -58,15 +58,15 @@
                             <td>{{ campaign.end_date }}</td>
                             <td>
                                 {% if campaign.status == 'active' %}
-                                <span class="badge bg-success">Active</span>
+                                <span class="badge bg-success">Đang diễn ra</span>
                                 {% elif campaign.status == 'completed' %}
-                                <span class="badge bg-info">Completed</span>
+                                <span class="badge bg-info">Đã hoàn thành</span>
                                 {% elif campaign.status == 'cancelled' %}
-                                <span class="badge bg-danger">Cancelled</span>
+                                <span class="badge bg-danger">Đã hủy</span>
                                 {% endif %}
                             </td>
                             <td>
-                                <a href="/admin/campaigns/{{ campaign.campaign_id }}" class="btn btn-sm btn-outline-primary">View</a>
+                                <a href="/admin/campaigns/{{ campaign.campaign_id }}" class="btn btn-sm btn-outline-primary">Xem</a>
                             </td>
                         </tr>
                         {% endfor %}
@@ -79,7 +79,7 @@
             <nav aria-label="Page navigation" class="mt-4">
                 <ul class="pagination justify-content-center">
                     <li class="page-item {% if page == 1 %}disabled{% endif %}">
-                        <a class="page-link" href="?page={{ page - 1 }}{% if status %}&status={{ status }}{% endif %}">Previous</a>
+                        <a class="page-link" href="?page={{ page - 1 }}{% if status %}&status={{ status }}{% endif %}">Trước</a>
                     </li>
                     
                     {% for p in range(1, total_pages + 1) %}
@@ -89,7 +89,7 @@
                     {% endfor %}
                     
                     <li class="page-item {% if page == total_pages %}disabled{% endif %}">
-                        <a class="page-link" href="?page={{ page + 1 }}{% if status %}&status={{ status }}{% endif %}">Next</a>
+                        <a class="page-link" href="?page={{ page + 1 }}{% if status %}&status={{ status }}{% endif %}">Sau</a>
                     </li>
                 </ul>
             </nav>
@@ -97,9 +97,9 @@
             {% else %}
             <div class="text-center py-5">
                 <i class="fas fa-bullhorn fa-4x text-muted mb-3"></i>
-                <h5>No campaigns found!</h5>
-                <p class="text-muted">No campaigns match your criteria or none have been created yet.</p>
-                <a href="/admin/campaigns/create" class="btn btn-primary mt-3">Create New Campaign</a>
+                <h5>Không tìm thấy chiến dịch nào!</h5>
+                <p class="text-muted">Không có chiến dịch nào phù hợp hoặc chưa có chiến dịch nào được tạo.</p>
+                <a href="/admin/campaigns/create" class="btn btn-primary mt-3">Tạo chiến dịch mới</a>
             </div>
             {% endif %}
         </div>

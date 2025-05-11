@@ -1,17 +1,17 @@
 {% extends "base.html" %}
 
-{% block title %}All Items - Admin{% endblock %}
+{% block title %}Quản lý sản phẩm - Quản trị viên{% endblock %}
 
 {% block content %}
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Items Management</h2>
+        <h2>Quản lý sản phẩm</h2>
         <div>
             <a href="/admin/items/pending" class="btn btn-warning">
-                <i class="fas fa-clock me-1"></i> Pending Items
+                <i class="fas fa-clock me-1"></i> Sản phẩm chờ duyệt
             </a>
             <a href="/admin/dashboard" class="btn btn-outline-secondary ms-2">
-                <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+                <i class="fas fa-arrow-left me-1"></i> Về trang quản trị
             </a>
         </div>
     </div>
@@ -21,29 +21,29 @@
         <div class="card-body">
             <form method="get" class="row g-3">
                 <div class="col-md-4">
-                    <label for="status" class="form-label">Status</label>
+                    <label for="status" class="form-label">Trạng thái</label>
                     <select class="form-select" id="status" name="status">
-                        <option value="" {% if not status %}selected{% endif %}>All Statuses</option>
-                        <option value="active" {% if status == 'active' %}selected{% endif %}>Active</option>
-                        <option value="pending" {% if status == 'pending' %}selected{% endif %}>Pending</option>
-                        <option value="rejected" {% if status == 'rejected' %}selected{% endif %}>Rejected</option>
-                        <option value="sold" {% if status == 'sold' %}selected{% endif %}>Sold</option>
-                        <option value="pending_sale" {% if status == 'pending_sale' %}selected{% endif %}>Pending Sale</option>
+                        <option value="" {% if not status %}selected{% endif %}>Tất cả trạng thái</option>
+                        <option value="active" {% if status == 'active' %}selected{% endif %}>Đang hiển thị</option>
+                        <option value="pending" {% if status == 'pending' %}selected{% endif %}>Chờ duyệt</option>
+                        <option value="rejected" {% if status == 'rejected' %}selected{% endif %}>Bị từ chối</option>
+                        <option value="sold" {% if status == 'sold' %}selected{% endif %}>Đã bán</option>
+                        <option value="pending_sale" {% if status == 'pending_sale' %}selected{% endif %}>Chờ bán</option>
                     </select>
                 </div>
                 <div class="col-md-4">
-                    <label for="category" class="form-label">Category</label>
+                    <label for="category" class="form-label">Danh mục</label>
                     <select class="form-select" id="category" name="category">
-                        <option value="" {% if not category %}selected{% endif %}>All Categories</option>
+                        <option value="" {% if not category %}selected{% endif %}>Tất cả danh mục</option>
                         {% for cat in categories %}
                         <option value="{{ cat.cate_id }}" {% if category == cat.cate_id|string %}selected{% endif %}>{{ cat.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
                 <div class="col-md-4">
-                    <label for="search" class="form-label">Search</label>
+                    <label for="search" class="form-label">Tìm kiếm</label>
                     <div class="input-group">
-                        <input type="text" class="form-control" id="search" name="search" placeholder="Search items..." value="{{ search or '' }}">
+                        <input type="text" class="form-control" id="search" name="search" placeholder="Tìm kiếm sản phẩm..." value="{{ search or '' }}">
                         <button class="btn btn-primary" type="submit">
                             <i class="fas fa-search"></i>
                         </button>
@@ -61,15 +61,15 @@
                 <table class="table table-hover mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th>ID</th>
-                            <th>Image</th>
-                            <th>Name</th>
-                            <th>Price</th>
-                            <th>Category</th>
-                            <th>Owner</th>
-                            <th>Status</th>
-                            <th><span title="Exchange Status">Exchange</span></th>
-                            <th>Created</th>
+                            <th>Mã</th>
+                            <th>Ảnh</th>
+                            <th>Tên</th>
+                            <th>Giá</th>
+                            <th>Danh mục</th>
+                            <th>Chủ sở hữu</th>
+                            <th>Trạng thái</th>
+                            <th><span title="Trạng thái trao đổi">Trao đổi</span></th>
+                            <th>Ngày tạo</th>
                             <th></th>
                         </tr>
                     </thead>
@@ -98,21 +98,21 @@
                             <td>{{ item.user_name }}</td>
                             <td>
                                 {% if item.status == 'active' %}
-                                <span class="badge bg-success">Active</span>
+                                <span class="badge bg-success">Đang hiển thị</span>
                                 {% elif item.status == 'pending' %}
-                                <span class="badge bg-warning text-dark">Pending Approval</span>
+                                <span class="badge bg-warning text-dark">Chờ duyệt</span>
                                 {% elif item.status == 'rejected' %}
-                                <span class="badge bg-danger">Rejected</span>
+                                <span class="badge bg-danger">Bị từ chối</span>
                                 {% elif item.status == 'sold' %}
-                                <span class="badge bg-info">Sold</span>
+                                <span class="badge bg-info">Đã bán</span>
                                 {% elif item.status == 'pending_sale' %}
-                                <span class="badge bg-primary">Pending Sale</span>
+                                <span class="badge bg-primary">Chờ bán</span>
                                 {% elif item.status == 'donation_pending' %}
-                                <span class="badge bg-warning text-dark">Pending Donation</span>
+                                <span class="badge bg-warning text-dark">Chờ quyên góp</span>
                                 {% elif item.status == 'pending_exchange' %}
-                                <span class="badge bg-warning text-dark">Pending Exchange</span>
+                                <span class="badge bg-warning text-dark">Chờ trao đổi</span>
                                 {% elif item.status == 'exchanged' %}
-                                <span class="badge bg-info">Exchanged</span>
+                                <span class="badge bg-info">Đã trao đổi</span>
                                 {% else %}
                                 <span class="badge bg-secondary">{{ item.status }}</span>
                                 {% endif %}
@@ -150,7 +150,7 @@
     <nav aria-label="Page navigation" class="mt-4">
         <ul class="pagination justify-content-center">
             <li class="page-item {% if page == 1 %}disabled{% endif %}">
-                <a class="page-link" href="?page={{ page - 1 }}{% if status %}&status={{ status }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% if search %}&search={{ search }}{% endif %}" tabindex="-1">Previous</a>
+                <a class="page-link" href="?page={{ page - 1 }}{% if status %}&status={{ status }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% if search %}&search={{ search }}{% endif %}" tabindex="-1">Trước</a>
             </li>
             
             {% for p in range(1, total_pages + 1) %}
@@ -160,7 +160,7 @@
             {% endfor %}
             
             <li class="page-item {% if page == total_pages %}disabled{% endif %}">
-                <a class="page-link" href="?page={{ page + 1 }}{% if status %}&status={{ status }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% if search %}&search={{ search }}{% endif %}">Next</a>
+                <a class="page-link" href="?page={{ page + 1 }}{% if status %}&status={{ status }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% if search %}&search={{ search }}{% endif %}">Tiếp</a>
             </li>
         </ul>
     </nav>

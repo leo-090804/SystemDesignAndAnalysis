@@ -1,19 +1,19 @@
 {% extends "base.html" %}
 
-{% block title %}Admin Dashboard - School Exchange Platform{% endblock %}
+{% block title %}Trang quản trị - Nền tảng Trao Đổi Trường Học{% endblock %}
 
 {% block content %}
 <div class="container py-4 admin-dashboard">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2>Welcome</h2>
+            <h2>Xin chào</h2>
             <p class="text-muted mb-0">{{ user.name }}</p>
         </div>
     </div>
 
     <!-- MANAGEMENT SECTION -->
     <div class="mb-5">
-        <h3 class="border-bottom pb-2 mb-4"><i class="fas fa-tasks me-2"></i> Management</h3>
+        <h3 class="border-bottom pb-2 mb-4"><i class="fas fa-tasks me-2"></i> Quản lý</h3>
         
         <!-- Stats Overview Cards -->
         <div class="row g-4 mb-4">
@@ -27,8 +27,8 @@
                             </div>
                             <h3 class="fs-2 mb-0">{{ total_users }}</h3>
                         </div>
-                        <h6 class="text-muted mb-3">Total Users</h6>
-                        <a href="/admin/users" class="btn btn-primary w-100">Manage Users</a>
+                        <h6 class="text-muted mb-3">Tổng số người dùng</h6>
+                        <a href="/admin/users" class="btn btn-primary w-100">Quản lý người dùng</a>
                     </div>
                 </div>
             </div>
@@ -43,8 +43,8 @@
                             </div>
                             <h3 class="fs-2 mb-0">{{ active_campaigns }}</h3>
                         </div>
-                        <h6 class="text-muted mb-3">Active Campaigns</h6>
-                        <a href="/admin/campaigns" class="btn btn-success w-100">Manage Campaigns</a>
+                        <h6 class="text-muted mb-3">Chiến dịch đang diễn ra</h6>
+                        <a href="/admin/campaigns" class="btn btn-success w-100">Quản lý chiến dịch</a>
                     </div>
                 </div>
             </div>
@@ -56,24 +56,24 @@
             <div class="col-md-6">
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-header bg-primary text-white py-3">
-                        <h5 class="mb-0"><i class="fas fa-clipboard-check me-2"></i> Items Pending Approval</h5>
+                        <h5 class="mb-0"><i class="fas fa-clipboard-check me-2"></i> Sản phẩm chờ duyệt</h5>
                     </div>
                     <div class="card-body p-4" id="pending-items-container">
                         {% if pending_items_count > 0 %}
                         <div class="alert alert-primary alert-permanent d-flex align-items-center mb-4">
                             <i class="fas fa-exclamation-circle me-3 fs-4"></i>
                             <div>
-                                <strong>{{ pending_items_count }}</strong> item{% if pending_items_count != 1 %}s{% endif %} waiting for your approval.
+                                <strong>{{ pending_items_count }}</strong> sản phẩm đang chờ bạn duyệt.
                             </div>
                         </div>
                         <a href="/admin/items/pending" class="btn btn-primary w-100">
-                            <i class="fas fa-search me-2"></i> Review Items
+                            <i class="fas fa-search me-2"></i> Duyệt sản phẩm
                         </a>
                         {% else %}
                         <div class="text-center py-5">
                             <i class="fas fa-check-circle text-success fa-4x mb-3"></i>
-                            <h5>No items pending approval</h5>
-                            <p class="text-muted">All items have been reviewed.</p>
+                            <h5>Không có sản phẩm chờ duyệt</h5>
+                            <p class="text-muted">Tất cả sản phẩm đã được kiểm tra.</p>
                         </div>
                         {% endif %}
                     </div>
@@ -84,24 +84,24 @@
             <div class="col-md-6">
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-header bg-success text-white py-3">
-                        <h5 class="mb-0"><i class="fas fa-handshake me-2"></i> Transactions Pending Approval</h5>
+                        <h5 class="mb-0"><i class="fas fa-handshake me-2"></i> Giao dịch chờ duyệt</h5>
                     </div>
                     <div class="card-body p-4" id="pending-transactions-container">
                         {% if pending_transactions_count > 0 %}
                         <div class="alert alert-success alert-permanent d-flex align-items-center mb-4">
                             <i class="fas fa-exclamation-circle me-3 fs-4"></i>
                             <div>
-                                <strong>{{ pending_transactions_count }}</strong> transaction{% if pending_transactions_count != 1 %}s{% endif %} waiting for your approval.
+                                <strong>{{ pending_transactions_count }}</strong> giao dịch đang chờ bạn duyệt.
                             </div>
                         </div>
                         <a href="/admin/transactions?status=pending" class="btn btn-success w-100">
-                            <i class="fas fa-search me-2"></i> Review Transactions
+                            <i class="fas fa-search me-2"></i> Duyệt giao dịch
                         </a>
                         {% else %}
                         <div class="text-center py-5">
                             <i class="fas fa-check-circle text-success fa-4x mb-3"></i>
-                            <h5>No transactions pending approval</h5>
-                            <p class="text-muted">All transactions have been reviewed.</p>
+                            <h5>Không có giao dịch chờ duyệt</h5>
+                            <p class="text-muted">Tất cả giao dịch đã được kiểm tra.</p>
                         </div>
                         {% endif %}
                     </div>
@@ -112,15 +112,15 @@
 
     <!-- STATISTICS SECTION -->
     <div>
-        <h3 class="border-bottom pb-2 mb-4"><i class="fas fa-chart-pie me-2"></i> Statistics</h3>
+        <h3 class="border-bottom pb-2 mb-4"><i class="fas fa-chart-pie me-2"></i> Thống kê</h3>
         
         <!-- First row of charts -->
         <div class="row g-4 mb-4">
             <div class="col-md-6">
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-header bg-white py-3 border-bottom-0">
-                        <h5 class="mb-0"><i class="fas fa-box fa-fw me-2"></i> Items by Status</h5>
-                        <p class="text-muted mb-0">Total: {{ total_items }} items</p>
+                        <h5 class="mb-0"><i class="fas fa-box fa-fw me-2"></i> Sản phẩm theo trạng thái</h5>
+                        <p class="text-muted mb-0">Tổng: {{ total_items }} sản phẩm</p>
                     </div>
                     <div class="card-body">
                         <canvas id="itemsChart" height="250"></canvas>
@@ -131,8 +131,8 @@
             <div class="col-md-6">
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-header bg-white py-3 border-bottom-0">
-                        <h5 class="mb-0"><i class="fas fa-users fa-fw me-2"></i> Users by Status</h5>
-                        <p class="text-muted mb-0">Total: {{ total_users }} users</p>
+                        <h5 class="mb-0"><i class="fas fa-users fa-fw me-2"></i> Người dùng theo trạng thái</h5>
+                        <p class="text-muted mb-0">Tổng: {{ total_users }} người dùng</p>
                     </div>
                     <div class="card-body">
                         <canvas id="usersChart" height="250"></canvas>
@@ -146,8 +146,8 @@
             <div class="col-md-6">
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-header bg-white py-3 border-bottom-0">
-                        <h5 class="mb-0"><i class="fas fa-exchange-alt fa-fw me-2"></i> Transactions</h5>
-                        <p class="text-muted mb-0">Total: {{ total_transactions if total_transactions is defined else 0 }} transactions</p>
+                        <h5 class="mb-0"><i class="fas fa-exchange-alt fa-fw me-2"></i> Giao dịch</h5>
+                        <p class="text-muted mb-0">Tổng: {{ total_transactions if total_transactions is defined else 0 }} giao dịch</p>
                     </div>
                     <div class="card-body">
                         <canvas id="transactionsChart" height="250"></canvas>
@@ -158,8 +158,8 @@
             <div class="col-md-6">
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-header bg-white py-3 border-bottom-0">
-                        <h5 class="mb-0"><i class="fas fa-bullhorn fa-fw me-2"></i> Campaigns</h5>
-                        <p class="text-muted mb-0">Total: {{ total_campaigns if total_campaigns is defined else 0 }} campaigns</p>
+                        <h5 class="mb-0"><i class="fas fa-bullhorn fa-fw me-2"></i> Chiến dịch</h5>
+                        <p class="text-muted mb-0">Tổng: {{ total_campaigns if total_campaigns is defined else 0 }} chiến dịch</p>
                     </div>
                     <div class="card-body">
                         <canvas id="campaignsChart" height="250"></canvas>
@@ -215,7 +215,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Items status chart
     const itemStatusCtx = document.getElementById('itemsChart').getContext('2d');
     const itemStatusData = {
-        labels: ['Active', 'Pending Approval', 'Rejected', 'Sold', 'Pending Sale', 'Pending Donation'],
+        labels: ['Đang hiển thị', 'Chờ duyệt', 'Bị từ chối', 'Đã bán', 'Chờ bán', 'Chờ quyên góp'],
         datasets: [{
             data: [
                 {{ item_status.active }},
@@ -254,7 +254,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Users status chart
     const userStatusCtx = document.getElementById('usersChart').getContext('2d');
     const userStatusData = {
-        labels: ['Active', 'Locked'],
+        labels: ['Đang hoạt động', 'Đã khóa', 'Chờ xác thực'],
         datasets: [{
             data: [
                 {{ user_status.active }},
@@ -285,7 +285,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Transaction chart - replace with correct data structure
     const transactionTypesCtx = document.getElementById('transactionsChart').getContext('2d');
     const transactionTypesData = {
-        labels: ['Purchase', 'Donation'],
+        labels: ['Đã hoàn thành', 'Chờ duyệt', 'Bị từ chối', 'Đang xử lý'],
         datasets: [{
             data: [
                 {{ transaction_types.purchase if transaction_types and 'purchase' in transaction_types else 0 }},
@@ -316,7 +316,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Campaign chart - replace with correct data structure
     const campaignCtx = document.getElementById('campaignsChart').getContext('2d');
     const campaignData = {
-        labels: ['Fundraising', 'Donation'],
+        labels: ['Đang diễn ra', 'Đã hoàn thành', 'Đã hủy'],
         datasets: [{
             data: [
                 {{ campaign_types.fundraising if campaign_types and 'fundraising' in campaign_types else 0 }},

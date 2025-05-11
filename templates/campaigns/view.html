@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}{{ campaign.name }} - School Exchange Platform{% endblock %}
+{% block title %}{{ campaign.name }} - Nền tảng Trao Đổi Trường Học{% endblock %}
 
 {% block content %}
 <div class="container py-4">
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/campaigns">Campaigns</a></li>
+            <li class="breadcrumb-item"><a href="/campaigns">Chiến dịch</a></li>
             <li class="breadcrumb-item active">{{ campaign.name }}</li>
         </ol>
     </nav>
@@ -22,20 +22,20 @@
                     
                     <div class="row mt-4">
                         <div class="col-md-6">
-                            <h5>Campaign Details</h5>
+                            <h5>Chi tiết chiến dịch</h5>
                             <ul class="list-unstyled">
-                                <li><strong>Type:</strong> {{ campaign.campaign_type|capitalize }}</li>
-                                <li><strong>Organizer:</strong> {{ campaign.organizer }}</li>
-                                <li><strong>Start Date:</strong> {{ campaign.start_date }}</li>
-                                <li><strong>End Date:</strong> {{ campaign.end_date }}</li>
+                                <li><strong>Loại:</strong> {% if campaign.campaign_type == 'fundraising' %}Gây quỹ{% elif campaign.campaign_type == 'donation' %}Quyên góp{% elif campaign.campaign_type == 'exchange' %}Trao đổi{% else %}{{ campaign.campaign_type|capitalize }}{% endif %}</li>
+                                <li><strong>Đơn vị tổ chức:</strong> {{ campaign.organizer }}</li>
+                                <li><strong>Ngày bắt đầu:</strong> {{ campaign.start_date }}</li>
+                                <li><strong>Ngày kết thúc:</strong> {{ campaign.end_date }}</li>
                                 <!-- <li><strong>Organized by:</strong> {{ creator.name if creator else "Unknown" }}</li> -->
                             </ul>
                         </div>
                         
                         {% if campaign.goal_amount %}
                         <div class="col-md-6">
-                            <h5>Fundraising Goal</h5>
-                            <p class="fs-4">$<span class="campaign-amount">{{ "%.2f"|format(campaign.current_amount) }}</span> of ${{ "%.2f"|format(campaign.goal_amount) }}</p>
+                            <h5>Mục tiêu gây quỹ</h5>
+                            <p class="fs-4">{{ "{:,}".format(campaign.current_amount|int) }} VNĐ / {{ "{:,}".format(campaign.goal_amount|int) }} VNĐ</p>
                             <div class="progress">
                                 {% set progress = (campaign.current_amount / campaign.goal_amount * 100)|round|int %}
                                 <div class="progress-bar" role="progressbar" style="width: {{ progress }}%;" 
@@ -47,14 +47,14 @@
                     
                     {% if user.role != "admin" %}
                     <div class="mt-4">
-                        <h5>Participate in Campaign</h5>
+                        <h5>Tham gia chiến dịch</h5>
                         <div class="d-grid gap-2 d-md-block">
                             <a href="/items/create?campaign={{ campaign.campaign_id }}" class="btn btn-primary">
-                                <i class="fas fa-plus"></i> Add Item to Campaign
+                                <i class="fas fa-plus"></i> Thêm vật phẩm vào chiến dịch
                             </a>
                             {% if campaign.campaign_type == 'fundraising' %}
                             <button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#donateModal">
-                                <i class="fas fa-donate"></i> Make Donation
+                                <i class="fas fa-donate"></i> Quyên góp
                             </button>
                             {% endif %}
                         </div>
@@ -66,7 +66,7 @@
             {% if campaign_items %}
             <div class="card">
                 <div class="card-header">
-                    <h5>Items in This Campaign</h5>
+                    <h5>Vật phẩm trong chiến dịch</h5>
                 </div>
                 <div class="card-body">
                     <div class="row row-cols-1 row-cols-md-3 g-4">
@@ -82,10 +82,10 @@
                                 {% endif %}
                                 <div class="card-body">
                                     <h5 class="card-title">{{ item.name }}</h5>
-                                    <p class="card-text">${{ "%.2f"|format(item.price) }}</p>
+                                    <p class="card-text">{{ "{:,}".format(item.price|int) }} VNĐ</p>
                                 </div>
                                 <div class="card-footer">
-                                    <a href="/items/{{ item.item_id }}" class="btn btn-primary w-100">View Details</a>
+                                    <a href="/items/{{ item.item_id }}" class="btn btn-primary w-100">Xem chi tiết</a>
                                 </div>
                             </div>
                         </div>
@@ -99,34 +99,34 @@
         <div class="col-md-4">
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5>About Campaigns</h5>
+                    <h5>Về các chiến dịch</h5>
                 </div>
                 <div class="card-body">
-                    <p>Campaigns are organized events for fundraising, donations, or exchange of items.</p>
-                    <p>By participating in campaigns, you can:</p>
+                    <p>Các chiến dịch là sự kiện được tổ chức để gây quỹ, quyên góp hoặc trao đổi vật phẩm.</p>
+                    <p>Khi tham gia chiến dịch, bạn có thể:</p>
                     <ul>
-                        <li>Help raise funds for school activities</li>
-                        <li>Donate items to those in need</li>
-                        <li>Participate in school-wide exchange events</li>
+                        <li>Góp phần gây quỹ cho các hoạt động của trường</li>
+                        <li>Quyên góp vật phẩm cho những người cần</li>
+                        <li>Tham gia các sự kiện trao đổi vật phẩm trong trường</li>
                     </ul>
                 </div>
             </div>
             
             <div class="card">
                 <div class="card-header">
-                    <h5>Recent Campaigns</h5>
+                    <h5>Chiến dịch gần đây</h5>
                 </div>
                 <div class="card-body">
                     <ul class="list-group list-group-flush">
                         <!-- This would be populated with real data in a future update -->
                         <li class="list-group-item">
-                            <a href="#" class="text-decoration-none">School Library Fundraiser</a>
+                            <a href="#" class="text-decoration-none">Gây quỹ thư viện trường</a>
                         </li>
                         <li class="list-group-item">
-                            <a href="#" class="text-decoration-none">Winter Coat Drive</a>
+                            <a href="#" class="text-decoration-none">Chương trình áo ấm mùa đông</a>
                         </li>
                         <li class="list-group-item">
-                            <a href="#" class="text-decoration-none">School Supplies Exchange</a>
+                            <a href="#" class="text-decoration-none">Trao đổi dụng cụ học tập</a>
                         </li>
                     </ul>
                 </div>
@@ -136,30 +136,30 @@
 </div>
 
 {% if campaign.campaign_type == 'fundraising' %}
-<!-- Modal và JS chỉ cho fundraising -->
+<!-- Modal và JS chỉ cho gây quỹ -->
 <div class="modal fade" id="donateModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Make a Donation</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title">Quyên góp</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
             </div>
             <div class="modal-body">
                 <form id="donation-form">
                     <div class="mb-3">
-                        <label for="donation-amount" class="form-label">Donation Amount ($)</label>
-                        <input type="number" class="form-control" id="donation-amount" name="amount" min="1" step="0.01" required>
+                        <label for="donation-amount" class="form-label">Số tiền quyên góp (VNĐ)</label>
+                        <input type="number" class="form-control" id="donation-amount" name="amount" min="1000" step="1000" required>
                     </div>
                     <div class="mb-3">
-                        <label for="donation-message" class="form-label">Message (Optional)</label>
+                        <label for="donation-message" class="form-label">Lời nhắn (không bắt buộc)</label>
                         <textarea class="form-control" id="donation-message" name="message" rows="3"></textarea>
                     </div>
                 </form>
                 <div id="donation-alert" class="alert alert-danger d-none"></div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success" id="complete-donation-btn">Complete Donation</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-success" id="complete-donation-btn">Hoàn tất quyên góp</button>
             </div>
         </div>
     </div>
@@ -177,12 +177,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const amount = parseFloat(document.getElementById('donation-amount').value);
         const message = document.getElementById('donation-message').value;
         if (!amount || isNaN(amount) || amount <= 0) {
-            showAlert('Please enter a valid donation amount');
+            showAlert('Vui lòng nhập số tiền hợp lệ');
             return;
         }
         isSubmitting = true;
         completeBtn.disabled = true;
-        completeBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+        completeBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang xử lý...';
         const formData = new FormData();
         formData.append('amount', amount);
         formData.append('message', message);
@@ -193,19 +193,19 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             completeBtn.disabled = false;
-            completeBtn.innerHTML = 'Complete Donation';
+            completeBtn.innerHTML = 'Hoàn tất quyên góp';
             if (data.success) {
                 donateModal.hide();
                 Swal.fire({
                     icon: 'success',
-                    title: 'Thank You!',
-                    text: 'Your donation has been processed successfully.',
+                    title: 'Cảm ơn bạn!',
+                    text: 'Quyên góp của bạn đã được ghi nhận thành công.',
                     confirmButtonColor: '#28a745'
                 }).then(() => {
                     if (data.new_amount !== undefined) {
                         const amountDisplay = document.querySelector('.campaign-amount');
                         if (amountDisplay) {
-                            amountDisplay.textContent = '$' + data.new_amount.toFixed(2);
+                            amountDisplay.textContent = data.new_amount.toLocaleString('vi-VN') + ' VNĐ';
                             if (data.goal_amount) {
                                 const progress = Math.round((data.new_amount / data.goal_amount) * 100);
                                 const progressBar = document.querySelector('.progress-bar');
@@ -220,15 +220,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 donationForm.reset();
             } else {
-                showAlert(data.message || 'An error occurred while processing your donation');
+                showAlert(data.message || 'Có lỗi xảy ra khi xử lý quyên góp');
             }
             setTimeout(() => { isSubmitting = false; }, 2000);
         })
         .catch(error => {
             completeBtn.disabled = false;
-            completeBtn.innerHTML = 'Complete Donation';
-            showAlert('Network error. Please try again later.');
-            console.error('Error:', error);
+            completeBtn.innerHTML = 'Hoàn tất quyên góp';
+            showAlert('Lỗi mạng. Vui lòng thử lại sau.');
+            console.error('Lỗi:', error);
             setTimeout(() => { isSubmitting = false; }, 2000);
         });
     });

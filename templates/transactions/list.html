@@ -1,40 +1,40 @@
 {% extends "base.html" %}
 
-{% block title %}My Transactions - School Exchange Platform{% endblock %}
+{% block title %}Giao dịch của tôi - Nền tảng Trao Đổi Trường Học{% endblock %}
 
 {% block content %}
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>My Transactions</h2>
-        <a href="/dashboard" class="btn btn-outline-secondary">Back to Dashboard</a>
+        <h2>Giao dịch của tôi</h2>
+        <a href="/dashboard" class="btn btn-outline-secondary">Quay lại Bảng điều khiển</a>
     </div>
 
-    <!-- Filter tabs -->
+    <!-- Tab lọc -->
     <ul class="nav nav-pills mb-4">
         <li class="nav-item">
-            <a class="nav-link {% if not status %}active{% endif %}" href="/transactions">All</a>
+            <a class="nav-link {% if not status %}active{% endif %}" href="/transactions">Tất cả</a>
         </li>
         <li class="nav-item">
             <a class="nav-link {% if status == 'processing' %}active{% endif %}" href="/transactions?status=processing">
-                Processing
+                Đang xử lý
             </a>
         </li>
         <li class="nav-item">
             <a class="nav-link {% if status == 'completed' %}active{% endif %}" href="/transactions?status=completed">
-                Completed
+                Hoàn thành
             </a>
         </li>
         <li class="nav-item">
             <a class="nav-link {% if status == 'cancelled' %}active{% endif %}" href="/transactions?status=cancelled">
-                Cancelled
+                Đã hủy
             </a>
         </li>
     </ul>
 
-    <!-- SECTION 1: REGULAR ITEM TRANSACTIONS -->
+    <!-- PHẦN 1: GIAO DỊCH VẬT PHẨM THÔNG THƯỜNG -->
     <div class="card mb-5">
         <div class="card-header bg-primary text-white">
-            <h4 class="mb-0">Item Purchases & Sales</h4>
+            <h4 class="mb-0">Mua bán vật phẩm</h4>
         </div>
         {% if regular_transactions %}
         <div class="card-body p-0">
@@ -43,13 +43,13 @@
                     <thead>
                         <tr>
                             <th>ID</th>
-                            <th>Item</th>
-                            <th>Role</th>
-                            <th>With</th>
-                            <th>Amount</th>
-                            <th>Status</th>
-                            <th>Date</th>
-                            <th>Actions</th>
+                            <th>Vật phẩm</th>
+                            <th>Vai trò</th>
+                            <th>Đối tác</th>
+                            <th>Số tiền</th>
+                            <th>Trạng thái</th>
+                            <th>Ngày</th>
+                            <th>Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -59,25 +59,25 @@
                             <td>{{ transaction.item.name }}</td>
                             <td>
                                 {% if transaction.is_buyer %}
-                                <span class="badge bg-primary">Buyer</span>
+                                <span class="badge bg-primary">Người mua</span>
                                 {% else %}
-                                <span class="badge bg-info">Seller</span>
+                                <span class="badge bg-info">Người bán</span>
                                 {% endif %}
                             </td>
                             <td>{{ transaction.other_party }}</td>
-                            <td>${{ "%.2f"|format(transaction.amount) }}</td>
+                            <td>{{ "{:,}".format(transaction.amount|int) }} VNĐ</td>
                             <td>
                                 {% if transaction.status == 'processing' %}
-                                <span class="badge bg-warning text-dark">Processing</span>
+                                <span class="badge bg-warning text-dark">Đang xử lý</span>
                                 {% elif transaction.status == 'completed' %}
-                                <span class="badge bg-success">Completed</span>
+                                <span class="badge bg-success">Hoàn thành</span>
                                 {% elif transaction.status == 'cancelled' %}
-                                <span class="badge bg-danger">Cancelled</span>
+                                <span class="badge bg-danger">Đã hủy</span>
                                 {% endif %}
                             </td>
                             <td>{{ transaction.transaction_date.split('T')[0] }}</td>
                             <td>
-                                <a href="/transactions/{{ transaction.transaction_id }}" class="btn btn-sm btn-outline-primary">View</a>
+                                <a href="/transactions/{{ transaction.transaction_id }}" class="btn btn-sm btn-outline-primary">Xem</a>
                             </td>
                         </tr>
                         {% endfor %}
@@ -88,17 +88,17 @@
         {% else %}
         <div class="card-body text-center py-5">
             <i class="fas fa-shopping-cart fa-4x text-muted mb-3"></i>
-            <h5>No purchase transactions found</h5>
-            <p class="text-muted">You haven't bought or sold any items yet.</p>
-            <a href="/items" class="btn btn-primary mt-2">Browse Items</a>
+            <h5>Không tìm thấy giao dịch mua bán</h5>
+            <p class="text-muted">Bạn chưa mua hoặc bán vật phẩm nào.</p>
+            <a href="/items" class="btn btn-primary mt-2">Xem vật phẩm</a>
         </div>
         {% endif %}
     </div>
 
-    <!-- SECTION 2: CAMPAIGN DONATIONS -->
+    <!-- PHẦN 2: QUYÊN GÓP CHIẾN DỊCH -->
     <div class="card">
         <div class="card-header bg-success text-white">
-            <h4 class="mb-0">Campaign Donations</h4>
+            <h4 class="mb-0">Quyên góp chiến dịch</h4>
         </div>
         {% if campaign_transactions %}
         <div class="card-body p-0">
@@ -107,11 +107,11 @@
                     <thead>
                         <tr>
                             <th>ID</th>
-                            <th>Campaign</th>
-                            <th>Amount</th>
-                            <th>Status</th>
-                            <th>Date</th>
-                            <th>Actions</th>
+                            <th>Chiến dịch</th>
+                            <th>Số tiền</th>
+                            <th>Trạng thái</th>
+                            <th>Ngày</th>
+                            <th>Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -119,20 +119,20 @@
                         <tr>
                             <td>{{ transaction.transaction_id }}</td>
                             <td>{{ transaction.campaign.name }}</td>
-                            <td>${{ "%.2f"|format(transaction.amount) }}</td>
+                            <td>{{ "{:,}".format(transaction.amount|int) }} VNĐ</td>
                             <td>
                                 {% if transaction.status == 'processing' %}
-                                <span class="badge bg-warning text-dark">Processing</span>
+                                <span class="badge bg-warning text-dark">Đang xử lý</span>
                                 {% elif transaction.status == 'completed' %}
-                                <span class="badge bg-success">Completed</span>
+                                <span class="badge bg-success">Hoàn thành</span>
                                 {% elif transaction.status == 'cancelled' %}
-                                <span class="badge bg-danger">Cancelled</span>
+                                <span class="badge bg-danger">Đã hủy</span>
                                 {% endif %}
                             </td>
                             <td>{{ transaction.transaction_date.split('T')[0] }}</td>
                             <td>
-                                <a href="/transactions/{{ transaction.transaction_id }}" class="btn btn-sm btn-outline-primary">View</a>
-                                <a href="/campaigns/{{ transaction.campaign_id }}" class="btn btn-sm btn-outline-success">View Campaign</a>
+                                <a href="/transactions/{{ transaction.transaction_id }}" class="btn btn-sm btn-outline-primary">Xem</a>
+                                <a href="/campaigns/{{ transaction.campaign_id }}" class="btn btn-sm btn-outline-success">Xem chiến dịch</a>
                             </td>
                         </tr>
                         {% endfor %}
@@ -143,9 +143,9 @@
         {% else %}
         <div class="card-body text-center py-5">
             <i class="fas fa-hand-holding-heart fa-4x text-muted mb-3"></i>
-            <h5>No donation transactions found</h5>
-            <p class="text-muted">You haven't made any donations to campaigns yet.</p>
-            <a href="/campaigns" class="btn btn-success mt-2">View Campaigns</a>
+            <h5>Không tìm thấy giao dịch quyên góp</h5>
+            <p class="text-muted">Bạn chưa quyên góp cho chiến dịch nào.</p>
+            <a href="/campaigns" class="btn btn-success mt-2">Xem chiến dịch</a>
         </div>
         {% endif %}
     </div>

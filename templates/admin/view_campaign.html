@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}Campaign Details - Admin{% endblock %}
+{% block title %}Chi tiết chiến dịch - Quản trị viên{% endblock %}
 
 {% block content %}
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Campaign Details</h2>
-        <a href="/admin/campaigns" class="btn btn-outline-secondary">Back to Campaigns</a>
+        <h2>Chi tiết chiến dịch</h2>
+        <a href="/admin/campaigns" class="btn btn-outline-secondary">Quay lại danh sách chiến dịch</a>
     </div>
 
     <div class="row">
@@ -17,70 +17,68 @@
                 </div>
                 <div class="card-body">
                     <div class="mb-4">
-                        <h5>Description</h5>
+                        <h5>Mô tả</h5>
                         <p>{{ campaign.description }}</p>
                     </div>
                     
                     <div class="row">
                         <div class="col-md-6">
-                            <h5>Campaign Details</h5>
+                            <h5>Thông tin chiến dịch</h5>
                             <ul class="list-group list-group-flush">
                                 <li class="list-group-item d-flex justify-content-between">
-                                    <span>Campaign Type:</span>
+                                    <span>Loại chiến dịch:</span>
                                     <span class="badge bg-info">{{ campaign.campaign_type|capitalize }}</span>
                                 </li>
                                 <li class="list-group-item d-flex justify-content-between">
-                                    <span>Organizer:</span>
+                                    <span>Đơn vị tổ chức:</span>
                                     <span>{{ organizer }}</span>
                                 </li>
                                 <li class="list-group-item d-flex justify-content-between">
-                                    <span>Status:</span>
+                                    <span>Trạng thái:</span>
                                     <span class="badge {% if campaign.status == 'active' %}bg-success{% elif campaign.status == 'completed' %}bg-primary{% else %}bg-danger{% endif %}">
-                                        {{ campaign.status|capitalize }}
+                                        {% if campaign.status == 'active' %}Đang diễn ra{% elif campaign.status == 'completed' %}Đã hoàn thành{% elif campaign.status == 'cancelled' %}Đã hủy{% else %}{{ campaign.status|capitalize }}{% endif %}
                                     </span>
                                 </li>
                                 <li class="list-group-item d-flex justify-content-between">
-                                    <span>Start Date:</span>
+                                    <span>Ngày bắt đầu:</span>
                                     <span>{{ campaign.start_date }}</span>
                                 </li>
                                 <li class="list-group-item d-flex justify-content-between">
-                                    <span>End Date:</span>
+                                    <span>Ngày kết thúc:</span>
                                     <span>{{ campaign.end_date }}</span>
                                 </li>
                                 <li class="list-group-item d-flex justify-content-between">
-                                    <span>Created By:</span>
-                                    <span>{{ campaign.created_by if campaign.created_by else "Unknown" }}</span>
+                                    <span>Người tạo:</span>
+                                    <span>{{ campaign.created_by if campaign.created_by else "Không xác định" }}</span>
                                 </li>
                                 <li class="list-group-item d-flex justify-content-between">
-                                    <span>Created On:</span>
-                                    <span>{{ campaign.created_at.split('T')[0] if campaign.created_at else "Unknown" }}</span>
+                                    <span>Ngày tạo:</span>
+                                    <span>{{ campaign.created_at.split('T')[0] if campaign.created_at else "Không xác định" }}</span>
                                 </li>
                             </ul>
                         </div>
                         
                         <div class="col-md-6">
-                            <h5>Campaign Progress</h5>
+                            <h5>Tiến độ chiến dịch</h5>
                             {% if campaign.campaign_type == 'fundraising' and campaign.goal_amount %}
                             <div class="card">
                                 <div class="card-body">
-                                    <h6 class="card-title">Fundraising Goal</h6>
-                                    <p class="fs-4">${{ "%.2f"|format(campaign.current_amount) }} of ${{ "%.2f"|format(campaign.goal_amount) }}</p>
+                                    <h6 class="card-title">Mục tiêu gây quỹ</h6>
+                                    <p class="fs-4">{{ "{:,}".format(campaign.current_amount|int) }} VNĐ / {{ "{:,}".format(campaign.goal_amount|int) }} VNĐ</p>
                                     <div class="progress">
                                         {% set progress = (campaign.current_amount / campaign.goal_amount * 100)|round|int %}
-                                        <div class="progress-bar" role="progressbar" style="width: {{ progress }}%;" 
-                                             aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100">{{ progress }}%</div>
+                                        <div class="progress-bar" role="progressbar" style="width: {{ progress }}%;" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100">{{ progress }}%</div>
                                     </div>
                                 </div>
                             </div>
                             {% elif campaign.campaign_type == 'donation' and campaign.goal_item %}
                             <div class="card">
                                 <div class="card-body">
-                                    <h6 class="card-title">Donation Goal</h6>
-                                    <p class="fs-4">{{ campaign_items|length }} of {{ campaign.goal_item }} items</p>
+                                    <h6 class="card-title">Mục tiêu quyên góp vật phẩm</h6>
+                                    <p class="fs-4">{{ campaign_items|length }} / {{ campaign.goal_item }} vật phẩm</p>
                                     <div class="progress">
                                         {% set progress = (campaign_items|length / campaign.goal_item * 100)|round|int %}
-                                        <div class="progress-bar" role="progressbar" style="width: {{ progress }}%;" 
-                                             aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100">{{ progress }}%</div>
+                                        <div class="progress-bar" role="progressbar" style="width: {{ progress }}%;" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100">{{ progress }}%</div>
                                     </div>
                                 </div>
                             </div>
@@ -88,10 +86,10 @@
                             
                             <div class="card mt-3">
                                 <div class="card-body">
-                                    <h6 class="card-title">Items in Campaign</h6>
-                                    <p class="fs-4">{{ campaign_items|length }} items</p>
+                                    <h6 class="card-title">Vật phẩm trong chiến dịch</h6>
+                                    <p class="fs-4">{{ campaign_items|length }} vật phẩm</p>
                                     {% if campaign.campaign_type == 'fundraising' %}
-                                    <p><strong>Total Value:</strong> ${{ "%.2f"|format(total_value) }}</p>
+                                    <p><strong>Tổng giá trị:</strong> {{ "{:,}".format(total_value|int) }} VNĐ</p>
                                     {% endif %}
                                 </div>
                             </div>
@@ -100,15 +98,13 @@
                     
                     <div class="mt-4 d-flex gap-2">
                         <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editCampaignModal">
-                            <i class="fas fa-edit me-1"></i> Edit Campaign
+                            <i class="fas fa-edit me-1"></i> Chỉnh sửa chiến dịch
                         </button>
-                        <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#cancelCampaignModal" 
-                                {% if campaign.status != 'active' %}disabled{% endif %}>
-                            <i class="fas fa-ban me-1"></i> Cancel Campaign
+                        <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#cancelCampaignModal" {% if campaign.status != 'active' %}disabled{% endif %}>
+                            <i class="fas fa-ban me-1"></i> Hủy chiến dịch
                         </button>
-                        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#completeCampaignModal"
-                                {% if campaign.status != 'active' %}disabled{% endif %}>
-                            <i class="fas fa-check-circle me-1"></i> Mark as Completed
+                        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#completeCampaignModal" {% if campaign.status != 'active' %}disabled{% endif %}>
+                            <i class="fas fa-check-circle me-1"></i> Đánh dấu đã hoàn thành
                         </button>
                     </div>
                 </div>
@@ -118,33 +114,31 @@
         <div class="col-md-4">
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5>Campaign Statistics</h5>
+                    <h5>Thống kê chiến dịch</h5>
                 </div>
                 <div class="card-body">
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item d-flex justify-content-between">
-                            <span>Total Items:</span>
+                            <span>Tổng số vật phẩm:</span>
                             <span class="badge bg-primary">{{ campaign_items|length }}</span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between">
-                            <span>Total Value:</span>
-                            <span>${{ "%.2f"|format(total_value) }}</span>
+                            <span>Tổng giá trị:</span>
+                            <span>{{ "{:,}".format(total_value|int) }} VNĐ</span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between">
-                            <span>Days Remaining:</span>
+                            <span>Số ngày còn lại:</span>
                             <span class="badge {% if campaign.status != 'active' %}bg-secondary{% else %}bg-primary{% endif %}">
                                 {% set today = now().strftime('%Y-%m-%d') %}
                                 {% if campaign.start_date > today %}
-                                    Not Started
+                                    Chưa bắt đầu
                                 {% elif campaign.end_date < today %}
-                                    Ended
+                                    Đã kết thúc
                                 {% else %}
                                     {% set end_date = campaign.end_date.split('-') %}
                                     {% set today_parts = today.split('-') %}
-                                    {% set days = (end_date[0]|int - today_parts[0]|int) * 365 + 
-                                                (end_date[1]|int - today_parts[1]|int) * 30 + 
-                                                (end_date[2]|int - today_parts[2]|int) %}
-                                    {{ days }} day{% if days != 1 %}s{% endif %}
+                                    {% set days = (end_date[0]|int - today_parts[0]|int) * 365 + (end_date[1]|int - today_parts[1]|int) * 30 + (end_date[2]|int - today_parts[2]|int) %}
+                                    {{ days }} ngày
                                 {% endif %}
                             </span>
                         </li>
@@ -157,18 +151,18 @@
     {% if campaign_items %}
     <div class="card mt-3">
         <div class="card-header">
-            <h5>Items in Campaign</h5>
+            <h5>Vật phẩm trong chiến dịch</h5>
         </div>
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>
                         <tr>
-                            <th>Item</th>
-                            <th>Owner</th>
-                            <th>Price</th>
-                            <th>Status</th>
-                            <th>Action</th>
+                            <th>Vật phẩm</th>
+                            <th>Chủ sở hữu</th>
+                            <th>Giá</th>
+                            <th>Trạng thái</th>
+                            <th>Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -177,7 +171,7 @@
                             <td>
                                 <div class="d-flex align-items-center">
                                     {% if item.image_path %}
-                                    <img src="{{ item.image_path }}" alt="Item" class="me-3" style="width: 50px; height: 50px; object-fit: cover;">
+                                    <img src="{{ item.image_path }}" alt="Vật phẩm" class="me-3" style="width: 50px; height: 50px; object-fit: cover;">
                                     {% else %}
                                     <div class="me-3 bg-light text-center" style="width: 50px; height: 50px;">
                                         <i class="fas fa-image text-muted" style="line-height: 50px;"></i>
@@ -186,35 +180,25 @@
                                     {{ item.name }}
                                 </div>
                             </td>
-                            <td>{{ item.user_name if item.user_name else "Unknown" }}</td>
-                            <td>
-                                {% if item.transaction_type == 'sale' %}
-                                ${{ "%.2f"|format(item.price) }}
-                                {% elif item.transaction_type == 'exchange' %}
-                                <span>Exchange Only</span>
-                                {% elif item.transaction_type == 'for_campaign' and item.campaign_type == 'fundraising' %}
-                                ${{ "%.2f (For fundraising)"|format(item.price) }}
-                                {% elif item.transaction_type == 'for_campaign' and item.campaign_type == 'donation' %}
-                                <span>Donation</span>
-                                {% elif item.transaction_type == 'exchange_sale' %}
-                                ${{ "%.2f (Exchange Available)"|format(item.price) }}
-                                {% else %}
-                                <span class="badge bg-secondary">Unknown</span>
-                                {% endif %}
-                            </td>
+                            <td>{{ item.user_name if item.user_name else "Không xác định" }}</td>
+                            <td>{{ "{:,}".format(item.price|int) }} VNĐ</td>
                             <td>
                                 {% if item.status == 'active' %}
-                                <span class="badge bg-success">Active</span>
+                                <span class="badge bg-success">Đang bán</span>
                                 {% elif item.status == 'pending' %}
-                                <span class="badge bg-warning text-dark">Pending</span>
+                                <span class="badge bg-warning text-dark">Đang chờ duyệt</span>
+                                {% elif item.status == 'rejected' %}
+                                <span class="badge bg-danger">Bị từ chối</span>
                                 {% elif item.status == 'sold' %}
-                                <span class="badge bg-info">Sold</span>
-                                {% elif item.status == 'donation_pending' %}
-                                <span class="badge bg-warning text-dark">Pending Donation</span>
+                                <span class="badge bg-info">Đã bán</span>
+                                {% elif item.status == 'pending_sale' %}
+                                <span class="badge bg-primary">Đang giao dịch</span>
+                                {% else %}
+                                <span class="badge bg-secondary">{{ item.status }}</span>
                                 {% endif %}
                             </td>
                             <td>
-                                <a href="/admin/items/{{ item.item_id }}" class="btn btn-sm btn-outline-primary">View</a>
+                                <a href="/admin/items/{{ item.item_id }}" class="btn btn-sm btn-outline-primary">Xem</a>
                             </td>
                         </tr>
                         {% endfor %}
@@ -227,121 +211,121 @@
     <div class="card mt-3">
         <div class="card-body text-center py-4">
             <i class="fas fa-box-open fa-4x text-muted mb-3"></i>
-            <h5>No items in this campaign</h5>
-            <p class="text-muted">This campaign doesn't have any items yet.</p>
+            <h5>Không có vật phẩm nào trong chiến dịch này</h5>
+            <p class="text-muted">Chiến dịch này chưa có vật phẩm nào.</p>
         </div>
     </div>
     {% endif %}
 </div>
 
-<!-- Edit Campaign Modal -->
+<!-- Modal chỉnh sửa chiến dịch -->
 <div class="modal fade" id="editCampaignModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Edit Campaign</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title">Chỉnh sửa chiến dịch</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
             </div>
             <form action="/admin/campaigns/{{ campaign.campaign_id }}/edit" method="post">
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="name" class="form-label">Campaign Name</label>
+                        <label for="name" class="form-label">Tên chiến dịch</label>
                         <input type="text" class="form-control" id="name" name="name" value="{{ campaign.name }}" required>
                     </div>
                     <div class="mb-3">
-                        <label for="description" class="form-label">Description</label>
+                        <label for="description" class="form-label">Mô tả</label>
                         <textarea class="form-control" id="description" name="description" rows="4" required>{{ campaign.description }}</textarea>
                     </div>
                     <div class="mb-3">
-                        <label for="organizer" class="form-label">Campaign Organizer</label>
+                        <label for="organizer" class="form-label">Đơn vị tổ chức</label>
                         <input type="text" class="form-control" id="organizer" name="organizer" value="{{ campaign.organizer }}" required>
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label for="start_date" class="form-label">Start Date</label>
+                            <label for="start_date" class="form-label">Ngày bắt đầu</label>
                             <input type="date" class="form-control" id="start_date" name="start_date" value="{{ campaign.start_date }}" required>
                         </div>
                         <div class="col-md-6">
-                            <label for="end_date" class="form-label">End Date</label>
+                            <label for="end_date" class="form-label">Ngày kết thúc</label>
                             <input type="date" class="form-control" id="end_date" name="end_date" value="{{ campaign.end_date }}" required>
                         </div>
                     </div>
                     
                     <div class="mb-3" id="goal-amount-section">
-                        <label for="goal_amount" class="form-label">Goal Amount ($)</label>
-                        <input type="number" class="form-control" id="goal_amount" name="goal_amount" min="0" step="0.01" value="{{ campaign.goal_amount if campaign.goal_amount else '' }}">
-                        <div class="form-text">Only for fundraising campaigns.</div>
+                        <label for="goal_amount" class="form-label">Mục tiêu gây quỹ (VNĐ)</label>
+                        <input type="number" class="form-control" id="goal_amount" name="goal_amount" min="0" step="1000" value="{{ campaign.goal_amount if campaign.goal_amount else '' }}">
+                        <div class="form-text">Chỉ áp dụng cho chiến dịch gây quỹ.</div>
                     </div>
                     <div class="mb-3" id="goal-item-section" style="display:none;">
-                        <label for="goal_item" class="form-label">Goal Item (number of items)</label>
+                        <label for="goal_item" class="form-label">Mục tiêu vật phẩm (số lượng)</label>
                         <input type="number" class="form-control" id="goal_item" name="goal_item" min="1" value="{{ campaign.goal_item if campaign.goal_item else '' }}">
-                        <div class="form-text">Only for donation campaigns.</div>
+                        <div class="form-text">Chỉ áp dụng cho chiến dịch quyên góp vật phẩm.</div>
                     </div>
                     
                     <div class="mb-3">
-                        <label for="status" class="form-label">Status</label>
+                        <label for="status" class="form-label">Trạng thái</label>
                         <select class="form-select" id="status" name="status" required>
-                            <option value="active" {% if campaign.status == 'active' %}selected{% endif %}>Active</option>
-                            <option value="completed" {% if campaign.status == 'completed' %}selected{% endif %}>Completed</option>
-                            <option value="cancelled" {% if campaign.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                            <option value="active" {% if campaign.status == 'active' %}selected{% endif %}>Đang diễn ra</option>
+                            <option value="completed" {% if campaign.status == 'completed' %}selected{% endif %}>Đã hoàn thành</option>
+                            <option value="cancelled" {% if campaign.status == 'cancelled' %}selected{% endif %}>Đã hủy</option>
                         </select>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<!-- Cancel Campaign Modal -->
+<!-- Modal hủy chiến dịch -->
 <div class="modal fade" id="cancelCampaignModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Cancel Campaign</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title">Hủy chiến dịch</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
             </div>
             <form action="/admin/campaigns/{{ campaign.campaign_id }}/cancel" method="post">
                 <div class="modal-body">
-                    <p>Are you sure you want to cancel this campaign?</p>
-                    <p class="text-danger">This will make the campaign inactive and unavailable to users.</p>
+                    <p>Bạn có chắc chắn muốn hủy chiến dịch này?</p>
+                    <p class="text-danger">Hành động này sẽ khiến chiến dịch không còn khả dụng với người dùng.</p>
                     <div class="mb-3">
-                        <label for="cancellation_reason" class="form-label">Reason for Cancellation</label>
+                        <label for="cancellation_reason" class="form-label">Lý do hủy</label>
                         <textarea class="form-control" id="cancellation_reason" name="reason" rows="3" required></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No, Keep Active</button>
-                    <button type="submit" class="btn btn-danger">Yes, Cancel Campaign</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Không, giữ lại</button>
+                    <button type="submit" class="btn btn-danger">Có, hủy chiến dịch</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<!-- Complete Campaign Modal -->
+<!-- Modal hoàn thành chiến dịch -->
 <div class="modal fade" id="completeCampaignModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Complete Campaign</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title">Hoàn thành chiến dịch</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
             </div>
             <form action="/admin/campaigns/{{ campaign.campaign_id }}/complete" method="post">
                 <div class="modal-body">
-                    <p>Are you sure you want to mark this campaign as completed?</p>
-                    <p class="text-info">This will finalize the campaign and make it read-only.</p>
+                    <p>Bạn có chắc chắn muốn đánh dấu chiến dịch này là đã hoàn thành?</p>
+                    <p class="text-info">Hành động này sẽ kết thúc chiến dịch và chuyển sang chế độ chỉ đọc.</p>
                     <div class="mb-3">
-                        <label for="completion_note" class="form-label">Completion Note (Optional)</label>
+                        <label for="completion_note" class="form-label">Ghi chú hoàn thành (không bắt buộc)</label>
                         <textarea class="form-control" id="completion_note" name="note" rows="3"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-success">Mark as Completed</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-success">Đánh dấu đã hoàn thành</button>
                 </div>
             </form>
         </div>

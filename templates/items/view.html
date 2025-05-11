@@ -12,7 +12,7 @@
                 {% else %}
                 <div class="card-img-top bg-light text-center p-5">
                     <i class="fas fa-image fa-5x text-muted"></i>
-                    <p class="mt-3">No Image Available</p>
+                    <p class="mt-3">Không có ảnh</p>
                 </div>
                 {% endif %}
             </div>
@@ -22,28 +22,28 @@
             <div class="card">
                 <div class="card-body">
                     <h2 class="card-title">{{ item.name }}</h2>
-                    <p class="badge bg-info">{{ category.name if category else "Uncategorized" }}</p>
+                    <p class="badge bg-info">{{ category.name if category else "Chưa phân loại" }}</p>
                     
-                    <p class="fs-3 fw-bold text-primary">${{ "%.2f"|format(item.price) }}</p>
-                    <p><i class="fas fa-user me-2"></i> Posted by: {{ owner.name }}</p>
-                    <p><i class="fas fa-calendar me-2"></i> Posted on: {{ item.created_at.split('T')[0] }}</p>
+                    <p class="fs-3 fw-bold text-primary">{{ "{:,}".format(item.price|int) }} VNĐ</p>
+                    <p><i class="fas fa-user me-2"></i> Đăng bởi: {{ owner.name }}</p>
+                    <p><i class="fas fa-calendar me-2"></i> Ngày đăng: {{ item.created_at.split('T')[0] }}</p>
                     
                     {% if item.status == 'active' and user.user_id != item.user_id %}
                     <div class="d-grid gap-2 my-4">
                         {% if item.transaction_type != 'exchange' %}
                         <button class="btn btn-primary btn-lg" id="buy-btn">
-                            <i class="fas fa-shopping-cart me-2"></i> Buy Now
+                            <i class="fas fa-shopping-cart me-2"></i> Mua ngay
                         </button>
                         {% endif %}
                         {% if item.transaction_type in ['exchange', 'exchange_sale'] %}
                         <button class="btn btn-warning btn-lg" id="exchange-btn">
-                            <i class="fas fa-exchange-alt me-2"></i> Exchange
+                            <i class="fas fa-exchange-alt me-2"></i> Trao đổi
                         </button>
                         {% endif %}
                     </div>
                     {% elif item.status == 'pending' and user.user_id == item.user_id %}
                     <div class="alert alert-warning alert-permanent pending-approval-alert">
-                        <i class="fas fa-clock me-2"></i> This item is pending approval by an administrator.
+                        <i class="fas fa-clock me-2"></i> Sản phẩm này đang chờ quản trị viên duyệt.
                     </div>
                     {% elif item.status == 'rejected' and user.user_id == item.user_id %}
                     <div class="alert alert-danger item-rejected-alert">
@@ -52,34 +52,32 @@
                                 <i class="fas fa-times-circle fa-2x text-danger"></i>
                             </div>
                             <div>
-                                <h5 class="alert-heading">This item was rejected</h5>
-                                {% if item.rejection_reason %}
-                                <p class="mb-1"><strong>Reason:</strong> {{ item.rejection_reason }}</p>
-                                {% endif %}
-                                <p class="mb-0 mt-2 small">You can revise and resubmit this item, or contact an administrator for more information.</p>
+                                <h5 class="alert-heading">Sản phẩm bị từ chối</h5>
+                                <p class="mb-1"><strong>Lý do:</strong> {{ item.rejection_reason }}</p>
+                                <p class="mb-0 mt-2 small">Bạn có thể chỉnh sửa và gửi lại sản phẩm này, hoặc liên hệ quản trị viên để biết thêm chi tiết.</p>
                             </div>
                         </div>
                     </div>
                     {% endif %}
                     
                     {% if item.status == 'active' %}
-                        <span class="badge bg-success">Active</span>
+                        <span class="badge bg-success">Đang hiển thị</span>
                     {% elif item.status == 'pending' %}
-                        <span class="badge bg-warning">Pending</span>
+                        <span class="badge bg-warning">Chờ duyệt</span>
                     {% elif item.status == 'rejected' %}
-                        <span class="badge bg-danger">Rejected</span>
+                        <span class="badge bg-danger">Bị từ chối</span>
                     {% elif item.status == 'sold' %}
-                        <span class="badge bg-info">Sold</span>
+                        <span class="badge bg-info">Đã bán</span>
                     {% elif item.status == 'pending_sale' %}
-                        <span class="badge bg-primary">Sale Pending</span>
+                        <span class="badge bg-primary">Chờ bán</span>
                     {% elif item.status == 'donation_pending' %}
-                        <span class="badge bg-warning text-dark">Donation Pending</span>
+                        <span class="badge bg-warning text-dark">Chờ quyên góp</span>
                     {% else %}
                         <span class="badge bg-secondary">{{ item.status }}</span>
                     {% endif %}
                     
                     <hr>
-                    <h5>Description:</h5>
+                    <h5>Mô tả:</h5>
                     <p class="card-text">{{ item.description }}</p>
                 </div>
             </div>
@@ -88,7 +86,7 @@
     
     {% if related_items and item.status == 'active' %}
     <div class="mt-5">
-        <h3>Related Items</h3>
+        <h3>Sản phẩm liên quan</h3>
         <div class="row">
             {% for related_item in related_items %}
             <div class="col-md-3 mb-4">
@@ -102,8 +100,8 @@
                     {% endif %}
                     <div class="card-body">
                         <h5 class="card-title">{{ related_item.name }}</h5>
-                        <p class="card-text text-primary fw-bold">${{ "%.2f"|format(related_item.price) }}</p>
-                        <a href="/items/{{ related_item.item_id }}" class="btn btn-outline-primary btn-sm">View Details</a>
+                        <p class="card-text text-primary fw-bold">{{ "{:,}".format(related_item.price|int) }} VNĐ</p>
+                        <a href="/items/{{ related_item.item_id }}" class="btn btn-outline-primary btn-sm">Xem chi tiết</a>
                     </div>
                 </div>
             </div>
@@ -117,41 +115,41 @@
 {% if user.user_id == item.user_id or user.role == 'admin' %}
 <div class="card mt-4">
     <div class="card-header">
-        <h5><i class="fas fa-history me-2"></i> Item History</h5>
+        <h5><i class="fas fa-history me-2"></i> Lịch sử sản phẩm</h5>
     </div>
     <div class="card-body">
         <ul class="list-group list-group-flush timeline">
             <li class="list-group-item">
                 <div class="timeline-badge bg-primary"></div>
-                <strong>Item Posted</strong>
-                <p class="mb-0">{{ item.created_at.split('T')[0] if item.created_at else "Unknown" }}</p>
+                <strong>Đăng sản phẩm</strong>
+                <p class="mb-0">{{ item.created_at.split('T')[0] if item.created_at else "Không rõ" }}</p>
             </li>
             
             {% if item.status == 'active' and item.approved_at %}
             <li class="list-group-item">
                 <div class="timeline-badge bg-success"></div>
-                <strong>Item Approved</strong>
+                <strong>Đã duyệt</strong>
                 <p class="mb-0">{{ item.approved_at.split('T')[0] }}</p>
             </li>
             {% elif item.status == 'rejected' and item.rejection_date %}
             <li class="list-group-item">
                 <div class="timeline-badge bg-danger"></div>
-                <strong>Item Rejected</strong>
+                <strong>Bị từ chối</strong>
                 <p class="mb-0">{{ item.rejection_date.split('T')[0] }}</p>
                 {% if item.user_id == user.user_id %}
-                <p class="mb-0 text-muted">Reason: {{ item.rejection_reason }}</p>
+                <p class="mb-0 text-muted">Lý do: {{ item.rejection_reason }}</p>
                 {% endif %}
             </li>
             {% elif item.status == 'pending_sale' %}
             <li class="list-group-item">
                 <div class="timeline-badge bg-warning"></div>
-                <strong>Purchase Initiated</strong>
-                <p class="mb-0">{{ item.status_updated_at.split('T')[0] if item.status_updated_at else "Unknown" }}</p>
+                <strong>Khởi tạo mua</strong>
+                <p class="mb-0">{{ item.status_updated_at.split('T')[0] if item.status_updated_at else "Không rõ" }}</p>
             </li>
             {% elif item.status == 'sold' and item.sold_at %}
             <li class="list-group-item">
                 <div class="timeline-badge bg-info"></div>
-                <strong>Item Sold</strong>
+                <strong>Đã bán</strong>
                 <p class="mb-0">{{ item.sold_at.split('T')[0] }}</p>
             </li>
             {% endif %}
@@ -167,16 +165,16 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Confirm Purchase</h5>
+                <h5 class="modal-title">Xác nhận mua hàng</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p>Are you sure you want to purchase <strong>{{ item.name }}</strong> for <strong>${{ "%.2f"|format(item.price) }}</strong>?</p>
+                <p>Bạn có chắc chắn muốn mua <strong>{{ item.name }}</strong> với giá <strong>{{ "{:,}".format(item.price|int) }} VNĐ</strong>?</p>
                 <!-- <p class="text-muted">This action cannot be undone.</p> -->
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="confirm-purchase">Confirm Purchase</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" id="confirm-purchase">Xác nhận mua</button>
             </div>
         </div>
     </div>
@@ -188,16 +186,16 @@
         <div class="modal-content">
             <form id="exchange-proposal-form" method="post" enctype="multipart/form-data" action="/items/{{ item.item_id }}/exchange-proposal">
                 <div class="modal-header">
-                    <h5 class="modal-title">Send Exchange Proposal</h5>
+                    <h5 class="modal-title">Gửi đề xuất trao đổi</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="your_item_name" class="form-label">Your Item Name</label>
+                        <label for="your_item_name" class="form-label">Tên sản phẩm của bạn</label>
                         <input type="text" class="form-control" id="your_item_name" name="your_item_name" required>
                     </div>
                     <div class="mb-3">
-                        <label for="your_item_condition" class="form-label">Item Condition</label>
+                        <label for="your_item_condition" class="form-label">Tình trạng sản phẩm</label>
                         <input type="text" class="form-control" id="your_item_condition" name="your_item_condition" required>
                     </div>
                     <div class="mb-3">

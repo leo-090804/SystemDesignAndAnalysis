@@ -1,33 +1,33 @@
 {% extends "base.html" %}
 
-{% block title %}Transaction Details - School Exchange Platform{% endblock %}
+{% block title %}Chi tiết giao dịch - Nền tảng Trao Đổi Trường Học{% endblock %}
 
 {% block content %}
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Transaction #{{ transaction.transaction_id }}</h2>
-        <a href="/transactions" class="btn btn-outline-secondary">Back to Transactions</a>
+        <h2>Giao dịch #{{ transaction.transaction_id }}</h2>
+        <a href="/transactions" class="btn btn-outline-secondary">Quay lại Giao dịch</a>
     </div>
 
     <div class="row">
         <div class="col-md-8">
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5>Transaction Details</h5>
+                    <h5>Chi tiết giao dịch</h5>
                 </div>
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6">
-                            <h6>Basic Information</h6>
+                            <h6>Thông tin cơ bản</h6>
                             <ul class="list-group list-group-flush mb-3">
                                 <li class="list-group-item d-flex justify-content-between">
-                                    <span>Transaction Type:</span>
+                                    <span>Loại giao dịch:</span>
                                     <span>{{ transaction.transaction_type|capitalize }}</span>
                                 </li>
                                 <li class="list-group-item d-flex justify-content-between">
-                                    <span>Amount / Transaction Fee:</span>
+                                    <span>Số tiền / Phí giao dịch:</span>
                                     {% if transaction.amount is defined %}
-                                        <span class="fw-bold">${{ "%.2f"|format(transaction.amount) }}</span>
+                                        <span class="fw-bold">{{ "{:,}".format(transaction.amount|int) }} VNĐ</span>
                                     {% elif transaction.transaction_fee is defined %}
                                         <span class="fw-bold text-info">{{ "{:,}".format(transaction.transaction_fee|int) }} VNĐ</span>
                                     {% else %}
@@ -35,24 +35,24 @@
                                     {% endif %}
                                 </li>
                                 <li class="list-group-item d-flex justify-content-between">
-                                    <span>Date:</span>
+                                    <span>Ngày:</span>
                                     <span>{{ transaction.transaction_date.split('T')[0] }}</span>
                                 </li>
                                 <li class="list-group-item d-flex justify-content-between">
-                                    <span>Status:</span>
+                                    <span>Trạng thái:</span>
                                     <span>
                                         {% if transaction.status == 'pending' %}
-                                        <span class="badge bg-warning text-dark">Pending</span>
+                                        <span class="badge bg-warning text-dark">Chờ xử lý</span>
                                         {% elif transaction.status == 'processing' %}
-                                        <span class="badge bg-warning text-dark">Processing</span>
+                                        <span class="badge bg-warning text-dark">Đang xử lý</span>
                                         {% elif transaction.status == 'accepted' %}
-                                        <span class="badge bg-primary">Accepted</span>
+                                        <span class="badge bg-primary">Đã chấp nhận</span>
                                         {% elif transaction.status == 'completed' %}
-                                        <span class="badge bg-success">Completed</span>
+                                        <span class="badge bg-success">Hoàn thành</span>
                                         {% elif transaction.status == 'rejected' %}
-                                        <span class="badge bg-danger">Rejected</span>
+                                        <span class="badge bg-danger">Từ chối</span>
                                         {% elif transaction.status == 'cancelled' %}
-                                        <span class="badge bg-danger">Cancelled</span>
+                                        <span class="badge bg-danger">Đã hủy</span>
                                         {% else %}
                                         <span class="badge bg-secondary">{{ transaction.status|capitalize }}</span>
                                         {% endif %}
@@ -60,61 +60,61 @@
                                 </li>
                                 {% if transaction.cancellation_reason %}
                                 <li class="list-group-item">
-                                    <span>Cancellation Reason:</span>
+                                    <span>Lý do hủy:</span>
                                     <p class="mb-0 mt-1 text-danger">{{ transaction.cancellation_reason }}</p>
                                 </li>
                                 {% endif %}
                             </ul>
                             
                             {% if transaction.status == 'processing' %}
-                            <h6>Expiration</h6>
+                            <h6>Thời hạn</h6>
                             <ul class="list-group list-group-flush mb-3">
                                 <li class="list-group-item d-flex justify-content-between">
-                                    <span>Expires On:</span>
+                                    <span>Hết hạn vào:</span>
                                     <span>{{ transaction.expiration_date.split('T')[0] }}</span>
                                 </li>
                                 <li class="list-group-item">
                                     <small class="text-muted">
-                                        Transactions will automatically be cancelled if not approved within this timeframe.
+                                        Giao dịch sẽ tự động hủy nếu không được phê duyệt trong thời gian này.
                                     </small>
                                 </li>
                             </ul>
                             {% endif %}
                         </div>
                         <div class="col-md-6">
-                            <h6>User Information</h6>
+                            <h6>Thông tin người dùng</h6>
                             <ul class="list-group list-group-flush mb-3">
                                 <li class="list-group-item">
                                     <div class="d-flex justify-content-between">
-                                        <span>Buyer:</span>
+                                        <span>Người mua:</span>
                                         <span>{{ buyer.name }}</span>
                                     </div>
-                                    <small class="text-muted">{% if is_buyer %}(You){% endif %}</small>
+                                    <small class="text-muted">{% if is_buyer %}(Bạn){% endif %}</small>
                                 </li>
                                 <li class="list-group-item">
                                     <div class="d-flex justify-content-between">
-                                        <span>Seller:</span>
+                                        <span>Người bán:</span>
                                         <span>{{ seller.name }}</span>
                                     </div>
-                                    <small class="text-muted">{% if not is_buyer %}(You){% endif %}</small>
+                                    <small class="text-muted">{% if not is_buyer %}(Bạn){% endif %}</small>
                                 </li>
                             </ul>
                             
-                            <h6>Item Information</h6>
+                            <h6>Thông tin vật phẩm</h6>
                             <ul class="list-group list-group-flush">
                                 <li class="list-group-item">
                                     <div class="d-flex justify-content-between">
-                                        <span>Item ID:</span>
+                                        <span>Mã vật phẩm:</span>
                                         <span>{{ item.item_id }}</span>
                                     </div>
                                 </li>
                                 <li class="list-group-item">
-                                    <span>Item Name:</span>
+                                    <span>Tên vật phẩm:</span>
                                     <p class="mb-0 mt-1">{{ item.name }}</p>
                                 </li>
                                 <li class="list-group-item">
                                     <a href="/items/{{ item.item_id }}" class="btn btn-sm btn-outline-primary">
-                                        View Item
+                                        Xem vật phẩm
                                     </a>
                                 </li>
                             </ul>
@@ -127,37 +127,37 @@
         <div class="col-md-4">
             <div class="card">
                 <div class="card-header">
-                    <h5>Transaction Status</h5>
+                    <h5>Trạng thái giao dịch</h5>
                 </div>
                 <div class="card-body">
                     {% if transaction.status == 'processing' %}
                     <div class="alert alert-warning">
-                        <i class="fas fa-clock me-2"></i> <strong>Processing</strong>
-                        <p class="mb-0 mt-1">This transaction is waiting for approval by an administrator.</p>
+                        <i class="fas fa-clock me-2"></i> <strong>Đang xử lý</strong>
+                        <p class="mb-0 mt-1">Giao dịch này đang chờ được phê duyệt bởi quản trị viên.</p>
                     </div>
                     {% elif transaction.status == 'completed' %}
                     <div class="alert alert-success">
-                        <i class="fas fa-check-circle me-2"></i> <strong>Completed</strong>
-                        <p class="mb-0 mt-1">This transaction has been successfully completed.</p>
+                        <i class="fas fa-check-circle me-2"></i> <strong>Hoàn thành</strong>
+                        <p class="mb-0 mt-1">Giao dịch đã được hoàn thành thành công.</p>
                     </div>
                     {% elif transaction.status == 'cancelled' %}
                     <div class="alert alert-danger">
-                        <i class="fas fa-times-circle me-2"></i> <strong>Cancelled</strong>
-                        <p class="mb-0 mt-1">This transaction has been cancelled.</p>
+                        <i class="fas fa-times-circle me-2"></i> <strong>Đã hủy</strong>
+                        <p class="mb-0 mt-1">Giao dịch đã bị hủy.</p>
                         {% if transaction.cancellation_reason %}
-                        <p class="mb-0"><strong>Reason:</strong> {{ transaction.cancellation_reason }}</p>
+                        <p class="mb-0"><strong>Lý do:</strong> {{ transaction.cancellation_reason }}</p>
                         {% endif %}
                     </div>
                     {% endif %}
                     
                     <div class="mt-3">
-                        <h6>Next Steps</h6>
+                        <h6>Các bước tiếp theo</h6>
                         {% if transaction.status == 'processing' %}
-                        <p>Please wait for an administrator to approve the transaction.</p>
+                        <p>Vui lòng chờ quản trị viên phê duyệt giao dịch.</p>
                         {% elif transaction.status == 'completed' %}
-                        <p>The transaction is complete. You can contact the {% if is_buyer %}seller{% else %}buyer{% endif %} if needed.</p>
+                        <p>Giao dịch đã hoàn thành. Bạn có thể liên hệ với {% if is_buyer %}người bán{% else %}người mua{% endif %} nếu cần.</p>
                         {% elif transaction.status == 'cancelled' %}
-                        <p>The transaction has been cancelled. No further action is required.</p>
+                        <p>Giao dịch đã bị hủy. Không cần thực hiện thêm hành động nào.</p>
                         {% endif %}
                     </div>
                 </div>
@@ -166,11 +166,11 @@
             {% if transaction.status == 'processing' or transaction.status == 'completed' %}
             <div class="card mt-4">
                 <div class="card-header">
-                    <h5>Contact {% if is_buyer %}Seller{% else %}Buyer{% endif %}</h5>
+                    <h5>Liên hệ {% if is_buyer %}người bán{% else %}người mua{% endif %}</h5>
                 </div>
                 <div class="card-body">
                     <button class="btn btn-outline-primary w-100" data-bs-toggle="modal" data-bs-target="#contactModal">
-                        <i class="fas fa-envelope me-2"></i> Send Message
+                        <i class="fas fa-envelope me-2"></i> Gửi tin nhắn
                     </button>
                 </div>
             </div>
@@ -179,31 +179,31 @@
     </div>
 </div>
 
-<!-- Contact Modal -->
+<!-- Modal liên hệ -->
 <div class="modal fade" id="contactModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Contact {% if is_buyer %}Seller{% else %}Buyer{% endif %}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title">Liên hệ {% if is_buyer %}người bán{% else %}người mua{% endif %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
             </div>
             <div class="modal-body">
                 <form id="contact-form">
                     <div class="mb-3">
-                        <label class="form-label">To: {{ seller.name if is_buyer else buyer.name }}</label>
+                        <label class="form-label">Đến: {{ seller.name if is_buyer else buyer.name }}</label>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Regarding: Transaction #{{ transaction.transaction_id }} - {{ item.name }}</label>
+                        <label class="form-label">Về: Giao dịch #{{ transaction.transaction_id }} - {{ item.name }}</label>
                     </div>
                     <div class="mb-3">
-                        <label for="message" class="form-label">Message:</label>
+                        <label for="message" class="form-label">Tin nhắn:</label>
                         <textarea class="form-control" id="message" rows="4" required></textarea>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="send-message">Send Message</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" id="send-message">Gửi tin nhắn</button>
             </div>
         </div>
     </div>
@@ -212,22 +212,22 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Simple placeholder for messaging functionality
+    // Chức năng gửi tin nhắn đơn giản
     const sendMessageBtn = document.getElementById('send-message');
     if (sendMessageBtn) {
         sendMessageBtn.addEventListener('click', function() {
             const message = document.getElementById('message').value.trim();
             
             if (!message) {
-                alert('Please enter a message');
+                alert('Vui lòng nhập tin nhắn');
                 return;
             }
             
-            // For now, just show a success message
+            // Hiển thị thông báo thành công
             Swal.fire({
                 icon: 'success',
-                title: 'Message Sent',
-                text: 'Your message has been sent successfully.'
+                title: 'Đã gửi tin nhắn',
+                text: 'Tin nhắn của bạn đã được gửi thành công.'
             }).then(() => {
                 bootstrap.Modal.getInstance(document.getElementById('contactModal')).hide();
                 document.getElementById('message').value = '';

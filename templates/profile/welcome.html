@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Welcome - School Exchange Platform{% endblock %}
+{% block title %}Chào mừng - Nền tảng Trao Đổi Trường Học{% endblock %}
 
 {% block content %}
 <div class="container py-5">
@@ -8,13 +8,13 @@
         <div class="col-md-7">
             <div class="card shadow">
                 <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0">Welcome to the School Exchange Platform!</h4>
+                    <h4 class="mb-0">Chào mừng đến với Nền tảng Trao Đổi Trường Học!</h4>
                 </div>
                 
                 <div class="card-body py-4">
                     <div class="text-center mb-4">
-                        <h2>Hello, {{ user.name }}!</h2>
-                        <p class="lead mb-4">Would you like to add a profile picture?</p>
+                        <h2>Xin chào, {{ user.name }}!</h2>
+                        <p class="lead mb-4">Bạn có muốn thêm ảnh đại diện không?</p>
                     </div>
                     
                     {% if error %}
@@ -31,17 +31,17 @@
                             
                             <div class="mb-4">
                                 <input class="form-control" type="file" id="profile_image" name="profile_image" accept="image/*">
-                                <div class="form-text">JPEG, PNG or GIF. Max 2MB.</div>
+                                <div class="form-text">JPEG, PNG hoặc GIF. Tối đa 2MB.</div>
                             </div>
                         </div>
                         
                         <div class="d-grid gap-2 d-md-flex justify-content-md-center">
-                            <a href="#" onclick="event.preventDefault(); document.getElementById('skip-form').submit();" class="btn btn-outline-secondary me-md-2 px-4">Skip</a>
-                            <button type="submit" class="btn btn-primary px-4">Save & Continue</button>
+                            <a href="#" onclick="event.preventDefault(); document.getElementById('skip-form').submit();" class="btn btn-outline-secondary me-md-2 px-4">Bỏ qua</a>
+                            <button type="submit" class="btn btn-primary px-4">Lưu & Tiếp tục</button>
                         </div>
                     </form>
                     
-                    <!-- Hidden form for skip action -->
+                    <!-- Form ẩn cho hành động bỏ qua -->
                     <form id="skip-form" action="/profile/skip-profile-image" method="post" style="display: none;"></form>
                 </div>
             </div>

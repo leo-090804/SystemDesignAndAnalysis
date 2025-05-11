@@ -1,55 +1,212 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard - School Exchange Platform{% endblock %}
+{% block title %}Trang cá nhân - Nền tảng Trao Đổi Trường Học{% endblock %}
 
 {% block content %}
-<div class="row">
+<div class="row g-4 mb-4">
     <div class="col-md-4">
-        <div class="card mb-4">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">Profile</h5>
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-primary text-white text-center rounded-top">
+                <h5 class="mb-0">Hồ sơ</h5>
             </div>
-            <div class="card-body">
-                <h5>{{ user.name }}</h5>
-                <p class="text-muted">{{ user.role|capitalize }}</p>
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <img src="{{ user.profile_image_path if user.profile_image_path else url_for('static', path='/img/default-avatar.png') }}" class="rounded-circle border" width="80" height="80" alt="Ảnh đại diện">
+                </div>
+                <h5 class="fw-bold">{{ user.name }}</h5>
+                <p class="text-muted mb-1">{{ user.role|capitalize }}</p>
                 {% if user.grade %}
-                <p><strong>Grade:</strong> {{ user.grade }}</p>
+                <p class="mb-1"><strong>Lớp:</strong> {{ user.grade }}</p>
                 {% endif %}
                 {% if user.organization %}
-                <p><strong>Organization:</strong> {{ user.organization }}</p>
+                <p class="mb-0"><strong>Trường/Đơn vị:</strong> {{ user.organization }}</p>
                 {% endif %}
             </div>
         </div>
     </div>
-    
     <div class="col-md-8">
-        <div class="card mb-4">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">Quick Actions</h5>
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-primary text-white text-center rounded-top">
+                <h5 class="mb-0">Chức năng nhanh</h5>
             </div>
             <div class="card-body">
-                <div class="d-grid gap-2">
-                    <a href="/items" class="btn btn-outline-primary">Browse Items</a>
-                    <a href="/items/create" class="btn btn-outline-success">Post New Item</a>
-                    <a href="/items/my" class="btn btn-outline-info">My Items</a>
-                    <a href="/transactions" class="btn btn-outline-secondary">My Transactions</a>
-                    <a href="/campaigns" class="btn btn-outline-warning">View Campaigns</a>
+                <div class="row g-2">
+                    <div class="col-6 col-md-4">
+                        <a href="/items" class="btn btn-outline-primary w-100 d-flex flex-column align-items-center py-3">
+                            <i class="fas fa-search fa-lg mb-1"></i> Tìm kiếm sản phẩm
+                        </a>
+                    </div>
+                    <div class="col-6 col-md-4">
+                        <a href="/items/create" class="btn btn-outline-success w-100 d-flex flex-column align-items-center py-3">
+                            <i class="fas fa-plus fa-lg mb-1"></i> Đăng sản phẩm mới
+                        </a>
+                    </div>
+                    <div class="col-6 col-md-4">
+                        <a href="/items/my" class="btn btn-outline-info w-100 d-flex flex-column align-items-center py-3">
+                            <i class="fas fa-box-open fa-lg mb-1"></i> Sản phẩm của tôi
+                        </a>
+                    </div>
+                    <div class="col-6 col-md-6">
+                        <a href="/transactions" class="btn btn-outline-secondary w-100 d-flex flex-column align-items-center py-3">
+                            <i class="fas fa-exchange-alt fa-lg mb-1"></i> Giao dịch của tôi
+                        </a>
+                    </div>
+                    <div class="col-6 col-md-6">
+                        <a href="/campaigns" class="btn btn-outline-warning w-100 d-flex flex-column align-items-center py-3">
+                            <i class="fas fa-hands-helping fa-lg mb-1"></i> Xem chiến dịch
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row">
+<div class="row g-4 mb-4">
     <div class="col-12">
-        <div class="card">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">Recent Activity</h5>
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-primary text-white text-center rounded-top">
+                <h5 class="mb-0">Hoạt động gần đây</h5>
             </div>
             <div class="card-body">
-                <p class="text-center text-muted">No recent activity to display.</p>
+                {% if recent_activities and recent_activities|length > 0 %}
+                <ul class="list-group list-group-flush">
+                    {% for act in recent_activities %}
+                    <li class="list-group-item d-flex align-items-center">
+                        {% if act.type == 'item' %}
+                            <i class="fas fa-box text-primary me-3"></i>
+                            <span><strong>{{ act.name }}</strong> - Sản phẩm 
+                                {% if act.status == 'completed' %}
+                                    <span class="badge bg-success">Hoàn thành</span>
+                                {% elif act.status == 'rejected' %}
+                                    <span class="badge bg-danger">Bị từ chối</span>
+                                {% else %}
+                                    <span class="badge bg-info text-dark">{{ act.status|capitalize }}</span>
+                                {% endif %}
+                            </span>
+                        {% elif act.type == 'transaction' %}
+                            <i class="fas fa-exchange-alt text-success me-3"></i>
+                            <span>Giao dịch
+                                {% if act.name == 'purchase' %}<strong>Mua</strong>{% elif act.name == 'exchange' %}<strong>Trao đổi</strong>{% elif act.name == 'donation' %}<strong>Quyên góp</strong>{% else %}<strong>{{ act.name|capitalize }}</strong>{% endif %}
+                                {% if act.status == 'completed' %}
+                                    <span class="badge bg-success">Hoàn thành</span>
+                                {% elif act.status == 'rejected' %}
+                                    <span class="badge bg-danger">Bị từ chối</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ act.status|capitalize }}</span>
+                                {% endif %}
+                            </span>
+                        {% endif %}
+                        <span class="ms-auto text-muted small">{{ act.time[:10] }} {{ act.time[11:16] }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-center text-muted mb-0">Chưa có hoạt động nào gần đây.</p>
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
+
+<!-- Báo cáo cá nhân bằng biểu đồ -->
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-primary text-white text-center rounded-top">
+                <h5 class="mb-0">Sản phẩm theo trạng thái</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="userItemsChart" height="220"></canvas>
+                <ul class="list-unstyled mt-3 mb-0 text-center">
+                    <li><span class="badge bg-info me-2">Chờ duyệt</span> {{ pending_items }}</li>
+                    <li><span class="badge bg-success me-2">Đã duyệt</span> {{ approved_items }}</li>
+                    <li><span class="badge bg-danger me-2">Bị từ chối</span> {{ rejected_items }}</li>
+                    <li><span class="badge bg-primary me-2">Đã bán</span> {{ sold_items }}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-primary text-white text-center rounded-top">
+                <h5 class="mb-0">Giao dịch theo loại</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="userTransactionsChart" height="220"></canvas>
+                <ul class="list-unstyled mt-3 mb-0 text-center">
+                    <li><span class="badge bg-secondary me-2">Mua</span> {{ purchase_transactions }}</li>
+                    <li><span class="badge bg-warning text-dark me-2">Trao đổi</span> {{ exchange_transactions }}</li>
+                    <li><span class="badge bg-success me-2">Quyên góp</span> {{ donation_transactions }}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-header bg-primary text-white text-center rounded-top">
+                <h5 class="mb-0">Số chiến dịch đã tham gia</h5>
+            </div>
+            <div class="card-body">
+                <span class="display-4 fw-bold text-primary">{{ num_campaigns }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Sản phẩm theo trạng thái
+    const itemsCtx = document.getElementById('userItemsChart').getContext('2d');
+    new Chart(itemsCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Chờ duyệt', 'Đã duyệt', 'Bị từ chối', 'Đã bán'],
+            datasets: [{
+                data: [{{ pending_items|int }}, {{ approved_items|int }}, {{ rejected_items|int }}, {{ sold_items|int }}],
+                backgroundColor: [
+                    '#17a2b8', // Chờ duyệt
+                    '#28a745', // Đã duyệt
+                    '#dc3545', // Bị từ chối
+                    '#007bff'  // Đã bán
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+    // Giao dịch theo loại
+    const transCtx = document.getElementById('userTransactionsChart').getContext('2d');
+    new Chart(transCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Mua', 'Trao đổi', 'Quyên góp'],
+            datasets: [{
+                data: [{{ purchase_transactions|int }}, {{ exchange_transactions|int }}, {{ donation_transactions|int }}],
+                backgroundColor: [
+                    '#6c757d', // Mua
+                    '#ffc107', // Trao đổi
+                    '#28a745'  // Quyên góp
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+});
+</script>
 {% endblock %}

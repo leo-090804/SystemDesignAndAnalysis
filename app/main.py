@@ -125,9 +125,60 @@ async def dashboard(request: Request):
         if not user:
             return RedirectResponse(url="/login")
         
+        # --- Bổ sung số liệu báo cáo cá nhân ---
+        user_id = user["user_id"]
+        # Sản phẩm
+        pending_items = await db.items.count_documents({"user_id": user_id, "status": "pending"})
+        approved_items = await db.items.count_documents({"user_id": user_id, "status": "active"})
+        rejected_items = await db.items.count_documents({"user_id": user_id, "status": "rejected"})
+        sold_items = await db.items.count_documents({"user_id": user_id, "status": "sold"})
+        # Giao dịch
+        purchase_transactions = await db.transactions.count_documents({"buyer_user_id": user_id, "transaction_type": "purchase"})
+        exchange_transactions = await db.transactions.count_documents({"buyer_user_id": user_id, "transaction_type": "exchange"})
+        donation_transactions = await db.transactions.count_documents({"buyer_user_id": user_id, "transaction_type": "donation"})
+        # Số chiến dịch tham gia (unique campaign_id từ các giao dịch quyên góp)
+        user_donations = await db.transactions.find({"buyer_user_id": user_id, "transaction_type": "donation"}).to_list(length=100)
+        campaign_ids = set(d["campaign_id"] for d in user_donations if "campaign_id" in d)
+        num_campaigns = len(campaign_ids)
+        # --- Recent Activity ---
+        recent_activities = []
+        # Lấy 3 sản phẩm gần nhất
+        recent_items = await db.items.find({"user_id": user_id}).sort("created_at", -1).limit(3).to_list(length=3)
+        for item in recent_items:
+            recent_activities.append({
+                "type": "item",
+                "name": item.get("name", "Sản phẩm"),
+                "status": item.get("status", ""),
+                "time": item.get("created_at", "")
+            })
+        # Lấy 2 giao dịch gần nhất
+        recent_transactions = await db.transactions.find({"buyer_user_id": user_id}).sort("transaction_date", -1).limit(2).to_list(length=2)
+        for tran in recent_transactions:
+            recent_activities.append({
+                "type": "transaction",
+                "name": tran.get("transaction_type", "Giao dịch"),
+                "status": tran.get("status", ""),
+                "time": tran.get("transaction_date", "")
+            })
+        # Sắp xếp lại theo thời gian mới nhất
+        recent_activities.sort(key=lambda x: x["time"], reverse=True)
+        recent_activities = recent_activities[:5]
+        # ---
         return templates.TemplateResponse(
             "dashboard.html", 
-            {"request": request, "user": user}
+            {
+                "request": request,
+                "user": user,
+                "pending_items": pending_items,
+                "approved_items": approved_items,
+                "rejected_items": rejected_items,
+                "sold_items": sold_items,
+                "purchase_transactions": purchase_transactions,
+                "exchange_transactions": exchange_transactions,
+                "donation_transactions": donation_transactions,
+                "num_campaigns": num_campaigns,
+                "recent_activities": recent_activities
+            }
         )
     
     except JWTError:

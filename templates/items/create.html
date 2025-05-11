@@ -4,210 +4,127 @@
 
 {% block content %}
 <div class="container py-4">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">Post New Item</h5>
-                </div>
-                <div class="card-body">
-                    {% if error %}
-                    <div class="alert alert-danger">
-                        {{ error }}
-                    </div>
-                    {% endif %}
+    <h2 class="mb-4">Đăng sản phẩm mới</h2>
 
-                    <form action="/items/create" method="post" enctype="multipart/form-data">
+    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-body">
                         <div class="mb-3">
-                            <label for="name" class="form-label">Item Name</label>
+                            <label for="name" class="form-label">Tên sản phẩm</label>
                             <input type="text" class="form-control" id="name" name="name" required>
+                            <div class="invalid-feedback">Vui lòng nhập tên sản phẩm</div>
                         </div>
-                        
+
                         <div class="mb-3">
-                            <label for="description" class="form-label">Description</label>
+                            <label for="description" class="form-label">Mô tả</label>
                             <textarea class="form-control" id="description" name="description" rows="4" required></textarea>
+                            <div class="invalid-feedback">Vui lòng nhập mô tả sản phẩm</div>
                         </div>
-                        
+
                         <div class="mb-3">
-                            <label for="category" class="form-label">Category</label>
+                            <label for="category" class="form-label">Danh mục</label>
                             <select class="form-select" id="category" name="category" required>
-                                <option value="">Select a category</option>
+                                <option value="">Chọn danh mục</option>
                                 {% for cat in categories %}
-                                <option value="{{ cat.cate_id }}">{{ cat.name }}</option>
+                                <option value="{{ cat.cate_id }}">{% if cat.name == 'School Supplies' %}Đồ dùng học tập
+                                {% elif cat.name == 'Sports Equipment' %}Thiết bị thể thao
+                                {% elif cat.name == 'Musical Instruments' %}Nhạc cụ
+                                {% elif cat.name == 'Uniforms' %}Đồng phục
+                                {% elif cat.name == 'Art Supplies' %}Dụng cụ mỹ thuật
+                                {% elif cat.name == 'Books' %}Sách
+                                {% elif cat.name == 'Electronics' %}Điện tử
+                                {% elif cat.name == 'Other' %}Khác
+                                {% else %}{{ cat.name }}
+                                {% endif %}</option>
                                 {% endfor %}
                             </select>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="transaction_type" class="form-label">Transaction Type</label>
-                            <select class="form-select" id="transaction_type" name="transaction_type" required>
-                                <option value="exchange_sale">Exchange/Sale</option>
-                                <option value="exchange">Exchange Only</option>
-                                <option value="sale">Sale Only</option>
-                                <option value="for_campaign">For Campaign</option>
-                            </select>
-                            <div class="form-text">Select how you want to offer this item.</div>
+                            <div class="invalid-feedback">Vui lòng chọn danh mục</div>
                         </div>
 
-                        <!-- Exchange requirements field - initially hidden -->
-                        <div class="mb-3" id="exchange-requirements-field" style="display: none;">
-                            <label for="exchange_requirements" class="form-label">Exchange Requirements</label>
-                            <textarea class="form-control" id="exchange_requirements" name="exchange_requirements" rows="3" 
-                                      placeholder="Describe what you're looking for in exchange (e.g. specific items, categories, conditions)"></textarea>
-                            <div class="form-text">Specify what you would accept in exchange for this item.</div>
-                            
-                            <div class="mt-3">
-                                <label for="transaction_fee" class="form-label">
-                                    Transaction Fee (If Any)</label>
-                                <input type="number" class="form-control" id="transaction_fee" name="transaction_fee" 
-                                       min="0" step="1000" value="5000" placeholder="Ví dụ: 5000 VNĐ">
-                                <div class="form-text">Đề xuất mức phí nhỏ (đóng vào quỹ chung)</div>
-                            </div>
+                        <div class="mb-3">
+                            <label for="condition" class="form-label">Tình trạng</label>
+                            <select class="form-select" id="condition" name="condition" required>
+                                <option value="">Chọn tình trạng</option>
+                                <option value="new">Mới</option>
+                                <option value="like_new">Như mới</option>
+                                <option value="good">Tốt</option>
+                                <option value="fair">Khá</option>
+                                <option value="poor">Cũ</option>
+                            </select>
+                            <div class="invalid-feedback">Vui lòng chọn tình trạng</div>
                         </div>
 
-                        <div class="mb-3" id="campaign-selection" style="display: none;">
-                            <label for="campaign_id" class="form-label">Select Campaign for Donation</label>
-                            <select class="form-select" id="campaign_id" name="campaign_id">
-                                <option value="">Select a campaign</option>
-                                {% for campaign in active_campaigns %}
-                                <option value="{{ campaign.campaign_id }}" data-campaign-type="{{ campaign.campaign_type }}">{{ campaign.name }}</option>
-                                {% endfor %}
+                        <div class="mb-3">
+                            <label for="price" class="form-label">Giá (VNĐ)</label>
+                            <input type="number" class="form-control" id="price" name="price" min="0" required>
+                            <div class="invalid-feedback">Vui lòng nhập giá hợp lệ</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="images" class="form-label">Hình ảnh</label>
+                            <input type="file" class="form-control" id="images" name="images" multiple accept="image/*" required>
+                            <div class="invalid-feedback">Vui lòng chọn ít nhất một hình ảnh</div>
+                            <small class="text-muted">Có thể chọn nhiều hình ảnh</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Thông tin bổ sung</h5>
+                        
+                        <div class="mb-3">
+                            <label for="location" class="form-label">Vị trí</label>
+                            <input type="text" class="form-control" id="location" name="location" required>
+                            <div class="invalid-feedback">Vui lòng nhập vị trí</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="exchange_type" class="form-label">Loại giao dịch</label>
+                            <select class="form-select" id="exchange_type" name="transaction_type" required>
+                                <option value="">Chọn loại giao dịch</option>
+                                <option value="sale">Bán</option>
+                                <option value="exchange">Đổi</option>
+                                <option value="donation">Tặng</option>
                             </select>
-                            <div class="form-text">When this item is sold, the proceeds will be donated to the selected campaign.</div>
+                            <div class="invalid-feedback">Vui lòng chọn loại giao dịch</div>
                         </div>
-                        
-                        <!-- Campaign Type field - initially hidden -->
-                        <div class="mb-3" id="campaign-type-field" style="display: none;">
-                            <label for="campaign_type" class="form-label">Campaign Type</label>
-                            <input type="text" class="form-control" id="campaign_type" name="campaign_type" readonly>
-                            <!-- <div class="form-text">This is the type of the selected campaign.</div> -->
-                        </div>
-                        
+
                         <div class="mb-3">
-                            <label for="price" class="form-label">Price ($)</label>
-                            <input type="number" class="form-control" id="price" name="price" step="1" min="0" required>
-                            <!-- <div class="form-text">Set to 0 for free items or donations.</div> -->
+                            <label for="tags" class="form-label">Thẻ</label>
+                            <input type="text" class="form-control" id="tags" name="tags" placeholder="Nhập các thẻ, phân cách bằng dấu phẩy">
+                            <small class="text-muted">Ví dụ: điện thoại, samsung, mới</small>
                         </div>
-                        
-                        <div class="mb-3">
-                            <label for="image" class="form-label">Item Image</label>
-                            <input type="file" class="form-control" id="image" name="image" accept="image/*">
-                            <div class="form-text">Optional. Maximum file size: 5MB. Recommended: 800x600px.</div>
-                        </div>
-                        
-                        <div class="alert alert-info alert-permanent">
-                            <i class="fas fa-info-circle"></i> Your item will be reviewed by an administrator before being published.
-                        </div>
-                        
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                            <a href="/dashboard" class="btn btn-outline-secondary me-md-2">Cancel</a>
-                            <button type="submit" class="btn btn-primary">Submit Item</button>
-                        </div>
-                    </form>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary">Đăng sản phẩm</button>
+                    <a href="/items/browse" class="btn btn-outline-secondary">Hủy</a>
                 </div>
             </div>
         </div>
-    </div>
+    </form>
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Get elements
-    const transactionTypeSelect = document.getElementById('transaction_type');
-    const campaignSelectionDiv = document.getElementById('campaign-selection');
-    const campaignSelect = document.getElementById('campaign_id');
-    const exchangeRequirementsDiv = document.getElementById('exchange-requirements-field');
-    const exchangeRequirementsInput = document.getElementById('exchange_requirements');
-    const campaignTypeField = document.getElementById('campaign-type-field');
-    const campaignTypeInput = document.getElementById('campaign_type');
-    const priceField = document.getElementById('price').closest('.mb-3'); // Get price field container
-    
-    // Function to toggle form fields based on transaction type
-    function toggleFormFields() {
-        const selectedType = transactionTypeSelect.value;
-        
-        // Handle campaign selection visibility
-        if (selectedType === 'for_campaign') {
-            campaignSelectionDiv.style.display = 'block';
-            campaignSelect.setAttribute('required', 'required');
-            // Check if a campaign is already selected
-            updateCampaignTypeField();
-        } else {
-            campaignSelectionDiv.style.display = 'none';
-            campaignTypeField.style.display = 'none';
-            campaignSelect.removeAttribute('required');
-        }
-        
-        // Handle exchange requirements visibility
-        if (selectedType === 'exchange_sale' || selectedType === 'exchange') {
-            exchangeRequirementsDiv.style.display = 'block';
-            exchangeRequirementsInput.setAttribute('required', 'required');
-        } else {
-            exchangeRequirementsDiv.style.display = 'none';
-            exchangeRequirementsInput.removeAttribute('required');
-        }
-        
-        // Handle price field visibility
-        updatePriceFieldVisibility();
-    }
-    
-    // Function to update price field visibility
-    function updatePriceFieldVisibility() {
-        const selectedType = transactionTypeSelect.value;
-        let hidePrice = false;
-        
-        // Hide price for Exchange Only
-        if (selectedType === 'exchange') {
-            hidePrice = true;
-        }
-        
-        // Hide price for Campaign Type "donation"
-        if (selectedType === 'for_campaign') {
-            const selectedOption = campaignSelect.options[campaignSelect.selectedIndex];
-            if (selectedOption && selectedOption.value) {
-                const campaignType = selectedOption.getAttribute('data-campaign-type');
-                if (campaignType === 'donation') {
-                    hidePrice = true;
-                }
+// Form validation
+(function () {
+    'use strict'
+    var forms = document.querySelectorAll('.needs-validation')
+    Array.prototype.slice.call(forms).forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+                event.preventDefault()
+                event.stopPropagation()
             }
-        }
-        
-        if (hidePrice) {
-            priceField.style.display = 'none';
-            document.getElementById('price').removeAttribute('required');
-            document.getElementById('price').value = '0'; // Set price to 0
-        } else {
-            priceField.style.display = 'block';
-            document.getElementById('price').setAttribute('required', 'required');
-        }
-    }
-    
-    // Function to update campaign type field based on selection
-    function updateCampaignTypeField() {
-        const selectedOption = campaignSelect.options[campaignSelect.selectedIndex];
-        
-        if (campaignSelect.value && selectedOption) {
-            const campaignType = selectedOption.getAttribute('data-campaign-type');
-            if (campaignType) {
-                campaignTypeInput.value = campaignType.charAt(0).toUpperCase() + campaignType.slice(1);
-                campaignTypeField.style.display = 'block';
-                
-                // Update price field visibility when campaign changes
-                updatePriceFieldVisibility();
-            } else {
-                campaignTypeField.style.display = 'none';
-            }
-        } else {
-            campaignTypeField.style.display = 'none';
-        }
-    }
-    
-    // Set initial state
-    toggleFormFields();
-    
-    // Add event listeners
-    transactionTypeSelect.addEventListener('change', toggleFormFields);
-    campaignSelect.addEventListener('change', updateCampaignTypeField);
-});
+            form.classList.add('was-validated')
+        }, false)
+    })
+})()
 </script>
 {% endblock %}

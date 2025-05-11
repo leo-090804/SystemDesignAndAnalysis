@@ -345,7 +345,7 @@ async def approve_item(item_id: int = Path(...), admin: dict = Depends(admin_req
         if item:
             # Create notification for item owner
             notification = {
-                "message": f"Your item '{item['name']}' has been approved.",
+                "message": f"Sản phẩm '{item['name']}' của bạn đã được duyệt.",
                 "created_at": datetime.now().isoformat(),
                 "is_read": False,
                 # "noti_id": await get_next_id(db, "notifications", "noti_id"),
@@ -375,7 +375,7 @@ async def reject_item(item_id: int = Path(...), admin: dict = Depends(admin_requ
         item = await db.items.find_one({"item_id": item_id})
         if item:
             notification = {
-                "message": f"Your item '{item['name']}' has been rejected. Reason: {reason}",
+                "message": f"Sản phẩm '{item['name']}' của bạn đã bị từ chối. Lý do: {reason}",
                 "created_at": datetime.now().isoformat(),
                 "is_read": False,
                 # "noti_id": await get_next_id(db, "notifications", "noti_id")

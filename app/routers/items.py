@@ -444,7 +444,7 @@ async def purchase_item(item_id: int = Path(...), user: dict = Depends(user_requ
 
         # Create notification for seller
         seller_notification = {
-            "message": f"Your item '{item['name']}' has a pending purchase from {user['name']}. Waiting for admin approval.",
+            "message": f"Sản phẩm '{item['name']}' của bạn có một yêu cầu mua từ {user['name']}. Đang chờ quản trị viên duyệt.",
             "created_at": now.isoformat(),
             "is_read": False,
             "is_seen": False,
@@ -459,26 +459,24 @@ async def purchase_item(item_id: int = Path(...), user: dict = Depends(user_requ
         admin_users = await db.users.find({"role": "admin"}).to_list(length=100)
         for admin in admin_users:
             admin_notification = {
-                "message": f"New purchase transaction: '{item['name']}' by {user['name']} needs approval.",
+                "message": f"Giao dịch mua mới: '{item['name']}' bởi {user['name']} cần được duyệt.",
                 "created_at": now.isoformat(),
                 "is_read": False,
                 "is_seen": False,
-                # "noti_id": await get_next_id(db, "notifications", "noti_id"),
                 "noti_id": int(str(uuid.uuid4().int)[:9]),
                 "user_id": admin["user_id"],
                 "related_item_id": item_id,
                 "related_transaction_id": transaction_id,
-                "priority": "high",  # Add priority to highlight this notification
+                "priority": "high",
             }
             await db.notifications.insert_one(admin_notification)
 
         # Create notification for buyer
         buyer_notification = {
-            "message": f"Your purchase of '{item['name']}' is pending admin approval.",
+            "message": f"Yêu cầu mua sản phẩm '{item['name']}' của bạn đang chờ quản trị viên duyệt.",
             "created_at": now.isoformat(),
             "is_read": False,
             "is_seen": False,
-            # "noti_id": await get_next_id(db, "notifications", "noti_id"),
             "noti_id": int(str(uuid.uuid4().int)[:9]),
             "user_id": user["user_id"],
             "related_item_id": item_id,
@@ -635,7 +633,7 @@ async def exchange_proposal(
     await db.transactions.insert_one(transaction)
     # Gửi thông báo cho chủ sở hữu sản phẩm
     admin_notification = {
-        "message": f"You have received an exchange proposal for item '{item['name']}' from {user['name']}",
+        "message": f"Bạn vừa nhận được một đề xuất trao đổi cho sản phẩm '{item['name']}' từ {user['name']}",
         "created_at": datetime.now().isoformat(),
         "is_read": False,
         "is_seen": False,
@@ -649,7 +647,7 @@ async def exchange_proposal(
     admin_users = await db.users.find({"role": "admin"}).to_list(length=100)
     for admin in admin_users:
         noti = {
-            "message": f"New exchange proposal for item '{item['name']}' from {user['name']}",
+            "message": f"Có đề xuất trao đổi mới cho sản phẩm '{item['name']}' từ {user['name']}",
             "created_at": datetime.now().isoformat(),
             "is_read": False,
             "is_seen": False,
@@ -678,9 +676,9 @@ async def accept_exchange_proposal(item_id: int, proposal_id: int, user: dict = 
     await db.transactions.update_one({"transaction_id": proposal_id}, {"$set": {"status": "accepted", "status_updated_at": datetime.now().isoformat()}})
     # Cập nhật trạng thái item (pending_exchange)
     await db.items.update_one({"item_id": item_id}, {"$set": {"status": "pending_exchange", "exchange_transaction_id": proposal_id}})
-    # Gửi thông báo cho người đề xuất
+    # Gửi thông báo cho người đề xuất (khi được chấp nhận)
     notify = {
-        "message": f"The owner has accepted the exchange proposal for item '{item['name']}' from {proposal['buyer_user_id']}",
+        "message": f"Chủ sở hữu đã chấp nhận đề xuất trao đổi cho sản phẩm '{item['name']}' từ bạn.",
         "created_at": datetime.now().isoformat(),
         "is_read": False,
         "is_seen": False,
@@ -694,7 +692,7 @@ async def accept_exchange_proposal(item_id: int, proposal_id: int, user: dict = 
     admin_users = await db.users.find({"role": "admin"}).to_list(length=100)
     for admin in admin_users:
         noti = {
-            "message": f"The owner has accepted the exchange proposal for item '{item['name']}' from {proposal['buyer_user_id']}",
+            "message": f"Chủ sở hữu đã chấp nhận đề xuất trao đổi cho sản phẩm '{item['name']}' từ {proposal['buyer_user_id']}",
             "created_at": datetime.now().isoformat(),
             "is_read": False,
             "is_seen": False,
@@ -724,9 +722,9 @@ async def reject_exchange_proposal(item_id: int, proposal_id: int, user: dict = 
     pending_count = await db.transactions.count_documents({"item_id": item_id, "transaction_type": "exchange_proposal", "status": "pending"})
     if pending_count == 0:
         await db.items.update_one({"item_id": item_id}, {"$set": {"status": "active", "exchange_transaction_id": None}})
-    # Gửi thông báo cho người đề xuất
+    # Gửi thông báo cho người đề xuất (khi bị từ chối)
     notify = {
-        "message": f"Your exchange proposal for item '{item['name']}' has been rejected.",
+        "message": f"Đề xuất trao đổi của bạn cho sản phẩm '{item['name']}' đã bị từ chối.",
         "created_at": datetime.now().isoformat(),
         "is_read": False,
         "is_seen": False,
@@ -760,9 +758,9 @@ async def admin_complete_exchange(item_id: int, proposal_id: int, admin: dict = 
         }
     )
     await db.items.update_one({"item_id": item_id}, {"$set": {"status": "exchanged"}})
-    # Gửi thông báo cho các bên liên quan
+    # Gửi thông báo xác nhận hoàn tất trao đổi
     notify_buyer = {
-        "message": f"The exchange transaction for item '{item['name']}' has been confirmed as completed by admin!",
+        "message": f"Giao dịch trao đổi cho sản phẩm '{item['name']}' đã được quản trị viên xác nhận hoàn tất!",
         "created_at": datetime.now().isoformat(),
         "is_read": False,
         "is_seen": False,
@@ -772,7 +770,7 @@ async def admin_complete_exchange(item_id: int, proposal_id: int, admin: dict = 
         "related_transaction_id": proposal_id,
     }
     notify_seller = {
-        "message": f"The exchange transaction for item '{item['name']}' has been confirmed as completed by admin!",
+        "message": f"Giao dịch trao đổi cho sản phẩm '{item['name']}' đã được quản trị viên xác nhận hoàn tất!",
         "created_at": datetime.now().isoformat(),
         "is_read": False,
         "is_seen": False,

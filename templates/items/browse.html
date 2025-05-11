@@ -4,40 +4,49 @@
 
 {% block content %}
 <div class="container py-4">
-    <h2 class="mb-4">Browse Items</h2>
+    <h2 class="mb-4">Tìm kiếm sản phẩm</h2>
 
     <!-- Filters and Search -->
     <div class="card mb-4">
         <div class="card-body">
             <form method="get" class="row g-3">
                 <div class="col-md-3">
-                    <label for="category" class="form-label">Category</label>
+                    <label for="category" class="form-label">Danh mục</label>
                     <select class="form-select" id="category" name="category">
-                        <option value="">All Categories</option>
+                        <option value="">Tất cả danh mục</option>
                         {% for cat in categories %}
                         <option value="{{ cat.cate_id }}" {% if category == cat.cate_id %}selected{% endif %}>
-                            {{ cat.name }}
+                            {% if cat.name == 'School Supplies' %}Đồ dùng học tập
+                            {% elif cat.name == 'Sports Equipment' %}Thiết bị thể thao
+                            {% elif cat.name == 'Musical Instruments' %}Nhạc cụ
+                            {% elif cat.name == 'Uniforms' %}Đồng phục
+                            {% elif cat.name == 'Art Supplies' %}Dụng cụ mỹ thuật
+                            {% elif cat.name == 'Books' %}Sách
+                            {% elif cat.name == 'Electronics' %}Điện tử
+                            {% elif cat.name == 'Other' %}Khác
+                            {% else %}{{ cat.name }}
+                            {% endif %}
                         </option>
                         {% endfor %}
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <label for="sort_by" class="form-label">Sort By</label>
+                    <label for="sort_by" class="form-label">Sắp xếp theo</label>
                     <select class="form-select" id="sort_by" name="sort_by">
-                        <option value="latest" {% if sort_by == 'latest' %}selected{% endif %}>Newest First</option>
-                        <option value="oldest" {% if sort_by == 'oldest' %}selected{% endif %}>Oldest First</option>
-                        <option value="price_low" {% if sort_by == 'price_low' %}selected{% endif %}>Price: Low to High</option>
-                        <option value="price_high" {% if sort_by == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+                        <option value="latest" {% if sort_by == 'latest' %}selected{% endif %}>Mới nhất</option>
+                        <option value="oldest" {% if sort_by == 'oldest' %}selected{% endif %}>Cũ nhất</option>
+                        <option value="price_low" {% if sort_by == 'price_low' %}selected{% endif %}>Giá: Thấp đến cao</option>
+                        <option value="price_high" {% if sort_by == 'price_high' %}selected{% endif %}>Giá: Cao đến thấp</option>
                     </select>
                 </div>
                 <div class="col-md-4">
-                    <label for="search" class="form-label">Search</label>
+                    <label for="search" class="form-label">Tìm kiếm</label>
                     <input type="text" class="form-control" id="search" name="search" 
-                           placeholder="Search items..." value="{{ search or '' }}">
+                           placeholder="Tìm kiếm sản phẩm..." value="{{ search or '' }}">
                 </div>
                 <div class="col-md-2">
                     <label class="form-label">&nbsp;</label>
-                    <button type="submit" class="btn btn-primary d-block w-100">Apply</button>
+                    <button type="submit" class="btn btn-primary">Áp dụng</button>
                 </div>
             </form>
         </div>
@@ -63,25 +72,25 @@
                         
                         <!-- Modified price display to handle Exchange Only items -->
                         {% if item.transaction_type == 'sale' %}
-                        ${{ "%.2f"|format(item.price) }}
+                        {{ "{:,}".format(item.price|int) }} VNĐ
                         {% elif item.transaction_type == 'exchange' %}
-                        <span>Exchange Only</span>
+                        <span>Chỉ trao đổi</span>
                         {% if item.transaction_fee %}
-                        <br><small class="text-muted">Transaction Fee: {{ "{:,}".format(item.transaction_fee|int) }} VNĐ</small>
+                        <br><small class="text-muted">Phí giao dịch: {{ "{:,}".format(item.transaction_fee|int) }} VNĐ</small>
                         {% endif %}
                         {% elif item.transaction_type == 'for_campaign' and item.campaign_type == 'fundraising' %}
-                        ${{ "%.2f (For fundraising)"|format(item.price) }}
+                        {{ "{:,}".format(item.price|int) }} VNĐ <span class="badge bg-success">Cho gây quỹ</span>
                         {% elif item.transaction_type == 'exchange_sale' %}
-                        ${{ "%.2f (Exchange Available)"|format(item.price) }}
+                        {{ "{:,}".format(item.price|int) }} VNĐ <span class="badge bg-info">Có thể trao đổi</span>
                         {% if item.transaction_fee %}
-                        <br><small class="text-muted">Transaction Fee: {{ "{:,}".format(item.transaction_fee|int) }} VNĐ</small>
+                        <br><small class="text-muted">Phí giao dịch: {{ "{:,}".format(item.transaction_fee|int) }} VNĐ</small>
                         {% endif %}
                         {% else %}
-                        <span class="badge bg-secondary">Unknown</span>
+                        <span class="badge bg-secondary">Không xác định</span>
                         {% endif %}
                     </div>
                     <div class="card-footer">
-                        <a href="/items/{{ item.item_id }}" class="btn btn-primary w-100">View Details</a>
+                        <a class="btn btn-outline-primary" href="/items/{{ item.item_id }}">Xem chi tiết</a>
                     </div>
                 </div>
             </div>
@@ -89,8 +98,8 @@
         {% else %}
             <div class="col-12 text-center py-5">
                 <i class="fas fa-search fa-4x text-muted mb-3"></i>
-                <h5>No items found</h5>
-                <p class="text-muted">Try adjusting your search criteria.</p>
+                <h5>Không tìm thấy sản phẩm nào</h5>
+                <p class="text-muted">Hãy thử thay đổi tiêu chí tìm kiếm.</p>
             </div>
         {% endif %}
     </div>
@@ -100,10 +109,7 @@
     <nav aria-label="Page navigation" class="mt-4">
         <ul class="pagination justify-content-center">
             <li class="page-item {% if page == 1 %}disabled{% endif %}">
-                <a class="page-link" href="?page={{ page - 1 }}
-                    {% if category %}&category={{ category }}{% endif %}
-                    {% if search %}&search={{ search }}{% endif %}
-                    {% if sort_by %}&sort_by={{ sort_by }}{% endif %}">Previous</a>
+                <a class="page-link" href="?page={{ page - 1 }}{% if category %}&category={{ category }}{% endif %}{% if search %}&search={{ search }}{% endif %}{% if sort_by %}&sort_by={{ sort_by }}{% endif %}">Trước</a>
             </li>
             
             {% for p in range(1, total_pages + 1) %}
@@ -116,13 +122,12 @@
             {% endfor %}
             
             <li class="page-item {% if page == total_pages %}disabled{% endif %}">
-                <a class="page-link" href="?page={{ page + 1 }}
-                    {% if category %}&category={{ category }}{% endif %}
-                    {% if search %}&search={{ search }}{% endif %}
-                    {% if sort_by %}&sort_by={{ sort_by }}{% endif %}">Next</a>
+                <a class="page-link" href="?page={{ page + 1 }}{% if category %}&category={{ category }}{% endif %}{% if search %}&search={{ search }}{% endif %}{% if sort_by %}&sort_by={{ sort_by }}{% endif %}">Sau</a>
             </li>
         </ul>
     </nav>
     {% endif %}
+
+    <a class="btn btn-primary" href="/items/create">Đăng sản phẩm mới</a>
 </div>
 {% endblock %}

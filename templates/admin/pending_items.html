@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}Pending Items - Admin{% endblock %}
+{% block title %}Sản phẩm chờ duyệt - Quản trị viên{% endblock %}
 
 {% block content %}
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Pending Items</h2>
-        <a href="/admin/dashboard" class="btn btn-outline-secondary">Back to Dashboard</a>
+        <h2>Sản phẩm chờ duyệt</h2>
+        <a href="/admin/dashboard" class="btn btn-outline-secondary">Về trang quản trị</a>
     </div>
 
     <div class="card">
@@ -26,41 +26,41 @@
                         <div class="card-body">
                             <h5 class="card-title">{{ item.name }}</h5>
                             <p class="card-text text-truncate">{{ item.description }}</p>
-                            <p class="card-text"><small class="text-muted">Posted by: {{ item.user_name }}</small></p>
+                            <p class="card-text"><small class="text-muted">Đăng bởi: {{ item.user_name }}</small></p>
                             <p class="card-text"><strong>
                             {% if item.transaction_type == 'sale' %}
-                            ${{ "%.2f"|format(item.price) }}
+                            {{ "{:,}".format(item.price|int) }} VNĐ
                             {% elif item.transaction_type == 'exchange' %}
-                            <span>Exchange Only</span>
+                            <span>Chỉ trao đổi</span>
                             {% elif item.transaction_type == 'for_campaign' and item.campaign_type == 'fundraising' %}
-                            ${{ "%.2f (For fundraising)"|format(item.price) }}
+                            {{ "{:,}".format(item.price|int) }} VNĐ <span class="badge bg-success">Cho gây quỹ</span>
                             {% elif item.transaction_type == 'for_campaign' and item.campaign_type == 'donation' %}
-                            <span>Donation</span>
+                            <span>Quyên góp</span>
                             {% elif item.transaction_type == 'exchange_sale' %}
-                            ${{ "%.2f (Exchange Available)"|format(item.price) }}
+                            {{ "{:,}".format(item.price|int) }} VNĐ <span class="badge bg-info">Có thể trao đổi</span>
                             {% else %}
-                            <span class="badge bg-secondary">Unknown</span>
+                            <span class="badge bg-secondary">Không xác định</span>
                             {% endif %}
                             </strong></p>
                             {% if item.status == 'active' %}
-                                <span class="badge bg-success">Active</span>
+                                <span class="badge bg-success">Đang hiển thị</span>
                             {% elif item.status == 'pending' %}
-                                <span class="badge bg-warning">Pending</span>
+                                <span class="badge bg-warning">Chờ duyệt</span>
                             {% elif item.status == 'rejected' %}
-                                <span class="badge bg-danger">Rejected</span>
+                                <span class="badge bg-danger">Bị từ chối</span>
                             {% elif item.status == 'sold' %}
-                                <span class="badge bg-info">Sold</span>
+                                <span class="badge bg-info">Đã bán</span>
                             {% elif item.status == 'pending_sale' %}
-                                <span class="badge bg-primary">Sale Pending</span>
+                                <span class="badge bg-primary">Chờ bán</span>
                             {% elif item.status == 'donation_pending' %}
-                                <span class="badge bg-warning text-dark">Donation Pending</span>
+                                <span class="badge bg-warning text-dark">Chờ quyên góp</span>
                             {% else %}
                                 <span class="badge bg-secondary">{{ item.status }}</span>
                             {% endif %}
                         </div>
                         <div class="card-footer">
                             <div class="d-grid gap-2">
-                                <a href="/admin/items/{{ item.item_id }}" class="btn btn-primary">Review</a>
+                                <a href="/admin/items/{{ item.item_id }}" class="btn btn-primary">Duyệt</a>
                             </div>
                         </div>
                     </div>
@@ -74,7 +74,7 @@
                 <nav aria-label="Page navigation">
                     <ul class="pagination justify-content-center">
                         <li class="page-item {% if page == 1 %}disabled{% endif %}">
-                            <a class="page-link" href="?page={{ page - 1 }}">Previous</a>
+                            <a class="page-link" href="?page={{ page - 1 }}">Trước</a>
                         </li>
                         
                         {% for p in range(1, total_pages + 1) %}
@@ -84,7 +84,7 @@
                         {% endfor %}
                         
                         <li class="page-item {% if page == total_pages %}disabled{% endif %}">
-                            <a class="page-link" href="?page={{ page + 1 }}">Next</a>
+                            <a class="page-link" href="?page={{ page + 1 }}">Sau</a>
                         </li>
                     </ul>
                 </nav>
@@ -93,8 +93,8 @@
             {% else %}
             <div class="text-center py-5">
                 <i class="fas fa-clipboard-check fa-4x text-muted mb-3"></i>
-                <h5>No pending items to review!</h5>
-                <p class="text-muted">All items have been reviewed.</p>
+                <h5>Không có sản phẩm chờ duyệt!</h5>
+                <p class="text-muted">Tất cả sản phẩm đã được kiểm tra.</p>
             </div>
             {% endif %}
         </div>

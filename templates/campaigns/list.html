@@ -1,24 +1,24 @@
 {% extends "base.html" %}
 
-{% block title %}Campaigns - School Exchange Platform{% endblock %}
+{% block title %}Chiến dịch - Nền tảng Trao Đổi Trường Học{% endblock %}
 
 {% block content %}
 <div class="container py-4">
-    <h2 class="mb-4">Active Campaigns</h2>
+    <h2 class="mb-4">Chiến dịch đang diễn ra</h2>
 
-    <!-- Filter tabs -->
+    <!-- Tabs bộ lọc -->
     <ul class="nav nav-pills mb-4">
         <li class="nav-item">
-            <a class="nav-link {% if not campaign_type %}active{% endif %}" href="/campaigns">All</a>
+            <a class="nav-link {% if not campaign_type %}active{% endif %}" href="/campaigns">Tất cả</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link {% if campaign_type == 'fundraising' %}active{% endif %}" href="/campaigns?campaign_type=fundraising">Fundraising</a>
+            <a class="nav-link {% if campaign_type == 'fundraising' %}active{% endif %}" href="/campaigns?campaign_type=fundraising">Gây quỹ</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link {% if campaign_type == 'donation' %}active{% endif %}" href="/campaigns?campaign_type=donation">Donation</a>
+            <a class="nav-link {% if campaign_type == 'donation' %}active{% endif %}" href="/campaigns?campaign_type=donation">Quyên góp</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link {% if campaign_type == 'exchange' %}active{% endif %}" href="/campaigns?campaign_type=exchange">Exchange</a>
+            <a class="nav-link {% if campaign_type == 'exchange' %}active{% endif %}" href="/campaigns?campaign_type=exchange">Trao đổi</a>
         </li>
     </ul>
 
@@ -32,51 +32,44 @@
                 </div>
                 <div class="card-body">
                     <p class="card-text">{{ campaign.description|truncate(100) }}</p>
-                    
                     {% if campaign.goal_amount %}
                     <div class="mb-3">
-                        <p><strong>Goal:</strong> ${{ "%.2f"|format(campaign.goal_amount) }}</p>
+                        <p><strong>Mục tiêu:</strong> {{ "{:,}".format(campaign.goal_amount|int) }} VNĐ</p>
                         <div class="progress">
                             {% set progress = (campaign.current_amount / campaign.goal_amount * 100)|round|int %}
-                            <div class="progress-bar" role="progressbar" style="width: {{ progress }}%;" 
-                                 aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100">{{ progress }}%</div>
+                            <div class="progress-bar" role="progressbar" style="width: {{ progress }}%;" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100">{{ progress }}%</div>
                         </div>
                     </div>
                     {% endif %}
-                    
-                    <p class="mb-1"><small class="text-muted">From: {{ campaign.start_date }}</small></p>
-                    <p><small class="text-muted">To: {{ campaign.end_date }}</small></p>
-                    
+                    <p class="mb-1"><small class="text-muted">Từ: {{ campaign.start_date }}</small></p>
+                    <p><small class="text-muted">Đến: {{ campaign.end_date }}</small></p>
                     <div class="d-grid gap-2 mt-3">
-                        <a href="/campaigns/{{ campaign.campaign_id }}" class="btn btn-outline-primary">View Details</a>
+                        <a href="/campaigns/{{ campaign.campaign_id }}" class="btn btn-outline-primary">Xem chi tiết</a>
                     </div>
                 </div>
                 <div class="card-footer text-muted">
                     <span class="badge {% if campaign.campaign_type == 'fundraising' %}bg-success{% elif campaign.campaign_type == 'donation' %}bg-info{% else %}bg-primary{% endif %}">
-                        {{ campaign.campaign_type|capitalize }}
+                        {% if campaign.campaign_type == 'fundraising' %}Gây quỹ{% elif campaign.campaign_type == 'donation' %}Quyên góp{% elif campaign.campaign_type == 'exchange' %}Trao đổi{% else %}{{ campaign.campaign_type|capitalize }}{% endif %}
                     </span>
                 </div>
             </div>
         </div>
         {% endfor %}
     </div>
-    
-    <!-- Pagination -->
+    <!-- Phân trang -->
     {% if total_pages > 1 %}
     <nav aria-label="Page navigation" class="mt-4">
         <ul class="pagination justify-content-center">
             <li class="page-item {% if page == 1 %}disabled{% endif %}">
-                <a class="page-link" href="?page={{ page - 1 }}{% if campaign_type %}&campaign_type={{ campaign_type }}{% endif %}">Previous</a>
+                <a class="page-link" href="?page={{ page - 1 }}{% if campaign_type %}&campaign_type={{ campaign_type }}{% endif %}">Trước</a>
             </li>
-            
             {% for p in range(1, total_pages + 1) %}
             <li class="page-item {% if p == page %}active{% endif %}">
                 <a class="page-link" href="?page={{ p }}{% if campaign_type %}&campaign_type={{ campaign_type }}{% endif %}">{{ p }}</a>
             </li>
             {% endfor %}
-            
             <li class="page-item {% if page == total_pages %}disabled{% endif %}">
-                <a class="page-link" href="?page={{ page + 1 }}{% if campaign_type %}&campaign_type={{ campaign_type }}{% endif %}">Next</a>
+                <a class="page-link" href="?page={{ page + 1 }}{% if campaign_type %}&campaign_type={{ campaign_type }}{% endif %}">Tiếp</a>
             </li>
         </ul>
     </nav>
@@ -84,8 +77,8 @@
     {% else %}
     <div class="text-center py-5">
         <i class="fas fa-bullhorn fa-4x text-muted mb-3"></i>
-        <h4>No active campaigns</h4>
-        <p class="text-muted">There are no active campaigns at the moment.</p>
+        <h4>Không có chiến dịch nào đang diễn ra</h4>
+        <p class="text-muted">Hiện tại chưa có chiến dịch nào đang diễn ra.</p>
     </div>
     {% endif %}
 </div>

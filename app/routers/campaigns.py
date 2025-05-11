@@ -127,15 +127,15 @@ async def make_donation(
         try:
             # Validate amount (can be done before or inside lock)
             if amount <= 0:
-                return {"success": False, "message": "Donation amount must be greater than zero"}
+                return {"success": False, "message": "Số tiền quyên góp phải lớn hơn 0"}
             
             # Get campaign (can be done before or inside lock)
             campaign = await db.campaigns.find_one({"campaign_id": campaign_id})
             if not campaign:
-                return {"success": False, "message": "Campaign not found"}
+                return {"success": False, "message": "Không tìm thấy chiến dịch"}
             
             if campaign["status"] != "active":
-                return {"success": False, "message": "This campaign is no longer active"}
+                return {"success": False, "message": "Chiến dịch này không còn hoạt động"}
 
             # --- Critical Section Start ---
             # Re-check for duplicate submissions INSIDE the lock
@@ -153,7 +153,7 @@ async def make_donation(
                 logger.info(f"Prevented duplicate donation (inside lock) from user {user['user_id']} to campaign {campaign_id}")
                 return {
                     "success": True,
-                    "message": "Your donation is already being processed.",
+                    "message": "Khoản quyên góp của bạn đang được xử lý. Vui lòng chờ quản trị viên duyệt.",
                     "transaction_id": existing_transaction["transaction_id"]
                 }
                 
@@ -182,7 +182,7 @@ async def make_donation(
             # Notifications can happen outside the critical section if desired
             # Create notification for donor
             donor_notification = {
-                "message": f"Your donation of ${amount:.2f} to '{campaign['name']}' is pending admin approval.",
+                "message": f"Khoản quyên góp {amount:.2f} VNĐ cho chiến dịch '{campaign['name']}' của bạn đang chờ quản trị viên duyệt.",
                 "created_at": current_time,
                 "is_read": False,
                 "is_seen": False,
@@ -197,7 +197,7 @@ async def make_donation(
             admin_users = await db.users.find({"role": "admin"}).to_list(length=100)
             for admin in admin_users:
                 admin_notification = {
-                    "message": f"New donation of ${amount:.2f} by {user['name']} for campaign '{campaign['name']}' needs approval.",
+                    "message": f"Có khoản quyên góp mới {amount:.2f} VNĐ từ {user['name']} cho chiến dịch '{campaign['name']}' cần được duyệt.",
                     "created_at": current_time,
                     "is_read": False,
                     "is_seen": False,
@@ -205,20 +205,20 @@ async def make_donation(
                     "user_id": admin["user_id"],
                     "related_item_id": None,
                     "related_transaction_id": transaction_id,
-                    "priority": "high"  # Add priority to highlight this notification
+                    "priority": "high"
                 }
                 await db.notifications.insert_one(admin_notification)
             
             return {
-                "success": True, 
-                "message": "Donation submitted successfully. Waiting for admin approval.",
+                "success": True,
+                "message": "Gửi quyên góp thành công. Đang chờ quản trị viên duyệt.",
                 "transaction_id": transaction_id
             }
             
         except Exception as e:
             logger.error(f"Error processing donation inside lock: {str(e)}")
             # The lock is automatically released by 'async with' even if an error occurs
-            return {"success": False, "message": f"An error occurred while processing your donation"}
+            return {"success": False, "message": "Đã xảy ra lỗi khi xử lý quyên góp của bạn"}
         # Lock is released automatically here
 
 # Helper function to get next ID - if not already defined elsewhere

@@ -1,33 +1,33 @@
 {% extends "base.html" %}
 
-{% block title %}Transaction Details - Admin{% endblock %}
+{% block title %}Chi tiết giao dịch - Quản trị viên{% endblock %}
 
 {% block content %}
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Transaction #{{ transaction.transaction_id }}</h2>
-        <a href="/admin/transactions" class="btn btn-outline-secondary">Back to Transactions</a>
+        <h2>Giao dịch #{{ transaction.transaction_id }}</h2>
+        <a href="/admin/transactions" class="btn btn-outline-secondary">Quay lại danh sách giao dịch</a>
     </div>
 
     <div class="row">
         <div class="col-md-8">
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5>Transaction Details</h5>
+                    <h5>Chi tiết giao dịch</h5>
                 </div>
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6">
-                            <h6>Basic Information</h6>
+                            <h6>Thông tin cơ bản</h6>
                             <ul class="list-group list-group-flush mb-3">
                                 <li class="list-group-item d-flex justify-content-between">
-                                    <span>Transaction Type:</span>
+                                    <span>Loại giao dịch:</span>
                                     <span>{{ transaction.transaction_type|capitalize }}</span>
                                 </li>
                                 <li class="list-group-item d-flex justify-content-between">
-                                    <span>Amount / Transaction Fee:</span>
+                                    <span>Số tiền / Phí giao dịch:</span>
                                     {% if transaction.amount is defined %}
-                                        <span class="fw-bold">${{ "%.2f"|format(transaction.amount) }}</span>
+                                        <span class="fw-bold">{{ "{:,}".format(transaction.amount|int) }} VNĐ</span>
                                     {% elif transaction.transaction_fee is defined %}
                                         <span class="fw-bold text-info">{{ "{:,}".format(transaction.transaction_fee|int) }} VNĐ</span>
                                     {% else %}
@@ -35,24 +35,24 @@
                                     {% endif %}
                                 </li>
                                 <li class="list-group-item d-flex justify-content-between">
-                                    <span>Date:</span>
+                                    <span>Ngày:</span>
                                     <span>{{ transaction.transaction_date.split('T')[0] }}</span>
                                 </li>
                                 <li class="list-group-item d-flex justify-content-between">
-                                    <span>Status:</span>
+                                    <span>Trạng thái:</span>
                                     <span>
                                         {% if transaction.status == 'pending' %}
-                                        <span class="badge bg-warning text-dark">Pending</span>
+                                        <span class="badge bg-warning text-dark">Đang chờ</span>
                                         {% elif transaction.status == 'processing' %}
-                                        <span class="badge bg-warning text-dark">Processing</span>
+                                        <span class="badge bg-warning text-dark">Đang xử lý</span>
                                         {% elif transaction.status == 'accepted' %}
-                                        <span class="badge bg-primary">Accepted</span>
+                                        <span class="badge bg-primary">Đã chấp nhận</span>
                                         {% elif transaction.status == 'completed' %}
-                                        <span class="badge bg-success">Completed</span>
+                                        <span class="badge bg-success">Hoàn thành</span>
                                         {% elif transaction.status == 'rejected' %}
-                                        <span class="badge bg-danger">Rejected</span>
+                                        <span class="badge bg-danger">Từ chối</span>
                                         {% elif transaction.status == 'cancelled' %}
-                                        <span class="badge bg-danger">Cancelled</span>
+                                        <span class="badge bg-danger">Đã hủy</span>
                                         {% else %}
                                         <span class="badge bg-secondary">{{ transaction.status|capitalize }}</span>
                                         {% endif %}
@@ -60,76 +60,72 @@
                                 </li>
                                 {% if transaction.cancellation_reason %}
                                 <li class="list-group-item">
-                                    <span>Cancellation Reason:</span>
+                                    <span>Lý do hủy:</span>
                                     <p class="mb-0 mt-1 text-danger">{{ transaction.cancellation_reason }}</p>
                                 </li>
                                 {% endif %}
                             </ul>
-                            
-                            <h6>Expiration</h6>
+                            <h6>Hạn xử lý</h6>
                             <ul class="list-group list-group-flush mb-3">
                                 <li class="list-group-item d-flex justify-content-between">
-                                    <span>Expiration Date:</span>
+                                    <span>Hạn xử lý:</span>
                                     <span>
                                         {% if transaction.expiration_date %}
                                             {{ transaction.expiration_date.split('T')[0] }}
                                         {% else %}
-                                            N/A
+                                            Không có
                                         {% endif %}
                                     </span>
                                 </li>
                             </ul>
                         </div>
                         <div class="col-md-6">
-                            <h6>User Information</h6>
+                            <h6>Thông tin người dùng</h6>
                             <ul class="list-group list-group-flush mb-3">
                                 <li class="list-group-item">
                                     <div class="d-flex justify-content-between">
-                                        <span>Buyer:</span>
+                                        <span>Người mua:</span>
                                         <span>{{ buyer.name }}</span>
                                     </div>
-                                    <small class="text-muted">ID: {{ buyer.user_id }}</small>
+                                    <small class="text-muted">Mã: {{ buyer.user_id }}</small>
                                 </li>
                                 <li class="list-group-item">
                                     <div class="d-flex justify-content-between">
-                                        <span>Seller:</span>
+                                        <span>Người bán:</span>
                                         <span>{{ seller.name }}</span>
                                     </div>
-                                    <small class="text-muted">ID: {{ seller.user_id }}</small>
+                                    <small class="text-muted">Mã: {{ seller.user_id }}</small>
                                 </li>
                             </ul>
-                            
-                            <h6>Item Information</h6>
+                            <h6>Thông tin vật phẩm</h6>
                             <ul class="list-group list-group-flush">
                                 <li class="list-group-item">
                                     <div class="d-flex justify-content-between">
-                                        <span>Item ID:</span>
+                                        <span>Mã vật phẩm:</span>
                                         <span>{{ item.item_id }}</span>
                                     </div>
                                 </li>
                                 <li class="list-group-item">
-                                    <span>Item Name:</span>
+                                    <span>Tên vật phẩm:</span>
                                     <p class="mb-0 mt-1">{{ item.name }}</p>
                                 </li>
                                 <li class="list-group-item">
                                     <a href="/items/{{ item.item_id }}" class="btn btn-sm btn-outline-primary">
-                                        View Item
+                                        Xem vật phẩm
                                     </a>
                                 </li>
                             </ul>
                         </div>
                     </div>
-                    
-                    <!-- Actions for Processing transactions -->
                     {% if transaction.status == 'processing' %}
                     <div class="mt-4">
-                        <h6>Actions</h6>
+                        <h6>Thao tác</h6>
                         <div class="d-flex gap-2">
                             <button class="btn btn-success" id="approve-btn">
-                                <i class="fas fa-check me-1"></i> Approve Transaction
+                                <i class="fas fa-check me-1"></i> Duyệt giao dịch
                             </button>
                             <button class="btn btn-danger" id="cancel-btn" data-bs-toggle="modal" data-bs-target="#cancelModal">
-                                <i class="fas fa-times me-1"></i> Cancel Transaction
+                                <i class="fas fa-times me-1"></i> Hủy giao dịch
                             </button>
                         </div>
                     </div>
@@ -137,32 +133,30 @@
                 </div>
             </div>
         </div>
-        
         <div class="col-md-4">
             <div class="card">
                 <div class="card-header">
-                    <h5>Timeline</h5>
+                    <h5>Tiến trình giao dịch</h5>
                 </div>
                 <div class="card-body">
                     <ul class="list-group list-group-flush timeline">
                         <li class="list-group-item">
                             <div class="timeline-badge bg-primary"></div>
-                            <strong>Transaction Created</strong>
+                            <strong>Khởi tạo giao dịch</strong>
                             <p class="mb-0">{{ transaction.transaction_date.split('T')[0] }}</p>
                         </li>
-                        
                         {% if transaction.status == 'completed' %}
                         <li class="list-group-item">
                             <div class="timeline-badge bg-success"></div>
-                            <strong>Transaction Completed</strong>
+                            <strong>Hoàn thành giao dịch</strong>
                             <p class="mb-0">{{ transaction.status_updated_at.split('T')[0] }}</p>
                         </li>
                         {% elif transaction.status == 'cancelled' %}
                         <li class="list-group-item">
                             <div class="timeline-badge bg-danger"></div>
-                            <strong>Transaction Cancelled</strong>
+                            <strong>Đã hủy giao dịch</strong>
                             <p class="mb-0">{{ transaction.status_updated_at.split('T')[0] }}</p>
-                            <p class="mb-0 text-muted">Reason: {{ transaction.cancellation_reason }}</p>
+                            <p class="mb-0 text-muted">Lý do: {{ transaction.cancellation_reason }}</p>
                         </li>
                         {% endif %}
                     </ul>
@@ -172,25 +166,25 @@
     </div>
 </div>
 
-<!-- Cancel Modal -->
+<!-- Modal hủy giao dịch -->
 <div class="modal fade" id="cancelModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Cancel Transaction</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title">Hủy giao dịch</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
             </div>
             <div class="modal-body">
                 <form id="cancel-form">
                     <div class="mb-3">
-                        <label for="reason" class="form-label">Cancellation Reason:</label>
+                        <label for="reason" class="form-label">Lý do hủy:</label>
                         <textarea class="form-control" id="reason" name="reason" rows="3" required></textarea>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-danger" id="confirm-cancel">Confirm Cancellation</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-danger" id="confirm-cancel">Xác nhận hủy</button>
             </div>
         </div>
     </div>
@@ -199,11 +193,11 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Approve button
+    // Duyệt giao dịch
     const approveBtn = document.getElementById('approve-btn');
     if (approveBtn) {
         approveBtn.addEventListener('click', function() {
-            if (confirm('Are you sure you want to approve this transaction?')) {
+            if (confirm('Bạn có chắc chắn muốn duyệt giao dịch này?')) {
                 fetch('/admin/transactions/{{ transaction.transaction_id }}/approve', {
                     method: 'POST',
                     headers: {
@@ -215,34 +209,31 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (data.success) {
                         Swal.fire({
                             icon: 'success',
-                            title: 'Transaction Approved',
-                            text: 'The transaction has been successfully approved.'
+                            title: 'Giao dịch đã được duyệt',
+                            text: 'Giao dịch đã được duyệt thành công.'
                         }).then(() => {
                             window.location.reload();
                         });
                     } else {
                         Swal.fire({
                             icon: 'error',
-                            title: 'Error',
-                            text: data.message || 'Failed to approve transaction.'
+                            title: 'Lỗi',
+                            text: data.message || 'Không thể duyệt giao dịch.'
                         });
                     }
                 });
             }
         });
     }
-    
-    // Cancel button
+    // Hủy giao dịch
     const confirmCancelBtn = document.getElementById('confirm-cancel');
     if (confirmCancelBtn) {
         confirmCancelBtn.addEventListener('click', function() {
             const reason = document.getElementById('reason').value.trim();
-            
             if (!reason) {
-                alert('Please provide a reason for cancellation');
+                alert('Vui lòng nhập lý do hủy');
                 return;
             }
-            
             fetch('/admin/transactions/{{ transaction.transaction_id }}/cancel', {
                 method: 'POST',
                 headers: {
@@ -257,16 +248,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.success) {
                     Swal.fire({
                         icon: 'success',
-                        title: 'Transaction Cancelled',
-                        text: 'The transaction has been cancelled.'
+                        title: 'Giao dịch đã bị hủy',
+                        text: 'Giao dịch đã bị hủy thành công.'
                     }).then(() => {
                         window.location.reload();
                     });
                 } else {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Error',
-                        text: data.message || 'Failed to cancel transaction.'
+                        title: 'Lỗi',
+                        text: data.message || 'Không thể hủy giao dịch.'
                     });
                 }
             });

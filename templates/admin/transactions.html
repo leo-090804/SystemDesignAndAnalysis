@@ -1,32 +1,32 @@
 {% extends "base.html" %}
 
-{% block title %}Transactions - Admin{% endblock %}
+{% block title %}Giao dịch - Quản trị viên{% endblock %}
 
 {% block content %}
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Transactions</h2>
-        <a href="/admin/dashboard" class="btn btn-outline-secondary">Back to Dashboard</a>
+        <h2>Giao dịch</h2>
+        <a href="/admin/dashboard" class="btn btn-outline-secondary">Quay lại Bảng điều khiển</a>
     </div>
 
     <!-- Filter tabs -->
     <ul class="nav nav-pills mb-4">
         <li class="nav-item">
-            <a class="nav-link {% if not status %}active{% endif %}" href="/admin/transactions">All</a>
+            <a class="nav-link {% if not status %}active{% endif %}" href="/admin/transactions">Tất cả</a>
         </li>
         <li class="nav-item">
             <a class="nav-link {% if status == 'pending' %}active{% endif %}" href="/admin/transactions?status=pending">
-                Pending
+                Đang chờ
             </a>
         </li>
         <li class="nav-item">
             <a class="nav-link {% if status == 'completed' %}active{% endif %}" href="/admin/transactions?status=completed">
-                Completed
+                Hoàn thành
             </a>
         </li>
         <li class="nav-item">
             <a class="nav-link {% if status == 'cancelled' %}active{% endif %}" href="/admin/transactions?status=cancelled">
-                Cancelled
+                Đã hủy
             </a>
         </li>
     </ul>
@@ -34,7 +34,7 @@
     <!-- SECTION 1: REGULAR ITEM TRANSACTIONS -->
     <div class="card mb-5">
         <div class="card-header bg-primary text-white">
-            <h4 class="mb-0">Item Purchases & Sales</h4>
+            <h4 class="mb-0">Mua bán vật phẩm</h4>
         </div>
         {% if regular_transactions %}
         <div class="card-body p-0">
@@ -42,14 +42,14 @@
                 <table class="table table-hover mb-0">
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Item</th>
-                            <th>Amount</th>
-                            <th>Buyer</th>
-                            <th>Seller</th>
-                            <th>Status</th>
-                            <th>Date</th>
-                            <th>Actions</th>
+                            <th>Mã</th>
+                            <th>Vật phẩm</th>
+                            <th>Số tiền</th>
+                            <th>Người mua</th>
+                            <th>Người bán</th>
+                            <th>Trạng thái</th>
+                            <th>Ngày</th>
+                            <th>Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -57,24 +57,24 @@
                         <tr class="clickable-row" data-href="/admin/transactions/{{ transaction.transaction_id }}" style="cursor: pointer;">
                             <td>{{ transaction.transaction_id }}</td>
                             <td>{{ transaction.item.name }}</td>
-                            <td>${{ "%.2f"|format(transaction.amount) }}</td>
+                            <td>{{ "{:,}".format(transaction.amount|int) }} VNĐ</td>
                             <td>{{ transaction.buyer.name }}</td>
                             <td>{{ transaction.seller.name }}</td>
                             <td>
                                 {% if transaction.status == 'pending' %}
-                                <span class="badge bg-warning text-dark">Pending</span>
+                                <span class="badge bg-warning text-dark">Đang chờ</span>
                                 {% elif transaction.status == 'completed' %}
-                                <span class="badge bg-success">Completed</span>
+                                <span class="badge bg-success">Hoàn thành</span>
                                 {% elif transaction.status == 'cancelled' %}
-                                <span class="badge bg-danger">Cancelled</span>
+                                <span class="badge bg-danger">Đã hủy</span>
                                 {% endif %}
                             </td>
                             <td>{{ transaction.transaction_date.split('T')[0] }}</td>
                             <td>
-                                <a href="/admin/transactions/{{ transaction.transaction_id }}" class="btn btn-sm btn-outline-primary action-btn">View</a>
+                                <a href="/admin/transactions/{{ transaction.transaction_id }}" class="btn btn-sm btn-outline-primary action-btn">Xem</a>
                                 {% if transaction.status == 'pending' %}
-                                <button class="btn btn-sm btn-outline-success approve-btn action-btn" data-id="{{ transaction.transaction_id }}">Approve</button>
-                                <button class="btn btn-sm btn-outline-danger cancel-btn action-btn" data-id="{{ transaction.transaction_id }}" data-bs-toggle="modal" data-bs-target="#cancelModal{{ transaction.transaction_id }}">Cancel</button>
+                                <button class="btn btn-sm btn-outline-success approve-btn action-btn" data-id="{{ transaction.transaction_id }}">Duyệt</button>
+                                <button class="btn btn-sm btn-outline-danger cancel-btn action-btn" data-id="{{ transaction.transaction_id }}" data-bs-toggle="modal" data-bs-target="#cancelModal{{ transaction.transaction_id }}">Hủy</button>
                                 {% endif %}
                             </td>
                         </tr>
@@ -86,8 +86,8 @@
         {% else %}
         <div class="card-body text-center py-5">
             <i class="fas fa-shopping-cart fa-4x text-muted mb-3"></i>
-            <h5>No purchase transactions found</h5>
-            <p class="text-muted">There are no item purchase transactions matching the selected criteria.</p>
+            <h5>Không tìm thấy giao dịch mua bán</h5>
+            <p class="text-muted">Không có giao dịch mua bán vật phẩm nào phù hợp với tiêu chí đã chọn.</p>
         </div>
         {% endif %}
     </div>
@@ -95,7 +95,7 @@
     <!-- SECTION 2: CAMPAIGN DONATIONS -->
     <div class="card">
         <div class="card-header bg-success text-white">
-            <h4 class="mb-0">Campaign Donations</h4>
+            <h4 class="mb-0">Quyên góp chiến dịch</h4>
         </div>
         {% if campaign_transactions %}
         <div class="card-body p-0">
@@ -103,13 +103,13 @@
                 <table class="table table-hover mb-0">
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Campaign</th>
-                            <th>Amount</th>
-                            <th>Donor</th>
-                            <th>Status</th>
-                            <th>Date</th>
-                            <th>Actions</th>
+                            <th>Mã</th>
+                            <th>Chiến dịch</th>
+                            <th>Số tiền</th>
+                            <th>Người quyên góp</th>
+                            <th>Trạng thái</th>
+                            <th>Ngày</th>
+                            <th>Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -117,24 +117,24 @@
                         <tr class="clickable-row" data-href="/admin/transactions/{{ transaction.transaction_id }}" style="cursor: pointer;">
                             <td>{{ transaction.transaction_id }}</td>
                             <td>{{ transaction.campaign.name }}</td>
-                            <td>${{ "%.2f"|format(transaction.amount) }}</td>
+                            <td>{{ "{:,}".format(transaction.amount|int) }} VNĐ</td>
                             <td>{{ transaction.donor.name }}</td>
                             <td>
                                 {% if transaction.status == 'pending' %}
-                                <span class="badge bg-warning text-dark">Pending</span>
+                                <span class="badge bg-warning text-dark">Đang chờ</span>
                                 {% elif transaction.status == 'completed' %}
-                                <span class="badge bg-success">Completed</span>
+                                <span class="badge bg-success">Hoàn thành</span>
                                 {% elif transaction.status == 'cancelled' %}
-                                <span class="badge bg-danger">Cancelled</span>
+                                <span class="badge bg-danger">Đã hủy</span>
                                 {% endif %}
                             </td>
                             <td>{{ transaction.transaction_date.split('T')[0] }}</td>
                             <td>
-                                <a href="/admin/transactions/{{ transaction.transaction_id }}" class="btn btn-sm btn-outline-primary action-btn">View</a>
-                                <a href="/admin/campaigns/{{ transaction.campaign_id }}" class="btn btn-sm btn-outline-success action-btn">View Campaign</a>
+                                <a href="/admin/transactions/{{ transaction.transaction_id }}" class="btn btn-sm btn-outline-primary action-btn">Xem</a>
+                                <a href="/admin/campaigns/{{ transaction.campaign_id }}" class="btn btn-sm btn-outline-success action-btn">Xem chiến dịch</a>
                                 {% if transaction.status == 'pending' %}
-                                <button class="btn btn-sm btn-outline-success approve-btn action-btn" data-id="{{ transaction.transaction_id }}">Approve</button>
-                                <button class="btn btn-sm btn-outline-danger cancel-btn action-btn" data-id="{{ transaction.transaction_id }}" data-bs-toggle="modal" data-bs-target="#cancelModal{{ transaction.transaction_id }}">Cancel</button>
+                                <button class="btn btn-sm btn-outline-success approve-btn action-btn" data-id="{{ transaction.transaction_id }}">Duyệt</button>
+                                <button class="btn btn-sm btn-outline-danger cancel-btn action-btn" data-id="{{ transaction.transaction_id }}" data-bs-toggle="modal" data-bs-target="#cancelModal{{ transaction.transaction_id }}">Hủy</button>
                                 {% endif %}
                             </td>
                         </tr>
@@ -146,8 +146,8 @@
         {% else %}
         <div class="card-body text-center py-5">
             <i class="fas fa-hand-holding-heart fa-4x text-muted mb-3"></i>
-            <h5>No donation transactions found</h5>
-            <p class="text-muted">There are no campaign donation transactions matching the selected criteria.</p>
+            <h5>Không tìm thấy giao dịch quyên góp</h5>
+            <p class="text-muted">Không có giao dịch quyên góp chiến dịch nào phù hợp với tiêu chí đã chọn.</p>
         </div>
         {% endif %}
     </div>
@@ -155,7 +155,7 @@
     <!-- SECTION 3: EXCHANGE PROPOSALS -->
     <div class="card mt-5">
         <div class="card-header bg-warning text-dark">
-            <h4 class="mb-0">Exchange Proposals</h4>
+            <h4 class="mb-0">Đề xuất trao đổi</h4>
         </div>
         {% if exchange_transactions %}
         <div class="card-body p-0">
@@ -163,14 +163,14 @@
                 <table class="table table-hover mb-0">
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Item</th>
-                            <th>Buyer</th>
-                            <th>Seller</th>
-                            <th>Fee</th>
-                            <th>Status</th>
-                            <th>Date</th>
-                            <th>Actions</th>
+                            <th>Mã</th>
+                            <th>Vật phẩm</th>
+                            <th>Người mua</th>
+                            <th>Người bán</th>
+                            <th>Phí</th>
+                            <th>Trạng thái</th>
+                            <th>Ngày</th>
+                            <th>Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -184,25 +184,25 @@
                                 {% if transaction.transaction_fee is defined %}
                                     <span class="fw-bold text-info">{{ "{:,}".format(transaction.transaction_fee|int) }} VNĐ</span>
                                 {% else %}
-                                    <span class="text-muted">Not applicable</span>
+                                    <span class="text-muted">Không áp dụng</span>
                                 {% endif %}
                             </td>
                             <td>
                                 {% if transaction.status == 'pending' %}
-                                <span class="badge bg-warning text-dark">Pending</span>
+                                <span class="badge bg-warning text-dark">Đang chờ</span>
                                 {% elif transaction.status == 'accepted' %}
-                                <span class="badge bg-primary">Accepted</span>
+                                <span class="badge bg-primary">Đã chấp nhận</span>
                                 {% elif transaction.status == 'completed' %}
-                                <span class="badge bg-success">Completed</span>
+                                <span class="badge bg-success">Hoàn thành</span>
                                 {% elif transaction.status == 'rejected' %}
-                                <span class="badge bg-danger">Rejected</span>
+                                <span class="badge bg-danger">Từ chối</span>
                                 {% else %}
                                 <span class="badge bg-secondary">{{ transaction.status|capitalize }}</span>
                                 {% endif %}
                             </td>
                             <td>{{ transaction.transaction_date.split('T')[0] }}</td>
                             <td>
-                                <a href="/admin/transactions/{{ transaction.transaction_id }}" class="btn btn-sm btn-outline-primary action-btn">View</a>
+                                <a href="/admin/transactions/{{ transaction.transaction_id }}" class="btn btn-sm btn-outline-primary action-btn">Xem</a>
                             </td>
                         </tr>
                         {% endfor %}
@@ -213,8 +213,8 @@
         {% else %}
         <div class="card-body text-center py-5">
             <i class="fas fa-exchange-alt fa-4x text-muted mb-3"></i>
-            <h5>No exchange proposals found</h5>
-            <p class="text-muted">There are no exchange proposal transactions matching the selected criteria.</p>
+            <h5>Không tìm thấy đề xuất trao đổi</h5>
+            <p class="text-muted">Không có đề xuất trao đổi nào phù hợp với tiêu chí đã chọn.</p>
         </div>
         {% endif %}
     </div>
@@ -227,20 +227,20 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Cancel Donation Transaction</h5>
+                    <h5 class="modal-title">Hủy giao dịch quyên góp</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <form class="cancel-form" data-id="{{ transaction.transaction_id }}">
                         <div class="mb-3">
-                            <label for="reason{{ transaction.transaction_id }}" class="form-label">Cancellation Reason:</label>
+                            <label for="reason{{ transaction.transaction_id }}" class="form-label">Lý do hủy:</label>
                             <textarea class="form-control" id="reason{{ transaction.transaction_id }}" name="reason" rows="3" required></textarea>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-danger confirm-cancel-btn" data-id="{{ transaction.transaction_id }}">Confirm Cancellation</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="button" class="btn btn-danger confirm-cancel-btn" data-id="{{ transaction.transaction_id }}">Xác nhận hủy</button>
                 </div>
             </div>
         </div>
@@ -270,7 +270,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.approve-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const transactionId = this.getAttribute('data-id');
-            if (confirm('Are you sure you want to approve this transaction?')) {
+            if (confirm('Bạn có chắc chắn muốn duyệt giao dịch này?')) {
                 fetch(`/admin/transactions/${transactionId}/approve`, {
                     method: 'POST',
                     headers: {
@@ -282,16 +282,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (data.success) {
                         Swal.fire({
                             icon: 'success',
-                            title: 'Transaction Approved',
-                            text: 'The transaction has been successfully approved.'
+                            title: 'Giao dịch đã được duyệt',
+                            text: 'Giao dịch đã được duyệt thành công.'
                         }).then(() => {
                             window.location.reload();
                         });
                     } else {
                         Swal.fire({
                             icon: 'error',
-                            title: 'Error',
-                            text: data.message || 'Failed to approve transaction.'
+                            title: 'Lỗi',
+                            text: data.message || 'Không thể duyệt giao dịch.'
                         });
                     }
                 });
@@ -305,7 +305,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const transactionId = this.getAttribute('data-id');
             const reason = document.getElementById('reason' + transactionId).value.trim();
             if (!reason) {
-                alert('Please provide a reason for cancellation');
+                alert('Vui lòng nhập lý do hủy giao dịch');
                 return;
             }
             fetch(`/admin/transactions/${transactionId}/cancel`, {
@@ -322,16 +322,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.success) {
                     Swal.fire({
                         icon: 'success',
-                        title: 'Transaction Cancelled',
-                        text: 'The donation transaction has been cancelled.'
+                        title: 'Giao dịch đã bị hủy',
+                        text: 'Giao dịch quyên góp đã được hủy.'
                     }).then(() => {
                         window.location.reload();
                     });
                 } else {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Error',
-                        text: data.message || 'Failed to cancel transaction.'
+                        title: 'Lỗi',
+                        text: data.message || 'Không thể hủy giao dịch.'
                     });
                 }
             });
