@@ -39,7 +39,7 @@
                     <th>Price</th>
                     <th>Status</th>
                     <th>Posted Date</th>
-                    <th>Actions</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -94,7 +94,9 @@
                         <div class="btn-group">
                             <a href="/items/{{ item.item_id }}" class="btn btn-sm btn-outline-primary">View</a>
                             {% if item.status == 'active' or item.status == 'pending' %}
-                            <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete('{{ item.item_id }}, {{ item.name }}')">Delete</button>
+                            <button class="btn btn-sm btn-danger" onclick="confirmDelete('{{ item.item_id }}', '{{ item.name }}')">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
                             {% endif %}
                         </div>
                     </td>
@@ -144,7 +146,7 @@
             </div>
             <div class="modal-body">
                 <p>Are you sure you want to delete "<span id="item-name"></span>"?</p>
-                <p class="text-danger">This action cannot be undone.</p>
+                <!-- <p class="text-danger">This action cannot be undone.</p> -->
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -158,15 +160,16 @@
 let itemIdToDelete = null;
 
 function confirmDelete(itemId, itemName) {
-    itemIdToDelete = itemId;
+    // Make sure only the numeric ID is stored, not a combination of ID and name
+    itemIdToDelete = parseInt(itemId); // Ensure it's a number
     document.getElementById('item-name').textContent = itemName;
     new bootstrap.Modal(document.getElementById('deleteModal')).show();
 }
 
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('confirm-delete').addEventListener('click', function() {
+
         if (itemIdToDelete) {
-            // We'll implement item deletion in a future update
             window.location.href = `/items/${itemIdToDelete}/delete`;
         }
     });

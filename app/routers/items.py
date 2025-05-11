@@ -30,7 +30,7 @@ async def user_required(request: Request):
 async def browse_items(
     request: Request,
     user: dict = Depends(user_required),
-    category: Optional[str] = None,  
+    category: Optional[str] = None,
     search: Optional[str] = None,
     sort_by: str = "latest",
     page: int = Query(1, ge=1),
@@ -77,14 +77,14 @@ async def browse_items(
 
     # Get categories for filter dropdown
     categories = await db.categories.find({}).to_list(length=100)
-    
+
     for item in items:
         campaign = await db.campaigns.find_one({"campaign_id": item.get("campaign_id")})
         if campaign:
-            item['campaign_type'] = campaign.get("campaign_type")
+            item["campaign_type"] = campaign.get("campaign_type")
         else:
-            item['campaign_type'] = None
-        
+            item["campaign_type"] = None
+
     return templates.TemplateResponse(
         "items/browse.html",
         {
@@ -108,18 +108,13 @@ async def create_item_form(request: Request, user: dict = Depends(user_required)
 
     db = Database.db
     categories = await db.categories.find({}).to_list(length=100)
-    
+
     # Fetch active campaigns for donation items
     active_campaigns = await db.campaigns.find({"status": "active"}).to_list(length=100)
 
     return templates.TemplateResponse(
-        "items/create.html", 
-        {
-            "request": request, 
-            "user": user, 
-            "categories": categories,
-            "active_campaigns": active_campaigns
-        }
+        "items/create.html",
+        {"request": request, "user": user, "categories": categories, "active_campaigns": active_campaigns},
     )
 
 
@@ -158,7 +153,7 @@ async def create_item(
         "cate_id": category,
         "transaction_type": transaction_type,  # Save as transaction_type, not type
     }
-    
+
     # Add exchange requirements if provided
     if exchange_requirements:
         new_item["exchange_requirements"] = exchange_requirements
@@ -173,16 +168,16 @@ async def create_item(
             if campaign:
                 new_item["campaign_id"] = campaign_id_int
                 campaign_type = campaign.get("campaign_type")
-                
+
                 # For donation campaigns, create a transaction directly
                 if campaign_type == "donation":
                     # Mark the item specially
-                    new_item["donated"] = True
+                    # new_item["donated"] = True
                     new_item["status"] = "donation_pending"
-                    
+
                     # Create donation transaction
                     transaction_id = int(str(uuid.uuid4().int)[:9])
-                    
+
                     donation_transaction = {
                         "transaction_id": transaction_id,
                         "item_id": next_item_id,
@@ -194,15 +189,15 @@ async def create_item(
                         "status": "pending",  # Needs admin approval
                         "status_updated_at": datetime.now().isoformat(),
                         "campaign_id": campaign_id_int,
-                        "message": f"Item donation for campaign: {campaign.get('name', 'Unknown Campaign')}"
+                        "message": f"Item donation for campaign: {campaign.get('name', 'Unknown Campaign')}",
                     }
-                    
+
                     # Insert the transaction
                     await db.transactions.insert_one(donation_transaction)
-                    
+
                     # Add transaction reference to item
                     new_item["transaction_id"] = transaction_id
-                    
+
                     # Notify admin about the donation
                     admin_users = await db.users.find({"role": "admin"}).to_list(length=100)
                     for admin in admin_users:
@@ -217,7 +212,7 @@ async def create_item(
                             "related_transaction_id": transaction_id,
                         }
                         await db.notifications.insert_one(admin_notification)
-                    
+
                     # Create notification for the donor
                     donor_notification = {
                         "message": f"Your item '{name}' has been submitted as a donation to '{campaign.get('name', 'Unknown')}' campaign.",
@@ -305,13 +300,13 @@ async def my_items(
     items = await db.items.find(query).skip(skip).limit(limit).to_list(length=limit)
     total_items = await db.items.count_documents(query)
     total_pages = (total_items + limit - 1) // limit if total_items > 0 else 1
-    
+
     for item in items:
         campaign_id = await db.campaigns.find_one({"campaign_id": item.get("campaign_id")})
         if campaign_id:
-            item['campaign_type'] = campaign_id.get("campaign_type")
+            item["campaign_type"] = campaign_id.get("campaign_type")
         else:
-            item['campaign_type'] = None
+            item["campaign_type"] = None
 
     return templates.TemplateResponse(
         "items/my_items.html",
@@ -333,7 +328,13 @@ async def view_item(request: Request, item_id: int = Path(...), user: dict = Dep
 
     # Get item owner and category information
     owner = await db.users.find_one({"user_id": item["user_id"]})
+    
     category = await db.categories.find_one({"cate_id": item["cate_id"]})
+    
+    campaign = await db.campaigns.find_one({"campaign_id": item.get("campaign_id")})
+    if campaign:
+        campaign_type = campaign.get("campaign_type")
+        item["campaign_type"] = campaign_type
 
     # Only fetch related items if the current item is active
     related_items = []
@@ -405,12 +406,12 @@ async def purchase_item(item_id: int = Path(...), user: dict = Depends(user_requ
             "item_id": item_id,
             "campaign_id": None,
         }
-        
+
         campaign_id = item.get("campaign_id")
         if campaign_id:
             transaction["campaign_id"] = campaign_id
             transaction["transaction_type"] = "donation"
-        
+
         db.transactions.insert_one(transaction)
 
         # Update item status to pending_sale
@@ -479,7 +480,7 @@ async def purchase_item(item_id: int = Path(...), user: dict = Depends(user_requ
         #             "priority": "high",
         #         }
         #         await db.notifications.insert_one(organizer_notification)
-                
+
         #         # Also update admin notification to indicate this is a fundraising purchase
         #         for admin in admin_users:
         #             admin_notification["message"] = f"New fundraising purchase: '{item['name']}' by {user['name']} for campaign '{campaign.get('name')}'. Needs approval."
@@ -490,7 +491,7 @@ async def purchase_item(item_id: int = Path(...), user: dict = Depends(user_requ
             "message": "Purchase request submitted! Waiting for admin approval.",
             "transaction_id": transaction_id,
         }
-        
+
     except Exception as e:
         print(f"Error processing purchase: {str(e)}")
         return {"success": False, "message": "An error occurred during purchase."}
@@ -527,3 +528,29 @@ async def purchased_items(request: Request, user: dict = Depends(user_required),
         "items/purchased.html",
         {"request": request, "user": user, "items": purchased_items, "page": page, "total_pages": total_pages},
     )
+
+
+@router.get("/{item_id}/delete")
+async def delete_item(
+    request: Request,
+    item_id: int = Path(...),  # Make sure to define item_id as an integer
+    user: dict = Depends(user_required),
+):
+    # Check that the user owns this item
+    db = Database.db
+    item = await db.items.find_one({"item_id": item_id})
+
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+
+    if item["user_id"] != user["user_id"] and user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="You don't have permission to delete this item")
+
+    # Perform deletion
+    result = await db.items.delete_one({"item_id": item_id})
+
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=500, detail="Failed to delete item")
+
+    # Redirect back to the my items page
+    return RedirectResponse(url="/items/my", status_code=303)

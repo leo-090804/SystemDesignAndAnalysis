@@ -24,18 +24,58 @@
                     <h2 class="card-title">{{ item.name }}</h2>
                     <p class="badge bg-info">{{ category.name if category else "Uncategorized" }}</p>
                     
+                    {% if item.transaction_type == "sale" %}
                     <p class="fs-3 fw-bold text-primary">${{ "%.2f"|format(item.price) }}</p>
+
+                    {% elif item.transaction_type == "exchange_sale" %}
+                    <p class="fs-3 fw-bold text-primary">${{ "%.2f (Exchange Available)"|format(item.price) }}</p>
+                    <p class="fs-3 fw-bold text-primary">Exchange Requirements: {{ item.exchange_requirements }}</p>
+
+                    {% elif item.transaction_type == 'exchange' %}
+                    <p class="fs-3 fw-bold text-primary">Exchange Only</p>
+                    <p class="fs-3 fw-bold text-primary">Exchange Requirements: {{ item.exchange_requirements }}</p>
+
+                    {% elif item.transaction_type == 'for_campaign' and item.campaign_type == 'fundraising' %}
+                    <p class="fs-3 fw-bold text-primary">${{ "%.2f"|format(item.price) }} (For Fundraising)</p>
+
+                    {% else %}
+                    <p class="fs-3 fw-bold text-primary">Unknown</p>
+                    {% endif %}
+                
                     <p><i class="fas fa-user me-2"></i> Posted by: {{ owner.name }}</p>
                     <p><i class="fas fa-calendar me-2"></i> Posted on: {{ item.created_at.split('T')[0] }}</p>
                     
                     {% if item.status == 'active' and user.user_id != item.user_id %}
                     <div class="d-grid gap-2 my-4">
+                        {% if item.transaction_type == 'sale' %}
+                        <!-- Sale: only show Buy Now button -->
                         <button class="btn btn-primary btn-lg" id="buy-btn">
                             <i class="fas fa-shopping-cart me-2"></i> Buy Now
                         </button>
-                        <button class="btn btn-outline-primary">
-                            <i class="fas fa-comment me-2"></i> Contact Seller
+                        {% elif item.transaction_type == 'exchange' %}
+                        <!-- Exchange only: only show Exchange button -->
+                        <button class="btn btn-secondary btn-lg" id="exchange-btn">
+                            <i class="fas fa-exchange-alt me-2"></i> Request Exchange
                         </button>
+                        {% elif item.transaction_type == 'exchange_sale' %}
+                        <!-- Exchange or Sale: show both buttons -->
+                        <button class="btn btn-primary btn-lg" id="buy-btn">
+                            <i class="fas fa-shopping-cart me-2"></i> Buy Now
+                        </button>
+                        <button class="btn btn-secondary btn-lg" id="exchange-btn">
+                            <i class="fas fa-exchange-alt me-2"></i> Request Exchange
+                        </button>
+                        {% elif item.transaction_type == 'for_campaign' and item.campaign_type == 'fundraising' %}
+                        <!-- For fundraising campaigns: show appropriate button -->
+                        <button class="btn btn-primary btn-lg" id="buy-btn">
+                            <i class="fas fa-heart me-2"></i> Support Campaign
+                        </button>
+                        {% else %}
+                        <!-- Default case: show Buy Now button -->
+                        <button class="btn btn-primary btn-lg" id="buy-btn">
+                            <i class="fas fa-shopping-cart me-2"></i> Buy Now
+                        </button>
+                        {% endif %}
                     </div>
                     {% elif item.status == 'pending' and user.user_id == item.user_id %}
                     <div class="alert alert-warning alert-permanent pending-approval-alert">
@@ -110,7 +150,7 @@
 </div>
 
 <!-- Add a timeline section for user's view -->
-{% if user.user_id == item.user_id or user.role == 'admin' %}
+<!-- {% if user.user_id == item.user_id or user.role == 'admin' %}
 <div class="card mt-4">
     <div class="card-header">
         <h5><i class="fas fa-history me-2"></i> Item History</h5>
@@ -153,7 +193,7 @@
             {% endif %}
         </ul>
     </div>
-</div>
+</div> -->
 {% endif %}
 </div>
 </div>

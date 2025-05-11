@@ -397,7 +397,20 @@ async def cancel_transaction(
         campaign = await db.campaigns.find_one({"campaign_id": transaction["campaign_id"]})
         if not campaign:
             return {"success": False, "message": "Campaign not found"}
-
+        
+        campaign_type = campaign["campaign_type"]
+        
+        
+        if campaign_type == "fundraising":
+            # Get donor for fundraising campaign
+            donor = await db.users.find_one({"user_id": transaction["buyer_user_id"]})
+            if not donor:
+                return {"success": False, "message": "Donor not found"}
+            
+            
+            
+        # elif campain_type == "donation":
+            
         # Get donor
         donor = await db.users.find_one({"user_id": transaction["buyer_user_id"]})
         if not donor:

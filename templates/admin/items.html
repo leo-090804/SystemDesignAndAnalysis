@@ -7,9 +7,9 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Items Management</h2>
         <div>
-            <a href="/admin/items/pending" class="btn btn-warning">
+            <!-- <a href="/admin/items/pending" class="btn btn-warning">
                 <i class="fas fa-clock me-1"></i> Pending Items
-            </a>
+            </a> -->
             <a href="/admin/dashboard" class="btn btn-outline-secondary ms-2">
                 <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
             </a>
@@ -29,6 +29,8 @@
                         <option value="rejected" {% if status == 'rejected' %}selected{% endif %}>Rejected</option>
                         <option value="sold" {% if status == 'sold' %}selected{% endif %}>Sold</option>
                         <option value="pending_sale" {% if status == 'pending_sale' %}selected{% endif %}>Pending Sale</option>
+                        <option value="donation_pending" {% if status == 'donation_pending' %}selected{% endif %}>Pending Donation</option>
+                        <option value="donated" {% if status == 'donated' %}selected{% endif %}>Donated</option>
                     </select>
                 </div>
                 <div class="col-md-4">

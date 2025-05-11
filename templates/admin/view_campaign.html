@@ -88,10 +88,10 @@
                         <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editCampaignModal">
                             <i class="fas fa-edit me-1"></i> Edit Campaign
                         </button>
-                        <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#cancelCampaignModal" 
+                        <!-- <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#cancelCampaignModal" 
                                 {% if campaign.status != 'active' %}disabled{% endif %}>
                             <i class="fas fa-ban me-1"></i> Cancel Campaign
-                        </button>
+                        </button> -->
                         <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#completeCampaignModal"
                                 {% if campaign.status != 'active' %}disabled{% endif %}>
                             <i class="fas fa-check-circle me-1"></i> Mark as Completed
@@ -238,10 +238,10 @@
                         <label for="description" class="form-label">Description</label>
                         <textarea class="form-control" id="description" name="description" rows="4" required>{{ campaign.description }}</textarea>
                     </div>
-                    <div class="mb-3">
+                    <!-- <div class="mb-3">
                         <label for="organizer" class="form-label">Campaign Organizer</label>
                         <input type="text" class="form-control" id="organizer" name="organizer" value="{{ campaign.organizer }}" required>
-                    </div>
+                    </div> -->
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="start_date" class="form-label">Start Date</label>
@@ -258,15 +258,14 @@
                         <input type="number" class="form-control" id="goal_amount" name="goal_amount" min="0" step="0.01" value="{{ campaign.goal_amount if campaign.goal_amount else '' }}">
                         <div class="form-text">Optional for donation and exchange campaigns.</div>
                     </div>
-                    
-                    <div class="mb-3">
+                    <!-- <div class="mb-3">
                         <label for="status" class="form-label">Status</label>
                         <select class="form-select" id="status" name="status" required>
                             <option value="active" {% if campaign.status == 'active' %}selected{% endif %}>Active</option>
                             <option value="completed" {% if campaign.status == 'completed' %}selected{% endif %}>Completed</option>
                             <option value="cancelled" {% if campaign.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
                         </select>
-                    </div>
+                    </div> -->
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>

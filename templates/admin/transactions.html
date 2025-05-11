@@ -159,6 +159,33 @@
         </div>
         {% endif %}
     </div>
+
+    <!-- Add cancellation modals for each transaction -->
+    {% for transaction in regular_transactions + campaign_transactions %}
+    <div class="modal fade" id="cancelModal{{ transaction.transaction_id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Cancel Transaction</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to cancel this transaction?</p>
+                    <form id="cancelForm{{ transaction.transaction_id }}">
+                        <div class="mb-3">
+                            <label for="reason{{ transaction.transaction_id }}" class="form-label">Reason for cancellation:</label>
+                            <textarea class="form-control" id="reason{{ transaction.transaction_id }}" rows="3" required></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-danger confirm-cancel-btn" data-id="{{ transaction.transaction_id }}">Cancel Transaction</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
 </div>
 {% endblock %}
 
@@ -212,7 +239,75 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Cancel transaction handlers are using the modal forms defined for each transaction
+    // Cancel transaction handlers
+    document.querySelectorAll('.confirm-cancel-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const transactionId = this.getAttribute('data-id');
+            const reason = document.getElementById(`reason${transactionId}`).value.trim();
+            
+            if (!reason) {
+                alert('Please provide a reason for cancellation');
+                return;
+            }
+            
+            // Disable button and show loading state
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+            
+            fetch(`/admin/transactions/${transactionId}/cancel`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams({
+                    'reason': reason
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Hide the modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById(`cancelModal${transactionId}`));
+                modal.hide();
+                
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Transaction Cancelled',
+                        text: 'The transaction has been cancelled successfully.'
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    // Re-enable button
+                    this.disabled = false;
+                    this.innerHTML = 'Cancel Transaction';
+                    
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message || 'Failed to cancel transaction.'
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                
+                // Re-enable button
+                this.disabled = false;
+                this.innerHTML = 'Cancel Transaction';
+                
+                // Hide the modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById(`cancelModal${transactionId}`));
+                modal.hide();
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Network Error',
+                    text: 'There was a problem connecting to the server. Please try again.'
+                });
+            });
+        });
+    });
 });
 </script>
 {% endblock %}

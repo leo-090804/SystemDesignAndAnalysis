@@ -215,7 +215,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Items status chart
     const itemStatusCtx = document.getElementById('itemsChart').getContext('2d');
     const itemStatusData = {
-        labels: ['Active', 'Pending Approval', 'Rejected', 'Sold', 'Pending Sale', 'Pending Donation'],
+        labels: ['Active', 'Pending Approval', 'Rejected', 'Sold', 'Pending Sale', 'Pending Donation', 'Donated'],
         datasets: [{
             data: [
                 {{ item_status.active }},
@@ -223,7 +223,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 {{ item_status.rejected }},
                 {{ item_status.sold }},
                 {{ item_status.pending_sale }},
-                {{ item_status.donation_pending }}
+                {{ item_status.donation_pending }},
+                {{ item_status.donated }}  // Add donated items to the chart
+            
             ],
             backgroundColor: [
                 '#4caf50', // Active - green
@@ -231,7 +233,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 '#f44336', // Rejected - red
                 '#2196f3', // Sold - blue
                 '#9c27b0',  // Pending Sale - purple
-                '#ffc107'   // Pending Donation - yellow
+                '#ffc107',  // Pending Donation - yellow
+                '#673ab7'   // Donated - deep purple
             ],
             borderWidth: 1
         }]
