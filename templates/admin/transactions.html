@@ -57,7 +57,7 @@
                         <tr class="clickable-row" data-href="/admin/transactions/{{ transaction.transaction_id }}" style="cursor: pointer;">
                             <td>{{ transaction.transaction_id }}</td>
                             <td>{{ transaction.item.name }}</td>
-                            <td>${{ "%.2f"|format(transaction.amount) }}</td>
+                            <td>{{ "{:,}".format(transaction.amount|int) }} VNĐ</td>
                             <td>{{ transaction.buyer.name }}</td>
                             <td>{{ transaction.seller.name }}</td>
                             <td>
@@ -135,7 +135,7 @@
                         <tr class="clickable-row" data-href="/admin/transactions/{{ transaction.transaction_id }}" style="cursor: pointer;">
                             <td>{{ transaction.transaction_id }}</td>
                             <td>{{ transaction.campaign.name }}</td>
-                            <td>${{ "%.2f"|format(transaction.amount) }}</td>
+                            <td>{{ "{:,}".format(transaction.amount|int) }} VNĐ</td>
                             <td>{{ transaction.donor.name }}</td>
                             <td>
                                 {% if transaction.status == 'pending' %}

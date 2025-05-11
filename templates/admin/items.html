@@ -91,7 +91,7 @@
                                 {% if item.transaction_type in ['exchange', 'exchange_sale'] and item.transaction_fee %}
                                     <span class="text-info">{{ "{:,}".format(item.transaction_fee|int) }} VNĐ</span>
                                 {% else %}
-                                    ${{ "%.2f"|format(item.price) }}
+                                    {{ "{:,}".format(item.price|int) }} VNĐ
                                 {% endif %}
                             </td>
                             <td>{{ item.category_name }}</td>

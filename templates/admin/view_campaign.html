@@ -268,9 +268,9 @@
                     </div>
                     
                     <div class="mb-3" id="goal-amount-section">
-                        <label for="goal_amount" class="form-label">Goal Amount ($)</label>
-                        <input type="number" class="form-control" id="goal_amount" name="goal_amount" min="0" step="0.01" value="{{ campaign.goal_amount if campaign.goal_amount else '' }}">
-                        <div class="form-text">Only for fundraising campaigns.</div>
+                        <label for="goal_amount" class="form-label">Goal Amount (VNĐ)</label>
+                        <input type="number" class="form-control" id="goal_amount" name="goal_amount" min="1000" step="1000" value="{{ campaign.goal_amount if campaign.goal_amount else '' }}">
+                        <div class="form-text">Only for fundraising campaigns. Enter amount in Vietnamese Dong (VNĐ)</div>
                     </div>
                     <div class="mb-3" id="goal-item-section" style="display:none;">
                         <label for="goal_item" class="form-label">Goal Item (number of items)</label>

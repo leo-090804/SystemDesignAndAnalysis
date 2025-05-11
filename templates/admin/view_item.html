@@ -79,7 +79,7 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <p class="mb-1 text-muted">Price</p>
-                            <p class="mb-0 fw-bold">${{ "%.2f"|format(item.price) }}</p>
+                            <p class="mb-0 fw-bold">{{ "{:,}".format(item.price|int) }} VNĐ</p>
                         </div>
                         <div class="col-md-6 mb-3">
                             <p class="mb-1 text-muted">Category</p>

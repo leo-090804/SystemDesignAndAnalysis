@@ -24,7 +24,7 @@
                     <h2 class="card-title">{{ item.name }}</h2>
                     <p class="badge bg-info">{{ category.name if category else "Uncategorized" }}</p>
                     
-                    <p class="fs-3 fw-bold text-primary">${{ "%.2f"|format(item.price) }}</p>
+                    <p class="fs-3 fw-bold text-primary">{{ "{:,}".format(item.price|int) }} VNĐ</p>
                     <p><i class="fas fa-user me-2"></i> Posted by: {{ owner.name }}</p>
                     <p><i class="fas fa-calendar me-2"></i> Posted on: {{ item.created_at.split('T')[0] }}</p>
                     
@@ -171,7 +171,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p>Are you sure you want to purchase <strong>{{ item.name }}</strong> for <strong>${{ "%.2f"|format(item.price) }}</strong>?</p>
+                <p>Are you sure you want to purchase <strong>{{ item.name }}</strong> for <strong>{{ "{:,}".format(item.price|int) }} VNĐ</strong>?</p>
                 <!-- <p class="text-muted">This action cannot be undone.</p> -->
             </div>
             <div class="modal-footer">
