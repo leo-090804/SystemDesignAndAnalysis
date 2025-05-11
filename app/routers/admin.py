@@ -319,8 +319,14 @@ async def view_item(request: Request, item_id: int = Path(...), admin: dict = De
     owner = await db.users.find_one({"user_id": item["user_id"]})
     category = await db.categories.find_one({"cate_id": item["cate_id"]})
 
+    # Lấy danh sách transaction trao đổi
+    exchange_proposals = await db.transactions.find({
+        "transaction_type": "exchange_proposal",
+        "item_id": item_id
+    }).sort("transaction_date", -1).to_list(length=20)
+
     return templates.TemplateResponse(
-        "admin/view_item.html", {"request": request, "user": admin, "item": item, "owner": owner, "category": category}
+        "admin/view_item.html", {"request": request, "user": admin, "item": item, "owner": owner, "category": category, "exchange_proposals": exchange_proposals}
     )
 
 
@@ -789,33 +795,50 @@ async def view_user_profile(request: Request, user_id: int = Path(...), admin: d
 @router.get("/report", response_class=HTMLResponse)
 async def admin_report(request: Request, admin: dict = Depends(admin_required), month: Optional[int] = None, year: Optional[int] = None):
     db = Database.db
-    # Lấy danh sách năm có dữ liệu
-    years = await db.transactions.distinct("transaction_date")
-    years = sorted({int(dt[:4]) for dt in years if dt})
-    # Tạo filter thời gian
-    date_filter = {}
+
+    # Xây dựng filter cho ngày tháng
     item_date_filter = {}
-    campaign_date_filter = {}
     if month and year:
-        date_filter = {"$expr": {"$and": [
-            {"$eq": [{"$month": {"$dateFromString": {"dateString": "$transaction_date"}}}, month]},
-            {"$eq": [{"$year": {"$dateFromString": {"dateString": "$transaction_date"}}}, year]}
-        ]}}
-        item_date_filter = {"$expr": {"$and": [
-            {"$eq": [{"$month": {"$dateFromString": {"dateString": "$created_at"}}}, month]},
-            {"$eq": [{"$year": {"$dateFromString": {"dateString": "$created_at"}}}, year]}
-        ]}}
-        campaign_date_filter = {"$expr": {"$and": [
-            {"$eq": [{"$month": {"$dateFromString": {"dateString": "$created_at"}}}, month]},
-            {"$eq": [{"$year": {"$dateFromString": {"dateString": "$created_at"}}}, year]}
-        ]}}
-    elif year:
-        date_filter = {"$expr": {"$eq": [{"$year": {"$dateFromString": {"dateString": "$transaction_date"}}}, year]}}
-        item_date_filter = {"$expr": {"$eq": [{"$year": {"$dateFromString": {"dateString": "$created_at"}}}, year]}}
-        campaign_date_filter = {"$expr": {"$eq": [{"$year": {"$dateFromString": {"dateString": "$created_at"}}}, year]}}
-    # 1. Thống kê bài đăng
-    # Phân loại bài đăng theo danh mục và loại hoạt động
-    categories = await db.categories.find({}).to_list(length=100)
+        start_date = datetime(year, month, 1)
+        if month == 12:
+            end_date = datetime(year + 1, 1, 1)
+        else:
+            end_date = datetime(year, month + 1, 1)
+        item_date_filter = {
+            "created_at": {
+                "$gte": start_date.isoformat(),
+                "$lt": end_date.isoformat()
+            }
+        }
+
+    # Tính toán các thống kê
+    total_users = await db.users.count_documents({})
+    total_items = await db.items.count_documents(item_date_filter)
+    active_items = await db.items.count_documents({"status": "active", **item_date_filter})
+    pending_items = await db.items.count_documents({"status": "pending", **item_date_filter})
+    rejected_items = await db.items.count_documents({"status": "rejected", **item_date_filter})
+    sold_items = await db.items.count_documents({"status": "sold", **item_date_filter})
+
+    # Tính tổng phí giao dịch
+    total_fee = 0
+    exchange_items = await db.items.find({
+        "transaction_type": {"$in": ["exchange", "exchange_sale"]},
+        "transaction_fee": {"$exists": True},
+        **item_date_filter
+    }).to_list(length=None)
+    for item in exchange_items:
+        total_fee += item.get("transaction_fee", 0)
+
+    # Lấy danh sách năm có dữ liệu
+    years = []
+    async for item in db.items.find({}, {"created_at": 1}):
+        year = datetime.fromisoformat(item["created_at"]).year
+        if year not in years:
+            years.append(year)
+    years.sort(reverse=True)
+
+    # Thống kê theo danh mục
+    categories = await db.categories.find().to_list(length=None)
     category_stats = {}
     for cat in categories:
         count = await db.items.count_documents({"cate_id": cat["cate_id"], **item_date_filter})
@@ -847,14 +870,14 @@ async def admin_report(request: Request, admin: dict = Depends(admin_required), 
         user = await db.users.find_one({"user_id": u["_id"]})
         user_names[u["_id"]] = user["name"] if user else str(u["_id"])
     # 2. Thống kê giao dịch
-    if date_filter:
-        completed_transactions = await db.transactions.count_documents({**date_filter, "status": "completed"})
+    if item_date_filter:
+        completed_transactions = await db.transactions.count_documents({**item_date_filter, "status": "completed"})
         completed_value = 0
-        async for t in db.transactions.find({**date_filter, "status": "completed"}):
+        async for t in db.transactions.find({**item_date_filter, "status": "completed"}):
             completed_value += t.get("amount", 0)
         # Giao dịch theo danh mục (fix: lấy cate_id từ items)
         category_trans_stats = {cat["name"]: 0 for cat in categories}
-        async for t in db.transactions.find({**date_filter, "status": "completed"}):
+        async for t in db.transactions.find({**item_date_filter, "status": "completed"}):
             item = await db.items.find_one({"item_id": t["item_id"]})
             if item:
                 for cat in categories:
@@ -864,7 +887,7 @@ async def admin_report(request: Request, admin: dict = Depends(admin_required), 
         # Thời gian giao dịch trung bình
         total_time = 0
         count_time = 0
-        async for t in db.transactions.find({**date_filter, "status": "completed"}):
+        async for t in db.transactions.find({**item_date_filter, "status": "completed"}):
             item = await db.items.find_one({"item_id": t["item_id"]})
             if item and item.get("approved_at"):
                 try:
@@ -902,27 +925,27 @@ async def admin_report(request: Request, admin: dict = Depends(admin_required), 
                     pass
         avg_time = round(total_time / count_time / 3600, 2) if count_time else 0
     # 3. Thống kê hoạt động gây quỹ/quyên góp
-    total_campaigns = await db.campaigns.count_documents(campaign_date_filter)
+    total_campaigns = await db.campaigns.count_documents(item_date_filter)
     # Số lượng chiến dịch theo loại
     campaign_types = ["fundraising", "donation"]
     campaign_type_stats = {}
     for ctype in campaign_types:
-        campaign_type_stats[ctype] = await db.campaigns.count_documents({"campaign_type": ctype, **campaign_date_filter})
+        campaign_type_stats[ctype] = await db.campaigns.count_documents({"campaign_type": ctype, **item_date_filter})
     # Tham gia chiến dịch
     campaign_participation = await db.transactions.aggregate([
-        {"$match": {"transaction_type": "donation", **date_filter}},
+        {"$match": {"transaction_type": "donation", **item_date_filter}},
         {"$group": {"_id": "$campaign_id", "members": {"$addToSet": "$buyer_user_id"}}}
     ]).to_list(length=100)
     campaign_member_stats = {c["_id"]: len(c["members"]) for c in campaign_participation}
     # Kết quả chiến dịch (tổng tiền/quy mô đạt được)
     campaign_results = await db.transactions.aggregate([
-        {"$match": {"transaction_type": "donation", **date_filter}},
+        {"$match": {"transaction_type": "donation", **item_date_filter}},
         {"$group": {"_id": "$campaign_id", "total": {"$sum": "$amount"}}}
     ]).to_list(length=100)
     campaign_result_stats = {c["_id"]: c["total"] for c in campaign_results}
     # Hiệu quả chiến dịch (tỷ lệ hoàn thành mục tiêu)
     campaign_goal_stats = {}
-    async for camp in db.campaigns.find(campaign_date_filter):
+    async for camp in db.campaigns.find(item_date_filter):
         cid = camp["campaign_id"]
         if camp.get("goal_amount"):
             achieved = campaign_result_stats.get(cid, 0)
@@ -944,9 +967,9 @@ async def admin_report(request: Request, admin: dict = Depends(admin_required), 
         {"$limit": 5}
     ]).to_list(length=5)
     # 5. Báo cáo quỹ chung
-    if date_filter:
+    if item_date_filter:
         total_fund = 0
-        async for t in db.transactions.find({**date_filter, "status": "completed"}):
+        async for t in db.transactions.find({**item_date_filter, "status": "completed"}):
             total_fund += t.get("fee", 0)
     else:
         total_fund = 0
@@ -992,6 +1015,7 @@ async def admin_report(request: Request, admin: dict = Depends(admin_required), 
             "user_rank": user_rank,
             "user_violation": user_violation,
             "total_fund": total_fund,
+            "total_fee": total_fee,
             "campaign_names": campaign_names,
             "member_names": member_names,
         },

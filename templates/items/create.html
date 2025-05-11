@@ -55,6 +55,14 @@
                             <textarea class="form-control" id="exchange_requirements" name="exchange_requirements" rows="3" 
                                       placeholder="Describe what you're looking for in exchange (e.g. specific items, categories, conditions)"></textarea>
                             <div class="form-text">Specify what you would accept in exchange for this item.</div>
+                            
+                            <div class="mt-3">
+                                <label for="transaction_fee" class="form-label">
+                                    Transaction Fee (If Any)</label>
+                                <input type="number" class="form-control" id="transaction_fee" name="transaction_fee" 
+                                       min="0" step="1000" value="5000" placeholder="Ví dụ: 5000 VNĐ">
+                                <div class="form-text">Đề xuất mức phí nhỏ (đóng vào quỹ chung)</div>
+                            </div>
                         </div>
 
                         <div class="mb-3" id="campaign-selection" style="display: none;">

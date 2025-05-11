@@ -25,8 +25,14 @@
                                     <span>{{ transaction.transaction_type|capitalize }}</span>
                                 </li>
                                 <li class="list-group-item d-flex justify-content-between">
-                                    <span>Amount:</span>
-                                    <span class="fw-bold">${{ "%.2f"|format(transaction.amount) }}</span>
+                                    <span>Amount / Transaction Fee:</span>
+                                    {% if transaction.amount is defined %}
+                                        <span class="fw-bold">${{ "%.2f"|format(transaction.amount) }}</span>
+                                    {% elif transaction.transaction_fee is defined %}
+                                        <span class="fw-bold text-info">{{ "{:,}".format(transaction.transaction_fee|int) }} VNĐ</span>
+                                    {% else %}
+                                        <span class="text-muted">Không áp dụng</span>
+                                    {% endif %}
                                 </li>
                                 <li class="list-group-item d-flex justify-content-between">
                                     <span>Date:</span>
@@ -35,12 +41,20 @@
                                 <li class="list-group-item d-flex justify-content-between">
                                     <span>Status:</span>
                                     <span>
-                                        {% if transaction.status == 'processing' %}
+                                        {% if transaction.status == 'pending' %}
+                                        <span class="badge bg-warning text-dark">Pending</span>
+                                        {% elif transaction.status == 'processing' %}
                                         <span class="badge bg-warning text-dark">Processing</span>
+                                        {% elif transaction.status == 'accepted' %}
+                                        <span class="badge bg-primary">Accepted</span>
                                         {% elif transaction.status == 'completed' %}
                                         <span class="badge bg-success">Completed</span>
+                                        {% elif transaction.status == 'rejected' %}
+                                        <span class="badge bg-danger">Rejected</span>
                                         {% elif transaction.status == 'cancelled' %}
                                         <span class="badge bg-danger">Cancelled</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">{{ transaction.status|capitalize }}</span>
                                         {% endif %}
                                     </span>
                                 </li>

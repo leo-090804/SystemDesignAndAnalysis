@@ -68,6 +68,7 @@
                             <th>Category</th>
                             <th>Owner</th>
                             <th>Status</th>
+                            <th><span title="Exchange Status">Exchange</span></th>
                             <th>Created</th>
                             <th></th>
                         </tr>
@@ -87,19 +88,11 @@
                             </td>
                             <td>{{ item.name }}</td>
                             <td>
-                                {% if item.transaction_type == 'sale' %}
-                                ${{ "%.2f"|format(item.price) }}
-                                {% elif item.transaction_type == 'exchange' %}
-                                <span>Exchange Only</span>
-                                {% elif item.transaction_type == 'for_campaign' and item.campaign_type == 'fundraising' %}
-                                ${{ "%.2f (For fundraising)"|format(item.price) }}
-                                {% elif item.transaction_type == 'for_campaign' and item.campaign_type == 'donation' %}
-                                <span>Donation</span>
-                                {% elif item.transaction_type == 'exchange_sale' %}
-                                ${{ "%.2f (Exchange Available)"|format(item.price) }}
+                                {% if item.transaction_type in ['exchange', 'exchange_sale'] and item.transaction_fee %}
+                                    <span class="text-info">{{ "{:,}".format(item.transaction_fee|int) }} VNĐ</span>
                                 {% else %}
-                                <span class="badge bg-secondary">Unknown</span>
-                        {% endif %}
+                                    ${{ "%.2f"|format(item.price) }}
+                                {% endif %}
                             </td>
                             <td>{{ item.category_name }}</td>
                             <td>{{ item.user_name }}</td>
@@ -116,8 +109,21 @@
                                 <span class="badge bg-primary">Pending Sale</span>
                                 {% elif item.status == 'donation_pending' %}
                                 <span class="badge bg-warning text-dark">Pending Donation</span>
+                                {% elif item.status == 'pending_exchange' %}
+                                <span class="badge bg-warning text-dark">Pending Exchange</span>
+                                {% elif item.status == 'exchanged' %}
+                                <span class="badge bg-info">Exchanged</span>
                                 {% else %}
                                 <span class="badge bg-secondary">{{ item.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if item.status == 'pending_exchange' %}
+                                    <span class="badge bg-warning text-dark">Đang chờ xác nhận</span>
+                                {% elif item.status == 'exchanged' %}
+                                    <span class="badge bg-info">Đã trao đổi</span>
+                                {% else %}
+                                    <span class="text-muted">-</span>
                                 {% endif %}
                             </td>
                             <td>{{ item.created_at.split('T')[0] if item.created_at else "Unknown" }}</td>

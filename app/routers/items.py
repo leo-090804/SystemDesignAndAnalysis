@@ -1,5 +1,5 @@
 from app.models import campaign
-from fastapi import APIRouter, Depends, HTTPException, Request, Form, Query, Path, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, Request, Form, Query, Path, UploadFile, File, status as http_status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from typing import Optional
@@ -7,6 +7,7 @@ from app.database.mongodb import Database
 from app.services.auth import get_current_user
 from datetime import datetime, timedelta
 import uuid
+import base64
 
 router = APIRouter(prefix="/items", tags=["items"])
 templates = Jinja2Templates(directory="templates")
@@ -134,6 +135,7 @@ async def create_item(
     transaction_type: str = Form(...),
     campaign_id: Optional[str] = Form(None),
     exchange_requirements: Optional[str] = Form(None),
+    transaction_fee: Optional[float] = Form(None),
     image: UploadFile = File(None),
 ):
     if user["role"] == "admin":
@@ -171,6 +173,10 @@ async def create_item(
     # Add exchange requirements if provided
     if exchange_requirements:
         new_item["exchange_requirements"] = exchange_requirements
+
+    # Add transaction fee if provided and transaction type is exchange
+    if transaction_fee and transaction_type in ['exchange', 'exchange_sale']:
+        new_item["transaction_fee"] = transaction_fee
 
     # Handle campaign selection
     campaign_type = None
@@ -353,6 +359,14 @@ async def view_item(request: Request, item_id: int = Path(...), user: dict = Dep
             .to_list(length=4)
         )
 
+    # Nếu là chủ sở hữu, lấy danh sách đề xuất trao đổi
+    exchange_proposals = []
+    if user["user_id"] == item["user_id"]:
+        exchange_proposals = await db.transactions.find({
+            "transaction_type": "exchange_proposal",
+            "item_id": item_id
+        }).sort("transaction_date", -1).to_list(length=20)
+
     return templates.TemplateResponse(
         "items/view.html",
         {
@@ -362,6 +376,7 @@ async def view_item(request: Request, item_id: int = Path(...), user: dict = Dep
             "owner": owner,
             "category": category,
             "related_items": related_items,
+            "exchange_proposals": exchange_proposals,
         },
     )
 
@@ -568,3 +583,210 @@ async def delete_item(item_id: int = Path(...), user: dict = Depends(user_requir
         return {"success": True}
     else:
         raise HTTPException(status_code=500, detail="Failed to delete item")
+
+
+@router.post("/{item_id}/exchange-proposal")
+async def exchange_proposal(
+    item_id: int,
+    request: Request,
+    user: dict = Depends(user_required),
+    your_item_name: str = Form(...),
+    your_item_condition: str = Form(...),
+    message: str = Form(None),
+    your_item_image: UploadFile = File(None),
+):
+    db = Database.db
+    item = await db.items.find_one({"item_id": item_id})
+    if not item or item["status"] != "active":
+        raise HTTPException(status_code=404, detail="Item not found or not active")
+    if user["user_id"] == item["user_id"]:
+        raise HTTPException(status_code=400, detail="You cannot propose exchange for your own item")
+    # Lưu hình ảnh sản phẩm Y nếu có
+    image_data = None
+    image_content_type = None
+    image_filename = None
+    if your_item_image and your_item_image.filename:
+        image_data = await your_item_image.read()
+        image_content_type = your_item_image.content_type
+        image_filename = your_item_image.filename
+    # Tạo transaction đề xuất trao đổi
+    transaction_id = int(str(uuid.uuid4().int)[:9])
+    transaction = {
+        "transaction_id": transaction_id,
+        "transaction_type": "exchange_proposal",
+        "item_id": item_id,
+        "buyer_user_id": user["user_id"],
+        "seller_user_id": item["user_id"],
+        "proposal": {
+            "your_item_name": your_item_name,
+            "your_item_condition": your_item_condition,
+            "message": message,
+            "image_data": image_data,
+            "image_content_type": image_content_type,
+            "image_filename": image_filename,
+        },
+        "transaction_date": datetime.now().isoformat(),
+        "status": "pending",
+        "status_updated_at": datetime.now().isoformat(),
+    }
+    # Thêm transaction_fee nếu item có
+    if item.get("transaction_fee"):
+        transaction["transaction_fee"] = item["transaction_fee"]
+    await db.transactions.insert_one(transaction)
+    # Gửi thông báo cho chủ sở hữu sản phẩm
+    admin_notification = {
+        "message": f"Bạn nhận được một đề xuất trao đổi cho sản phẩm '{item['name']}' từ {user['name']}",
+        "created_at": datetime.now().isoformat(),
+        "is_read": False,
+        "is_seen": False,
+        "noti_id": int(str(uuid.uuid4().int)[:9]),
+        "user_id": item["user_id"],
+        "related_item_id": item_id,
+        "related_transaction_id": transaction_id,
+    }
+    await db.notifications.insert_one(admin_notification)
+    # Gửi thông báo cho tất cả admin
+    admin_users = await db.users.find({"role": "admin"}).to_list(length=100)
+    for admin in admin_users:
+        noti = {
+            "message": f"Có đề xuất trao đổi mới cho sản phẩm '{item['name']}' từ {user['name']}",
+            "created_at": datetime.now().isoformat(),
+            "is_read": False,
+            "is_seen": False,
+            "noti_id": int(str(uuid.uuid4().int)[:9]),
+            "user_id": admin["user_id"],
+            "related_item_id": item_id,
+            "related_transaction_id": transaction_id,
+        }
+        await db.notifications.insert_one(noti)
+    # Redirect về trang sản phẩm với thông báo
+    return RedirectResponse(url=f"/items/{item_id}", status_code=http_status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/{item_id}/exchange-proposal/{proposal_id}/accept")
+async def accept_exchange_proposal(item_id: int, proposal_id: int, user: dict = Depends(user_required)):
+    db = Database.db
+    item = await db.items.find_one({"item_id": item_id})
+    proposal = await db.transactions.find_one({"transaction_id": proposal_id, "transaction_type": "exchange_proposal"})
+    if not item or not proposal:
+        raise HTTPException(status_code=404, detail="Item or proposal not found")
+    if user["user_id"] != item["user_id"]:
+        raise HTTPException(status_code=403, detail="Only the owner can accept proposals")
+    if proposal["status"] != "pending":
+        raise HTTPException(status_code=400, detail="Proposal already processed")
+    # Cập nhật trạng thái proposal
+    await db.transactions.update_one({"transaction_id": proposal_id}, {"$set": {"status": "accepted", "status_updated_at": datetime.now().isoformat()}})
+    # Cập nhật trạng thái item (pending_exchange)
+    await db.items.update_one({"item_id": item_id}, {"$set": {"status": "pending_exchange", "exchange_transaction_id": proposal_id}})
+    # Gửi thông báo cho người đề xuất
+    notify = {
+        "message": f"Đề xuất trao đổi của bạn cho sản phẩm '{item['name']}' đã được chấp nhận!",
+        "created_at": datetime.now().isoformat(),
+        "is_read": False,
+        "is_seen": False,
+        "noti_id": int(str(uuid.uuid4().int)[:9]),
+        "user_id": proposal["buyer_user_id"],
+        "related_item_id": item_id,
+        "related_transaction_id": proposal_id,
+    }
+    await db.notifications.insert_one(notify)
+    # Gửi thông báo cho tất cả admin
+    admin_users = await db.users.find({"role": "admin"}).to_list(length=100)
+    for admin in admin_users:
+        noti = {
+            "message": f"Chủ sở hữu đã chấp nhận đề xuất trao đổi cho sản phẩm '{item['name']}' từ {proposal['buyer_user_id']}",
+            "created_at": datetime.now().isoformat(),
+            "is_read": False,
+            "is_seen": False,
+            "noti_id": int(str(uuid.uuid4().int)[:9]),
+            "user_id": admin["user_id"],
+            "related_item_id": item_id,
+            "related_transaction_id": proposal_id,
+        }
+        await db.notifications.insert_one(noti)
+    return RedirectResponse(url=f"/items/{item_id}", status_code=http_status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/{item_id}/exchange-proposal/{proposal_id}/reject")
+async def reject_exchange_proposal(item_id: int, proposal_id: int, user: dict = Depends(user_required)):
+    db = Database.db
+    item = await db.items.find_one({"item_id": item_id})
+    proposal = await db.transactions.find_one({"transaction_id": proposal_id, "transaction_type": "exchange_proposal"})
+    if not item or not proposal:
+        raise HTTPException(status_code=404, detail="Item or proposal not found")
+    if user["user_id"] != item["user_id"]:
+        raise HTTPException(status_code=403, detail="Only the owner can reject proposals")
+    if proposal["status"] != "pending":
+        raise HTTPException(status_code=400, detail="Proposal already processed")
+    # Cập nhật trạng thái proposal
+    await db.transactions.update_one({"transaction_id": proposal_id}, {"$set": {"status": "rejected", "status_updated_at": datetime.now().isoformat()}})
+    # Nếu không còn proposal nào pending, item trở lại active
+    pending_count = await db.transactions.count_documents({"item_id": item_id, "transaction_type": "exchange_proposal", "status": "pending"})
+    if pending_count == 0:
+        await db.items.update_one({"item_id": item_id}, {"$set": {"status": "active", "exchange_transaction_id": None}})
+    # Gửi thông báo cho người đề xuất
+    notify = {
+        "message": f"Đề xuất trao đổi của bạn cho sản phẩm '{item['name']}' đã bị từ chối.",
+        "created_at": datetime.now().isoformat(),
+        "is_read": False,
+        "is_seen": False,
+        "noti_id": int(str(uuid.uuid4().int)[:9]),
+        "user_id": proposal["buyer_user_id"],
+        "related_item_id": item_id,
+        "related_transaction_id": proposal_id,
+    }
+    await db.notifications.insert_one(notify)
+    return RedirectResponse(url=f"/items/{item_id}", status_code=http_status.HTTP_303_SEE_OTHER)
+
+# Route cho admin xác nhận hoàn tất trao đổi
+@router.post("/admin/items/{item_id}/exchange-complete/{proposal_id}")
+async def admin_complete_exchange(item_id: int, proposal_id: int, admin: dict = Depends(get_current_user)):
+    db = Database.db
+    item = await db.items.find_one({"item_id": item_id})
+    proposal = await db.transactions.find_one({"transaction_id": proposal_id, "transaction_type": "exchange_proposal"})
+    if not item or not proposal:
+        raise HTTPException(status_code=404, detail="Item or proposal not found")
+    if admin["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Only admin can complete exchange")
+    # Cập nhật trạng thái transaction và item
+    await db.transactions.update_one(
+        {"transaction_id": proposal_id}, 
+        {
+            "$set": {
+                "status": "completed",
+                "status_updated_at": datetime.now().isoformat(),
+                "completed_at": datetime.now().isoformat()
+            }
+        }
+    )
+    await db.items.update_one({"item_id": item_id}, {"$set": {"status": "exchanged"}})
+    # Gửi thông báo cho các bên liên quan
+    notify_buyer = {
+        "message": f"Giao dịch trao đổi cho sản phẩm '{item['name']}' đã được admin xác nhận hoàn tất!",
+        "created_at": datetime.now().isoformat(),
+        "is_read": False,
+        "is_seen": False,
+        "noti_id": int(str(uuid.uuid4().int)[:9]),
+        "user_id": proposal["buyer_user_id"],
+        "related_item_id": item_id,
+        "related_transaction_id": proposal_id,
+    }
+    notify_seller = {
+        "message": f"Giao dịch trao đổi cho sản phẩm '{item['name']}' đã được admin xác nhận hoàn tất!",
+        "created_at": datetime.now().isoformat(),
+        "is_read": False,
+        "is_seen": False,
+        "noti_id": int(str(uuid.uuid4().int)[:9]),
+        "user_id": proposal["seller_user_id"],
+        "related_item_id": item_id,
+        "related_transaction_id": proposal_id,
+    }
+    await db.notifications.insert_one(notify_buyer)
+    await db.notifications.insert_one(notify_seller)
+    return RedirectResponse(url=f"/admin/items/{item_id}", status_code=http_status.HTTP_303_SEE_OTHER)
+
+def b64encode(data):
+    if data:
+        return base64.b64encode(data).decode('utf-8')
+    return ''
+templates.env.filters['b64encode'] = b64encode

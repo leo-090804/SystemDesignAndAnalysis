@@ -47,20 +47,24 @@ async def list_transactions(
     
     campaign_transactions = await db.transactions.find(campaign_query).sort("transaction_date", -1).to_list(length=100)
     
-    # Get related data for each transaction
+    # EXCHANGE PROPOSAL TRANSACTIONS
+    exchange_query = {
+        **base_query,
+        "transaction_type": "exchange_proposal"
+    }
+    exchange_transactions = await db.transactions.find(exchange_query).sort("transaction_date", -1).to_list(length=100)
+
     for transaction in regular_transactions:
         # Get item info
         item = await db.items.find_one({"item_id": transaction["item_id"]})
         transaction["item"] = item if item else {"name": "Unknown Item"}
-        
         # Get buyer info
         buyer = await db.users.find_one({"user_id": transaction["buyer_user_id"]})
         transaction["buyer"] = buyer if buyer else {"name": "Unknown User"}
-        
         # Get seller info
         seller = await db.users.find_one({"user_id": transaction["seller_user_id"]})
         transaction["seller"] = seller if seller else {"name": "Unknown User"}
-    
+
     # Enrich campaign transactions data
     for transaction in campaign_transactions:
         # Get campaign info
@@ -76,11 +80,23 @@ async def list_transactions(
             donor = await db.users.find_one({"user_id": transaction["seller_user_id"]})
             transaction["donor"] = donor if donor else {"name": "Unknown User"}
     
+    for transaction in exchange_transactions:
+        # Get item info
+        item = await db.items.find_one({"item_id": transaction["item_id"]})
+        transaction["item"] = item if item else {"name": "Unknown Item"}
+        # Get buyer info
+        buyer = await db.users.find_one({"user_id": transaction["buyer_user_id"]})
+        transaction["buyer"] = buyer if buyer else {"name": "Unknown User"}
+        # Get seller info
+        seller = await db.users.find_one({"user_id": transaction["seller_user_id"]})
+        transaction["seller"] = seller if seller else {"name": "Unknown User"}
+
     return templates.TemplateResponse(
         "admin/transactions.html",
         {"request": request, "user": admin, 
          "regular_transactions": regular_transactions,
          "campaign_transactions": campaign_transactions,
+         "exchange_transactions": exchange_transactions,
          "status": status, "page": page}
     )
 

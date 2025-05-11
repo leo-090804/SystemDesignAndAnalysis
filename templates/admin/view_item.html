@@ -169,6 +169,60 @@
             </div>
         </div>
     </div>
+
+    {% if exchange_proposals %}
+    <div class="card mt-4">
+        <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0"><i class="fas fa-exchange-alt me-2"></i> Đề xuất trao đổi liên quan</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Thành viên đề xuất</th>
+                            <th>Tên sản phẩm đề xuất</th>
+                            <th>Ngày gửi</th>
+                            <th>Trạng thái</th>
+                            <th>Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for proposal in exchange_proposals %}
+                        <tr>
+                            <td>{{ proposal.buyer_user_id }}</td>
+                            <td>{{ proposal.proposal.your_item_name }}</td>
+                            <td>{{ proposal.transaction_date.split('T')[0] }}</td>
+                            <td>
+                                {% if proposal.status == 'pending' %}
+                                    <span class="badge bg-warning text-dark">Pending</span>
+                                {% elif proposal.status == 'accepted' %}
+                                    <span class="badge bg-success">Accepted</span>
+                                {% elif proposal.status == 'completed' %}
+                                    <span class="badge bg-info">Completed</span>
+                                {% elif proposal.status == 'rejected' %}
+                                    <span class="badge bg-danger">Rejected</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ proposal.status|capitalize }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if proposal.status == 'accepted' %}
+                                <form method="post" action="/items/admin/items/{{ item.item_id }}/exchange-complete/{{ proposal.transaction_id }}" style="display:inline-block">
+                                    <button class="btn btn-primary btn-sm" type="submit">Xác nhận hoàn tất</button>
+                                </form>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </div>
 
 <!-- Reject Item Modal -->
