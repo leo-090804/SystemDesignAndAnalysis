@@ -1,6 +1,6 @@
 from app.models import campaign
 from fastapi import APIRouter, Depends, HTTPException, Request, Form, Query, Path
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from typing import Optional
 from app.database.mongodb import Database
@@ -8,6 +8,8 @@ from app.services.auth import get_current_user
 from datetime import datetime
 import logging
 import uuid
+import io
+import openpyxl
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 templates = Jinja2Templates(directory="templates")
@@ -1049,4 +1051,416 @@ async def admin_report(request: Request, admin: dict = Depends(admin_required), 
             "member_names": member_names,
             "fundraising_total": fundraising_total,
         },
+    )
+
+
+@router.get("/report/export")
+async def export_report(admin: dict = Depends(admin_required), month: Optional[int] = None, year: Optional[int] = None):
+    db = Database.db
+    item_date_filter = {}
+    if month and year:
+        start_date = datetime(year, month, 1)
+        if month == 12:
+            end_date = datetime(year + 1, 1, 1)
+        else:
+            end_date = datetime(year, month + 1, 1)
+        item_date_filter = {
+            "created_at": {
+                "$gte": start_date.isoformat(),
+                "$lt": end_date.isoformat()
+            }
+        }
+    # 1. Post Statistics
+    categories = await db.categories.find().to_list(length=None)
+    category_stats = {}
+    for cat in categories:
+        count = await db.items.count_documents({"cate_id": cat["cate_id"], **item_date_filter})
+        category_stats[cat["name"]] = count
+    activity_type_map = {
+        "sale": "Bán",
+        "exchange": "Trao đổi",
+        "exchange_sale": "Bán/Trao đổi",
+        "for_campaign": "Gây quỹ/Quyên góp"
+    }
+    activity_stats = {v: 0 for v in activity_type_map.values()}
+    for k, v in activity_type_map.items():
+        count = await db.items.count_documents({"transaction_type": k, **item_date_filter})
+        activity_stats[v] = count
+    total_posts = await db.items.count_documents(item_date_filter)
+    approved_posts = await db.items.count_documents({"status": "active", **item_date_filter})
+    approval_rate = round(approved_posts / total_posts * 100, 2) if total_posts else 0
+    top_users = await db.items.aggregate([
+        {"$match": item_date_filter},
+        {"$group": {"_id": "$user_id", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": 5}
+    ]).to_list(length=5)
+    user_names = {}
+    for u in top_users:
+        user = await db.users.find_one({"user_id": u["_id"]})
+        user_names[u["_id"]] = user["name"] if user else str(u["_id"])
+    # 2. Transaction Statistics
+    completed_transactions = await db.transactions.count_documents({**item_date_filter, "status": "completed"})
+    completed_value = 0
+    async for t in db.transactions.find({**item_date_filter, "status": "completed"}):
+        completed_value += t.get("amount", 0)
+    category_trans_stats = {cat["name"]: 0 for cat in categories}
+    async for t in db.transactions.find({**item_date_filter, "status": "completed"}):
+        item = await db.items.find_one({"item_id": t["item_id"]})
+        if item:
+            for cat in categories:
+                if item.get("cate_id") == cat["cate_id"]:
+                    category_trans_stats[cat["name"]] += 1
+                    break
+    total_time = 0
+    count_time = 0
+    async for t in db.transactions.find({**item_date_filter, "status": "completed"}):
+        item = await db.items.find_one({"item_id": t["item_id"]})
+        if item and item.get("approved_at"):
+            try:
+                t1 = datetime.fromisoformat(item["approved_at"])
+                t2 = datetime.fromisoformat(t["transaction_date"])
+                total_time += (t2 - t1).total_seconds()
+                count_time += 1
+            except:
+                pass
+    avg_time = round(total_time / count_time / 3600, 2) if count_time else 0
+    # 3. Fundraising/Donation Statistics
+    total_campaigns = await db.campaigns.count_documents(item_date_filter)
+    campaign_types = ["fundraising", "donation"]
+    campaign_type_stats = {}
+    for ctype in campaign_types:
+        campaign_type_stats[ctype] = await db.campaigns.count_documents({"campaign_type": ctype, **item_date_filter})
+    campaign_participation = await db.transactions.aggregate([
+        {"$match": {"transaction_type": "donation", **item_date_filter}},
+        {"$group": {"_id": "$campaign_id", "members": {"$addToSet": "$buyer_user_id"}}}
+    ]).to_list(length=100)
+    campaign_member_stats = {c["_id"]: len(c["members"]) for c in campaign_participation}
+    campaign_results = await db.transactions.aggregate([
+        {"$match": {"transaction_type": "donation", **item_date_filter}},
+        {"$group": {"_id": "$campaign_id", "total": {"$sum": "$amount"}}}
+    ]).to_list(length=100)
+    campaign_result_stats = {c["_id"]: c["total"] for c in campaign_results}
+    campaign_goal_stats = {}
+    async for camp in db.campaigns.find(item_date_filter):
+        cid = camp["campaign_id"]
+        if camp.get("goal_amount"):
+            achieved = campaign_result_stats.get(cid, 0)
+            goal = camp["goal_amount"]
+            campaign_goal_stats[cid] = round(achieved / goal * 100, 2) if goal else 0
+    campaign_names = {}
+    campaign_ids = set(list(campaign_member_stats.keys()) + list(campaign_result_stats.keys()) + list(campaign_goal_stats.keys()))
+    if campaign_ids:
+        async for camp in db.campaigns.find({"campaign_id": {"$in": list(campaign_ids)}}):
+            campaign_names[camp["campaign_id"]] = camp.get("name", str(camp["campaign_id"]))
+    # 4. Member Evaluation
+    user_rank = await db.items.aggregate([
+        {"$match": item_date_filter},
+        {"$group": {"_id": "$user_id", "posts": {"$sum": 1}}},
+        {"$sort": {"posts": -1}},
+        {"$limit": 5}
+    ]).to_list(length=5)
+    user_violation = await db.items.aggregate([
+        {"$match": {"status": "rejected", **item_date_filter}},
+        {"$group": {"_id": "$user_id", "rejected": {"$sum": 1}}},
+        {"$sort": {"rejected": -1}},
+        {"$limit": 5}
+    ]).to_list(length=5)
+    member_ids = set([u["_id"] for u in user_rank] + [u["_id"] for u in user_violation])
+    member_names = {}
+    if member_ids:
+        async for mem in db.users.find({"user_id": {"$in": list(member_ids)}}):
+            member_names[mem["user_id"]] = mem.get("name", str(mem["user_id"]))
+    # 5. Common Fund
+    total_fee = 0
+    exchange_items = await db.items.find({
+        "transaction_type": {"$in": ["exchange", "exchange_sale"]},
+        "transaction_fee": {"$exists": True},
+        **item_date_filter
+    }).to_list(length=None)
+    for item in exchange_items:
+        total_fee += item.get("transaction_fee", 0)
+    fundraising_total = 0
+    async for t in db.transactions.find({**item_date_filter, "status": "completed", "transaction_type": "donation"}):
+        campaign = await db.campaigns.find_one({"campaign_id": t.get("campaign_id")})
+        if campaign and campaign.get("campaign_type") == "fundraising":
+            fundraising_total += t.get("amount", 0)
+    total_fund = total_fee + fundraising_total
+    # Tạo workbook Excel
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Report"
+    # 1. Post Statistics
+    ws.append(["1. Post Statistics"])
+    ws.append(["Post Categories:"])
+    ws.append(["Category", "Count"])
+    for cat, count in category_stats.items():
+        ws.append([cat, count])
+    ws.append([])
+    ws.append(["Activity Types:"])
+    ws.append(["Type", "Count"])
+    for act, count in activity_stats.items():
+        ws.append([act, count])
+    ws.append([])
+    ws.append(["Approval Rate:", f"{approval_rate}%"])
+    ws.append([])
+    ws.append(["Top Active Members:"])
+    ws.append(["Member", "Posts"])
+    for u in top_users:
+        ws.append([user_names.get(u["_id"], u["_id"]), u["count"]])
+    ws.append([])
+    # 2. Transaction Statistics
+    ws.append(["2. Transaction Statistics"])
+    ws.append(["Completed Transactions:", completed_transactions])
+    ws.append(["Total Transaction Value:", f"{completed_value:,} VNĐ"])
+    ws.append([])
+    ws.append(["Transactions by Category:"])
+    ws.append(["Category", "Count"])
+    for cat, count in category_trans_stats.items():
+        ws.append([cat, count])
+    ws.append([])
+    ws.append(["Average Transaction Time:", f"{avg_time} hours"])
+    ws.append([])
+    # 3. Fundraising/Donation Statistics
+    ws.append(["3. Fundraising/Donation Statistics"])
+    ws.append(["Total Campaigns:", total_campaigns])
+    ws.append([])
+    ws.append(["Campaigns by Type:"])
+    ws.append(["Type", "Count"])
+    for ctype, count in campaign_type_stats.items():
+        ws.append([ctype, count])
+    ws.append([])
+    ws.append(["Campaign Participation (Member Count):"])
+    ws.append(["Campaign ID", "Campaign Name", "Members"])
+    if campaign_member_stats:
+        for cid, mem in campaign_member_stats.items():
+            ws.append([cid, campaign_names.get(cid, ''), mem])
+    else:
+        ws.append(["", "", ""])
+    ws.append([])
+    ws.append(["Campaign Results (Total Value):"])
+    ws.append(["Campaign ID", "Campaign Name", "Total Value (VNĐ)"])
+    if campaign_result_stats:
+        for cid, val in campaign_result_stats.items():
+            ws.append([cid, campaign_names.get(cid, ''), val])
+    else:
+        ws.append(["", "", ""])
+    ws.append([])
+    ws.append(["Campaign Effectiveness (Goal Completion Rate):"])
+    ws.append(["Campaign ID", "Campaign Name", "Rate (%)"])
+    if campaign_goal_stats:
+        for cid, rate in campaign_goal_stats.items():
+            ws.append([cid, campaign_names.get(cid, ''), rate])
+    else:
+        ws.append(["", "", ""])
+    ws.append([])
+    # 4. Member Evaluation
+    ws.append(["4. Member Evaluation"])
+    ws.append(["Member Rankings (Top Posters):"])
+    ws.append(["Member", "Member Name", "Posts"])
+    if user_rank:
+        for u in user_rank:
+            ws.append([u["_id"], member_names.get(u["_id"], ''), u["posts"]])
+    else:
+        ws.append(["", "", ""])
+    ws.append([])
+    ws.append(["Members with Violations (Most Rejections):"])
+    ws.append(["Member", "Member Name", "Rejections"])
+    if user_violation:
+        for u in user_violation:
+            ws.append([u["_id"], member_names.get(u["_id"], ''), u["rejected"]])
+    else:
+        ws.append(["", "", ""])
+    ws.append([])
+    # 5. Common Fund Report
+    ws.append(["5. Common Fund Report"])
+    ws.append(["Fund from Exchange Transaction Fees:", f"{total_fee:,} VNĐ"])
+    ws.append(["Fund from Fundraising Campaigns:", f"{fundraising_total:,} VNĐ"])
+    ws.append(["Total Fund:", f"{total_fund:,} VNĐ"])
+    # Xuất file
+    stream = io.BytesIO()
+    wb.save(stream)
+    stream.seek(0)
+    filename = f"report_{month or 'all'}_{year or 'all'}.xlsx"
+    return StreamingResponse(stream, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", headers={"Content-Disposition": f"attachment; filename={filename}"})
+
+
+@router.get("/users/{user_id}/report")
+async def user_personal_report(user_id: int, admin: dict = Depends(admin_required)):
+    db = Database.db
+    user = await db.users.find_one({"user_id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    # 1. Sản phẩm đã đăng
+    total_items = await db.items.count_documents({"user_id": user_id})
+    pending_items = await db.items.count_documents({"user_id": user_id, "status": "pending"})
+    approved_items = await db.items.count_documents({"user_id": user_id, "status": "active"})
+    rejected_items = await db.items.count_documents({"user_id": user_id, "status": "rejected"})
+    sold_items = await db.items.count_documents({"user_id": user_id, "status": {"$in": ["sold", "exchanged"]}})
+    # Lý do từ chối
+    rejected_list = await db.items.find({"user_id": user_id, "status": "rejected"}).to_list(length=20)
+    # 2. Giao dịch đã thực hiện
+    buy_count = await db.transactions.count_documents({"buyer_user_id": user_id, "transaction_type": "purchase"})
+    exchange_count = await db.transactions.count_documents({"buyer_user_id": user_id, "transaction_type": "exchange"})
+    donation_count = await db.transactions.count_documents({"buyer_user_id": user_id, "transaction_type": "donation"})
+    # Tổng tiền đã chi (mua + trao đổi)
+    total_spent = 0
+    async for t in db.transactions.find({"buyer_user_id": user_id, "transaction_type": {"$in": ["purchase", "exchange"]}}):
+        total_spent += t.get("amount", 0)
+    # Tổng phí đóng góp từ trao đổi
+    total_fee = 0
+    async for t in db.transactions.find({"buyer_user_id": user_id, "transaction_type": "exchange"}):
+        total_fee += t.get("fee", 0)
+    # 3. Hoạt động đã tham gia (quyên góp/gây quỹ)
+    user_donations = await db.transactions.find({"buyer_user_id": user_id, "transaction_type": "donation"}).to_list(length=100)
+    campaign_ids = list(set(donation["campaign_id"] for donation in user_donations if "campaign_id" in donation))
+    participated_campaigns = []
+    if campaign_ids:
+        participated_campaigns = await db.campaigns.find({"campaign_id": {"$in": campaign_ids}}).to_list(length=100)
+    # Thống kê loại hoạt động
+    fundraising_count = sum(1 for c in participated_campaigns if c.get("campaign_type") == "fundraising")
+    donation_campaign_count = sum(1 for c in participated_campaigns if c.get("campaign_type") == "donation")
+    # 4. Tổng đóng góp quỹ chung (từ phí trao đổi)
+    # Đã tính ở trên: total_fee
+    # 5. Thời gian hoạt động
+    registered_at = user.get("created_at")
+    first_item = await db.items.find({"user_id": user_id}).sort("created_at", 1).to_list(length=1)
+    first_transaction = await db.transactions.find({"buyer_user_id": user_id}).sort("transaction_date", 1).to_list(length=1)
+    last_item = await db.items.find({"user_id": user_id}).sort("created_at", -1).to_list(length=1)
+    # 6. Hiệu quả hoạt động
+    approve_rate = round(approved_items / total_items * 100, 2) if total_items else 0
+    # Xuất file Excel
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Personal Report"
+    ws.append([f"Personal Report for {user.get('name', user_id)} (User ID: {user_id})"])
+    ws.append([])
+    # 1. Sản phẩm đã đăng
+    ws.append(["1. Product Statistics"])
+    ws.append([f"You have posted {total_items} products:"])
+    ws.append(["Pending Approval", pending_items])
+    ws.append(["Approved", approved_items])
+    ws.append(["Rejected", rejected_items])
+    ws.append(["Sold/Exchanged", sold_items])
+    ws.append([])
+    ws.append(["Rejected Products (with reason):"])
+    ws.append(["Product Name", "Rejection Reason"])
+    if rejected_list:
+        for item in rejected_list:
+            ws.append([item.get("name", ""), item.get("rejection_reason", "")])
+    else:
+        ws.append(["", ""])
+    ws.append([])
+    # 2. Giao dịch đã thực hiện
+    ws.append(["2. Transaction Statistics"])
+    total_transactions = buy_count + exchange_count + donation_count
+    ws.append([f"You have participated in {total_transactions} transactions:"])
+    ws.append(["Purchase", buy_count])
+    ws.append(["Exchange", exchange_count])
+    ws.append(["Donation", donation_count])
+    ws.append(["Total Spent (Purchase + Exchange)", f"{total_spent:,} VNĐ"])
+    ws.append(["Total Exchange Fee Contributed", f"{total_fee:,} VNĐ"])
+    ws.append([])
+    # 3. Activities Participated
+    ws.append(["3. Activities Participated"])
+    total_activities = fundraising_count + donation_campaign_count
+    ws.append([f"You have participated in {total_activities} activities:"])
+    ws.append(["Fundraising Campaigns", fundraising_count])
+    ws.append(["Donation Campaigns", donation_campaign_count])
+    ws.append(["Campaign Name", "Type", "Start Date", "End Date"])
+    if participated_campaigns:
+        for c in participated_campaigns:
+            ws.append([
+                c.get("name", ""),
+                c.get("campaign_type", ""),
+                c.get("start_date", ""),
+                c.get("end_date", "")
+            ])
+    else:
+        ws.append(["", "", "", ""])
+    ws.append([])
+    # 4. Fund Contribution
+    ws.append(["4. Fund Contribution"])
+    ws.append([f"You have contributed {total_fee:,} VNĐ to the common fund through {exchange_count} exchange transactions."])
+    ws.append([])
+    # 5. Activity Timeline
+    ws.append(["5. Activity Timeline"])
+    ws.append(["Registered At", registered_at or "N/A"])
+    ws.append(["First Product Posted At", first_item[0]["created_at"] if first_item else "N/A"])
+    ws.append(["First Transaction At", first_transaction[0]["transaction_date"] if first_transaction else "N/A"])
+    ws.append(["Last Product Posted At", last_item[0]["created_at"] if last_item else "N/A"])
+    ws.append([])
+    # 6. Activity Effectiveness
+    ws.append(["6. Activity Effectiveness"])
+    ws.append(["Product Approval Rate", f"{approve_rate}%"])
+    # Xuất file
+    stream = io.BytesIO()
+    wb.save(stream)
+    stream.seek(0)
+    filename = f"user_report_{user_id}.xlsx"
+    return StreamingResponse(stream, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", headers={"Content-Disposition": f"attachment; filename={filename}"})
+
+
+@router.get("/dashboard", response_class=HTMLResponse)
+async def user_dashboard(request: Request, user: dict = Depends(get_current_user)):
+    db = Database.db
+    if not user:
+        return RedirectResponse(url="/login", status_code=302)
+    user_id = user["user_id"]
+    # 1. Sản phẩm đã đăng
+    total_items = await db.items.count_documents({"user_id": user_id})
+    pending_items = await db.items.count_documents({"user_id": user_id, "status": "pending"})
+    approved_items = await db.items.count_documents({"user_id": user_id, "status": "active"})
+    rejected_items = await db.items.count_documents({"user_id": user_id, "status": "rejected"})
+    sold_items = await db.items.count_documents({"user_id": user_id, "status": {"$in": ["sold", "exchanged"]}})
+    # 2. Giao dịch đã thực hiện
+    buy_count = await db.transactions.count_documents({"buyer_user_id": user_id, "transaction_type": "purchase"})
+    exchange_count = await db.transactions.count_documents({"buyer_user_id": user_id, "transaction_type": "exchange"})
+    donation_count = await db.transactions.count_documents({"buyer_user_id": user_id, "transaction_type": "donation"})
+    total_spent = 0
+    async for t in db.transactions.find({"buyer_user_id": user_id, "transaction_type": {"$in": ["purchase", "exchange"]}}):
+        total_spent += t.get("amount", 0)
+    total_fee = 0
+    async for t in db.transactions.find({"buyer_user_id": user_id, "transaction_type": "exchange"}):
+        total_fee += t.get("fee", 0)
+    # 3. Hoạt động đã tham gia
+    user_donations = await db.transactions.find({"buyer_user_id": user_id, "transaction_type": "donation"}).to_list(length=100)
+    campaign_ids = list(set(donation["campaign_id"] for donation in user_donations if "campaign_id" in donation))
+    participated_campaigns = []
+    if campaign_ids:
+        participated_campaigns = await db.campaigns.find({"campaign_id": {"$in": campaign_ids}}).to_list(length=100)
+    fundraising_count = sum(1 for c in participated_campaigns if c.get("campaign_type") == "fundraising")
+    donation_campaign_count = sum(1 for c in participated_campaigns if c.get("campaign_type") == "donation")
+    total_activities = fundraising_count + donation_campaign_count
+    # 4. Thời gian hoạt động
+    registered_at = user.get("created_at")
+    first_item = await db.items.find({"user_id": user_id}).sort("created_at", 1).to_list(length=1)
+    first_transaction = await db.transactions.find({"buyer_user_id": user_id}).sort("transaction_date", 1).to_list(length=1)
+    last_item = await db.items.find({"user_id": user_id}).sort("created_at", -1).to_list(length=1)
+    # 5. Hiệu quả hoạt động
+    approve_rate = round(approved_items / total_items * 100, 2) if total_items else 0
+    personal_report = {
+        "total_items": total_items,
+        "pending_items": pending_items,
+        "approved_items": approved_items,
+        "rejected_items": rejected_items,
+        "sold_items": sold_items,
+        "buy_count": buy_count,
+        "exchange_count": exchange_count,
+        "donation_count": donation_count,
+        "total_transactions": buy_count + exchange_count + donation_count,
+        "total_spent": total_spent,
+        "total_fee": total_fee,
+        "fundraising_count": fundraising_count,
+        "donation_campaign_count": donation_campaign_count,
+        "total_activities": total_activities,
+        "registered_at": registered_at,
+        "first_item": first_item[0]["created_at"] if first_item else None,
+        "first_transaction": first_transaction[0]["transaction_date"] if first_transaction else None,
+        "last_item": last_item[0]["created_at"] if last_item else None,
+        "approve_rate": approve_rate,
+    }
+    return templates.TemplateResponse(
+        "dashboard.html",
+        {"request": request, "user": user, "personal_report": personal_report}
     )

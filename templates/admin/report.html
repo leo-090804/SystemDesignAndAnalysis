@@ -2,7 +2,12 @@
 {% block title %}Statistical Report - Admin{% endblock %}
 {% block content %}
 <div class="container py-4">
-    <h2 class="mb-4">Statistical Report</h2>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-4">Statistical Report</h2>
+        <a href="/admin/report/export{% if month or year %}?{% endif %}{% if month %}month={{ month }}{% endif %}{% if month and year %}&{% endif %}{% if year %}year={{ year }}{% endif %}" class="btn btn-success">
+            <i class="fas fa-file-excel me-2"></i> Export Report
+        </a>
+    </div>
     <form method="get" class="row g-3 mb-4">
         <div class="col-md-3">
             <label for="month" class="form-label">Month</label>

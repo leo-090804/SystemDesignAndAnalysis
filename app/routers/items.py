@@ -339,11 +339,11 @@ async def view_item(request: Request, item_id: int = Path(...), user: dict = Dep
     item = await db.items.find_one({"item_id": item_id})
 
     if not item:
-        raise HTTPException(status_code=404, detail="Item not found")
+        return templates.TemplateResponse("items/not_available.html", {"request": request})
 
     # Regular users should only see active items unless they're the owner
     if user["role"] != "admin" and item["status"] != "active" and item["user_id"] != user["user_id"]:
-        raise HTTPException(status_code=403, detail="Item is not available")
+        return templates.TemplateResponse("items/not_available.html", {"request": request})
 
     # Get item owner and category information
     owner = await db.users.find_one({"user_id": item["user_id"]})

@@ -199,38 +199,30 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Approve button
-    const approveBtn = document.getElementById('approve-btn');
-    if (approveBtn) {
-        approveBtn.addEventListener('click', function() {
+    // Approve button (AJAX, dùng class)
+    document.querySelectorAll('.approve-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
             if (confirm('Are you sure you want to approve this transaction?')) {
                 fetch('/admin/transactions/{{ transaction.transaction_id }}/approve', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
+                    headers: { 'Content-Type': 'application/json' }
                 })
                 .then(response => response.json())
                 .then(data => {
-                    if (data.success) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Transaction Approved',
-                            text: 'The transaction has been successfully approved.'
-                        }).then(() => {
-                            window.location.reload();
-                        });
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: data.message || 'Failed to approve transaction.'
-                        });
-                    }
+                    Swal.fire({
+                        icon: data.success ? 'success' : 'error',
+                        title: data.success ? 'Transaction Approved' : 'Error',
+                        text: data.message || (data.success ? 'The transaction has been successfully approved.' : 'Failed to approve transaction.'),
+                        timer: 5000,
+                        timerProgressBar: true
+                    }).then(() => {
+                        window.location.reload();
+                    });
                 });
             }
         });
-    }
+    });
     
     // Cancel button
     const confirmCancelBtn = document.getElementById('confirm-cancel');

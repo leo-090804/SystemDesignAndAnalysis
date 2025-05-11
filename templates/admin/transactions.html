@@ -78,6 +78,24 @@
                                 {% endif %}
                             </td>
                         </tr>
+                        <!-- Modal Cancel -->
+                        <div class="modal fade" id="cancelModal{{ transaction.transaction_id }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Cancel Transaction #{{ transaction.transaction_id }}</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <textarea class="form-control" id="reason-{{ transaction.transaction_id }}" placeholder="Enter reason..." required></textarea>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                        <button type="button" class="btn btn-danger confirm-cancel-btn" data-id="{{ transaction.transaction_id }}">Confirm Cancel</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -138,6 +156,29 @@
                                 {% endif %}
                             </td>
                         </tr>
+                        <!-- Modal Cancel -->
+                        <div class="modal fade" id="cancelModal{{ transaction.transaction_id }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Cancel Donation Transaction</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <form class="cancel-form" data-id="{{ transaction.transaction_id }}">
+                                            <div class="mb-3">
+                                                <label for="reason{{ transaction.transaction_id }}" class="form-label">Cancellation Reason:</label>
+                                                <textarea class="form-control" id="reason{{ transaction.transaction_id }}" name="reason" rows="3" required></textarea>
+                                            </div>
+                                        </form>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                        <button type="button" class="btn btn-danger confirm-cancel-btn" data-id="{{ transaction.transaction_id }}">Confirm Cancellation</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -299,40 +340,26 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Cancel transaction for campaign donation
+    // Cancel transaction for regular transactions
     document.querySelectorAll('.confirm-cancel-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const transactionId = this.getAttribute('data-id');
-            const reason = document.getElementById('reason' + transactionId).value.trim();
+            const reason = document.getElementById('reason-' + transactionId).value.trim();
             if (!reason) {
                 alert('Please provide a reason for cancellation');
                 return;
             }
             fetch(`/admin/transactions/${transactionId}/cancel`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: new URLSearchParams({
-                    'reason': reason
-                })
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ 'reason': reason })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Transaction Cancelled',
-                        text: 'The donation transaction has been cancelled.'
-                    }).then(() => {
-                        window.location.reload();
-                    });
+                    window.location.reload();
                 } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: data.message || 'Failed to cancel transaction.'
-                    });
+                    alert(data.message || 'Failed to cancel transaction.');
                 }
             });
         });

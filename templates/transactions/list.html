@@ -67,12 +67,16 @@
                             <td>{{ transaction.other_party }}</td>
                             <td>${{ "%.2f"|format(transaction.amount) }}</td>
                             <td>
-                                {% if transaction.status == 'processing' %}
+                                {% if transaction.status == 'pending' %}
+                                <span class="badge bg-warning text-dark">Pending</span>
+                                {% elif transaction.status == 'processing' %}
                                 <span class="badge bg-warning text-dark">Processing</span>
                                 {% elif transaction.status == 'completed' %}
                                 <span class="badge bg-success">Completed</span>
                                 {% elif transaction.status == 'cancelled' %}
                                 <span class="badge bg-danger">Cancelled</span>
+                                {% else %}
+                                <span class="badge bg-secondary">{{ transaction.status|capitalize }}</span>
                                 {% endif %}
                             </td>
                             <td>{{ transaction.transaction_date.split('T')[0] }}</td>
@@ -121,12 +125,16 @@
                             <td>{{ transaction.campaign.name }}</td>
                             <td>${{ "%.2f"|format(transaction.amount) }}</td>
                             <td>
-                                {% if transaction.status == 'processing' %}
+                                {% if transaction.status == 'pending' %}
+                                <span class="badge bg-warning text-dark">Pending</span>
+                                {% elif transaction.status == 'processing' %}
                                 <span class="badge bg-warning text-dark">Processing</span>
                                 {% elif transaction.status == 'completed' %}
                                 <span class="badge bg-success">Completed</span>
                                 {% elif transaction.status == 'cancelled' %}
                                 <span class="badge bg-danger">Cancelled</span>
+                                {% else %}
+                                <span class="badge bg-secondary">{{ transaction.status|capitalize }}</span>
                                 {% endif %}
                             </td>
                             <td>{{ transaction.transaction_date.split('T')[0] }}</td>

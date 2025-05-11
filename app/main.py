@@ -110,25 +110,72 @@ async def dashboard(request: Request):
         token = request.cookies.get("access_token")
         if not token:
             return RedirectResponse(url="/login")
-        
         token_type, access_token = token.split()
         payload = jwt.decode(access_token, SECRET_KEY, algorithms=[ALGORITHM])
         username = payload.get("sub")
-        
         if username is None:
             return RedirectResponse(url="/login")
-        
-        # Get user from database
         db = Database.db
         user = await db.users.find_one({"username": username})
-        
         if not user:
             return RedirectResponse(url="/login")
-        
+        user_id = user["user_id"]
+        # 1. Sản phẩm đã đăng
+        total_items = await db.items.count_documents({"user_id": user_id})
+        pending_items = await db.items.count_documents({"user_id": user_id, "status": "pending"})
+        approved_items = await db.items.count_documents({"user_id": user_id, "status": "active"})
+        rejected_items = await db.items.count_documents({"user_id": user_id, "status": "rejected"})
+        sold_items = await db.items.count_documents({"user_id": user_id, "status": {"$in": ["sold", "exchanged"]}})
+        # 2. Giao dịch đã thực hiện
+        buy_count = await db.transactions.count_documents({"buyer_user_id": user_id, "transaction_type": "purchase"})
+        exchange_count = await db.transactions.count_documents({"buyer_user_id": user_id, "transaction_type": "exchange"})
+        donation_count = await db.transactions.count_documents({"buyer_user_id": user_id, "transaction_type": "donation"})
+        total_spent = 0
+        async for t in db.transactions.find({"buyer_user_id": user_id, "transaction_type": {"$in": ["purchase", "exchange"]}}):
+            total_spent += t.get("amount", 0)
+        total_fee = 0
+        async for t in db.transactions.find({"buyer_user_id": user_id, "transaction_type": "exchange"}):
+            total_fee += t.get("fee", 0)
+        # 3. Hoạt động đã tham gia
+        user_donations = await db.transactions.find({"buyer_user_id": user_id, "transaction_type": "donation"}).to_list(length=100)
+        campaign_ids = list(set(donation["campaign_id"] for donation in user_donations if "campaign_id" in donation))
+        participated_campaigns = []
+        if campaign_ids:
+            participated_campaigns = await db.campaigns.find({"campaign_id": {"$in": campaign_ids}}).to_list(length=100)
+        fundraising_count = sum(1 for c in participated_campaigns if c.get("campaign_type") == "fundraising")
+        donation_campaign_count = sum(1 for c in participated_campaigns if c.get("campaign_type") == "donation")
+        total_activities = fundraising_count + donation_campaign_count
+        # 4. Thời gian hoạt động
+        registered_at = user.get("created_at")
+        first_item = await db.items.find({"user_id": user_id}).sort("created_at", 1).to_list(length=1)
+        first_transaction = await db.transactions.find({"buyer_user_id": user_id}).sort("transaction_date", 1).to_list(length=1)
+        last_item = await db.items.find({"user_id": user_id}).sort("created_at", -1).to_list(length=1)
+        # 5. Hiệu quả hoạt động
+        approve_rate = round(approved_items / total_items * 100, 2) if total_items else 0
+        personal_report = {
+            "total_items": total_items,
+            "pending_items": pending_items,
+            "approved_items": approved_items,
+            "rejected_items": rejected_items,
+            "sold_items": sold_items,
+            "buy_count": buy_count,
+            "exchange_count": exchange_count,
+            "donation_count": donation_count,
+            "total_transactions": buy_count + exchange_count + donation_count,
+            "total_spent": total_spent,
+            "total_fee": total_fee,
+            "fundraising_count": fundraising_count,
+            "donation_campaign_count": donation_campaign_count,
+            "total_activities": total_activities,
+            "registered_at": registered_at,
+            "first_item": first_item[0]["created_at"] if first_item else None,
+            "first_transaction": first_transaction[0]["transaction_date"] if first_transaction else None,
+            "last_item": last_item[0]["created_at"] if last_item else None,
+            "approve_rate": approve_rate,
+        }
         return templates.TemplateResponse(
-            "dashboard.html", 
-            {"request": request, "user": user}
+            "dashboard.html",
+            {"request": request, "user": user, "personal_report": personal_report}
         )
-    
     except JWTError:
         return RedirectResponse(url="/login")

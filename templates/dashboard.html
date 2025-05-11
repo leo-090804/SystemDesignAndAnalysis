@@ -3,53 +3,306 @@
 {% block title %}Dashboard - School Exchange Platform{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-4">
-        <div class="card mb-4">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">Profile</h5>
-            </div>
-            <div class="card-body">
-                <h5>{{ user.name }}</h5>
-                <p class="text-muted">{{ user.role|capitalize }}</p>
-                {% if user.grade %}
-                <p><strong>Grade:</strong> {{ user.grade }}</p>
-                {% endif %}
-                {% if user.organization %}
-                <p><strong>Organization:</strong> {{ user.organization }}</p>
-                {% endif %}
+<div class="container py-4">
+    <!-- Welcome Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="avatar-circle bg-primary text-white">
+                                <i class="fas fa-user-circle fa-3x"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h2 class="mb-1">Welcome back, {{ user.name }}!</h2>
+                            <p class="text-muted mb-0">{{ user.role|capitalize }} • Member since {{ personal_report.registered_at.split('T')[0] if personal_report.registered_at else 'N/A' }}</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    
-    <div class="col-md-8">
-        <div class="card mb-4">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">Quick Actions</h5>
+
+    <!-- Quick Stats Section -->
+    <div class="row g-4 mb-4">
+        <!-- Items Stats -->
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="icon-box bg-primary-subtle rounded-circle p-3 me-3">
+                            <i class="fas fa-box text-primary"></i>
+                        </div>
+                        <h3 class="fs-2 mb-0">{{ personal_report.total_items }}</h3>
+                    </div>
+                    <h6 class="text-muted mb-0">Total Items</h6>
+                    <div class="progress mt-3" style="height: 4px;">
+                        <div class="progress-bar bg-primary" style="width: {{ personal_report.approve_rate }}%"></div>
+                    </div>
+                    <small class="text-muted">Approval Rate: {{ personal_report.approve_rate }}%</small>
+                </div>
             </div>
-            <div class="card-body">
-                <div class="d-grid gap-2">
-                    <a href="/items" class="btn btn-outline-primary">Browse Items</a>
-                    <a href="/items/create" class="btn btn-outline-success">Post New Item</a>
-                    <a href="/items/my" class="btn btn-outline-info">My Items</a>
-                    <a href="/transactions" class="btn btn-outline-secondary">My Transactions</a>
-                    <a href="/campaigns" class="btn btn-outline-warning">View Campaigns</a>
+        </div>
+
+        <!-- Transactions Stats -->
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="icon-box bg-success-subtle rounded-circle p-3 me-3">
+                            <i class="fas fa-exchange-alt text-success"></i>
+                        </div>
+                        <h3 class="fs-2 mb-0">{{ personal_report.total_transactions }}</h3>
+                    </div>
+                    <h6 class="text-muted mb-0">Total Transactions</h6>
+                    <div class="mt-3">
+                        <small class="text-muted">Buy: {{ personal_report.buy_count }} • Exchange: {{ personal_report.exchange_count }} • Donate: {{ personal_report.donation_count }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activities Stats -->
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="icon-box bg-info-subtle rounded-circle p-3 me-3">
+                            <i class="fas fa-hands-helping text-info"></i>
+                        </div>
+                        <h3 class="fs-2 mb-0">{{ personal_report.total_activities }}</h3>
+                    </div>
+                    <h6 class="text-muted mb-0">Activities</h6>
+                    <div class="mt-3">
+                        <small class="text-muted">Fundraising: {{ personal_report.fundraising_count }} • Donation: {{ personal_report.donation_campaign_count }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Financial Stats -->
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="icon-box bg-warning-subtle rounded-circle p-3 me-3">
+                            <i class="fas fa-coins text-warning"></i>
+                        </div>
+                        <h3 class="fs-2 mb-0">{{ "{:,}".format(personal_report.total_spent) }}</h3>
+                    </div>
+                    <h6 class="text-muted mb-0">Total Spent (VNĐ)</h6>
+                    <div class="mt-3">
+                        <small class="text-muted">Exchange Fee: {{ "{:,}".format(personal_report.total_fee) }} VNĐ</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="row g-4 mb-4">
+        <!-- Items Status Chart -->
+        <div class="col-md-12">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3 border-bottom-0">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i> Items Status</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="itemsChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 border-bottom-0">
+                    <h5 class="mb-0"><i class="fas fa-bolt me-2"></i> Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-2">
+                            <a href="/items" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-search me-2"></i> Browse Items
+                            </a>
+                        </div>
+                        <div class="col-md-2">
+                            <a href="/items/create" class="btn btn-outline-success w-100">
+                                <i class="fas fa-plus me-2"></i> Post New Item
+                            </a>
+                        </div>
+                        <div class="col-md-2">
+                            <a href="/items/my" class="btn btn-outline-info w-100">
+                                <i class="fas fa-box me-2"></i> My Items
+                            </a>
+                        </div>
+                        <div class="col-md-2">
+                            <a href="/transactions" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-history me-2"></i> My Transactions
+                            </a>
+                        </div>
+                        <div class="col-md-2">
+                            <a href="/campaigns" class="btn btn-outline-warning w-100">
+                                <i class="fas fa-hands-helping me-2"></i> View Campaigns
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 border-bottom-0">
+                    <h5 class="mb-0"><i class="fas fa-clock me-2"></i> Recent Activity</h5>
+                </div>
+                <div class="card-body">
+                    {% if personal_report.first_item or personal_report.first_transaction %}
+                    <div class="timeline">
+                        {% if personal_report.first_item %}
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-primary"></div>
+                            <div class="timeline-content">
+                                <h6 class="mb-1">First Item Posted</h6>
+                                <p class="text-muted mb-0">{{ personal_report.first_item.split('T')[0] }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if personal_report.first_transaction %}
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-success"></div>
+                            <div class="timeline-content">
+                                <h6 class="mb-1">First Transaction</h6>
+                                <p class="text-muted mb-0">{{ personal_report.first_transaction.split('T')[0] }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if personal_report.last_item %}
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-info"></div>
+                            <div class="timeline-content">
+                                <h6 class="mb-1">Latest Item Posted</h6>
+                                <p class="text-muted mb-0">{{ personal_report.last_item.split('T')[0] }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <p class="text-center text-muted">No recent activity to display.</p>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">Recent Activity</h5>
-            </div>
-            <div class="card-body">
-                <p class="text-center text-muted">No recent activity to display.</p>
-            </div>
-        </div>
-    </div>
-</div>
+<!-- Add custom styles -->
+<style>
+.avatar-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon-box {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.timeline {
+    position: relative;
+    padding: 20px 0;
+}
+
+.timeline-item {
+    position: relative;
+    padding-left: 40px;
+    margin-bottom: 20px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+}
+
+.timeline-item:not(:last-child):before {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 16px;
+    height: calc(100% + 4px);
+    width: 2px;
+    background-color: #e9ecef;
+}
+
+.timeline-content {
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+}
+</style>
+
+<!-- Add Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Initialize Charts -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Items Status Chart
+    const itemsCtx = document.getElementById('itemsChart').getContext('2d');
+    new Chart(itemsCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Active', 'Pending', 'Rejected', 'Sold', 'Exchanged', 'Pending Sale', 'Donation Pending'],
+            datasets: [{
+                data: [
+                    {{ personal_report.approved_items }},
+                    {{ personal_report.pending_items }},
+                    {{ personal_report.rejected_items }},
+                    {{ personal_report.sold_items }},
+                    {{ personal_report.exchanged_items|default(0) }},
+                    {{ personal_report.pending_sale_items|default(0) }},
+                    {{ personal_report.donation_pending_items|default(0) }}
+                ],
+                backgroundColor: [
+                    '#4caf50', // Active - green
+                    '#ffc107', // Pending - yellow
+                    '#f44336', // Rejected - red
+                    '#2196f3', // Sold - blue
+                    '#9c27b0', // Exchanged - purple
+                    '#ff9800', // Pending Sale - orange
+                    '#00bcd4'  // Donation Pending - cyan
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right'
+                }
+            }
+        }
+    });
+});
+</script>
 {% endblock %}
