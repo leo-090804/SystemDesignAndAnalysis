@@ -11,7 +11,7 @@ pymongo==4.5.0
 werkzeug
 Flask-Login
 python-dotenv
-
+openpyxl
 fastapi==0.103.1
 uvicorn==0.23.2
 motor==3.1.2
