@@ -604,7 +604,6 @@ async def edit_campaign(
     admin: dict = Depends(admin_required),
     name: str = Form(...),
     description: str = Form(...),
-    organizer: str = Form(...),
     start_date: str = Form(...),
     end_date: str = Form(...),
     goal_amount: Optional[float] = Form(None),
@@ -616,7 +615,6 @@ async def edit_campaign(
         update_data = {
             "name": name,
             "description": description,
-            "organizer": organizer,
             "start_date": start_date,
             "end_date": end_date,
             "status": status,
@@ -1417,6 +1415,7 @@ async def user_dashboard(request: Request, user: dict = Depends(get_current_user
     buy_count = await db.transactions.count_documents({"buyer_user_id": user_id, "transaction_type": "purchase"})
     exchange_count = await db.transactions.count_documents({"buyer_user_id": user_id, "transaction_type": "exchange"})
     donation_count = await db.transactions.count_documents({"buyer_user_id": user_id, "transaction_type": "donation"})
+    # Tổng tiền đã chi (mua + trao đổi)
     total_spent = 0
     async for t in db.transactions.find({"buyer_user_id": user_id, "transaction_type": {"$in": ["purchase", "exchange"]}}):
         total_spent += t.get("amount", 0)

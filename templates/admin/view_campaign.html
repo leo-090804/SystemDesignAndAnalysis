@@ -64,7 +64,7 @@
                             <div class="card">
                                 <div class="card-body">
                                     <h6 class="card-title">Fundraising Goal</h6>
-                                    <p class="fs-4">${{ "%.2f"|format(campaign.current_amount) }} of ${{ "%.2f"|format(campaign.goal_amount) }}</p>
+                                    <p class="fs-4">{{ "{:,}".format(campaign.current_amount|int) }} VNĐ of {{ "{:,}".format(campaign.goal_amount|int) }} VNĐ</p>
                                     <div class="progress">
                                         {% set progress = (campaign.current_amount / campaign.goal_amount * 100)|round|int %}
                                         <div class="progress-bar" role="progressbar" style="width: {{ progress }}%;" 
@@ -91,7 +91,7 @@
                                     <h6 class="card-title">Items in Campaign</h6>
                                     <p class="fs-4">{{ campaign_items|length }} items</p>
                                     {% if campaign.campaign_type == 'fundraising' %}
-                                    <p><strong>Total Value:</strong> ${{ "%.2f"|format(total_value) }}</p>
+                                    <p><strong>Total Value:</strong> {{ "{:,}".format(total_value|int) }} VNĐ</p>
                                     {% endif %}
                                 </div>
                             </div>
@@ -101,14 +101,6 @@
                     <div class="mt-4 d-flex gap-2">
                         <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editCampaignModal">
                             <i class="fas fa-edit me-1"></i> Edit Campaign
-                        </button>
-                        <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#cancelCampaignModal" 
-                                {% if campaign.status != 'active' %}disabled{% endif %}>
-                            <i class="fas fa-ban me-1"></i> Cancel Campaign
-                        </button>
-                        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#completeCampaignModal"
-                                {% if campaign.status != 'active' %}disabled{% endif %}>
-                            <i class="fas fa-check-circle me-1"></i> Mark as Completed
                         </button>
                     </div>
                 </div>
@@ -128,7 +120,7 @@
                         </li>
                         <li class="list-group-item d-flex justify-content-between">
                             <span>Total Value:</span>
-                            <span>${{ "%.2f"|format(total_value) }}</span>
+                            <span>{{ "{:,}".format(total_value|int) }} VNĐ</span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between">
                             <span>Days Remaining:</span>
@@ -189,17 +181,17 @@
                             <td>{{ item.user_name if item.user_name else "Unknown" }}</td>
                             <td>
                                 {% if item.transaction_type == 'sale' %}
-                                ${{ "%.2f"|format(item.price) }}
+                                    {{ "{:,}".format(item.price|int) }} VNĐ
                                 {% elif item.transaction_type == 'exchange' %}
-                                <span>Exchange Only</span>
+                                    <span>Exchange Only</span>
                                 {% elif item.transaction_type == 'for_campaign' and item.campaign_type == 'fundraising' %}
-                                ${{ "%.2f (For fundraising)"|format(item.price) }}
+                                    {{ "{:,}".format(item.price|int) }} VNĐ (For fundraising)
                                 {% elif item.transaction_type == 'for_campaign' and item.campaign_type == 'donation' %}
-                                <span>Donation</span>
+                                    <span>Donation</span>
                                 {% elif item.transaction_type == 'exchange_sale' %}
-                                ${{ "%.2f (Exchange Available)"|format(item.price) }}
+                                    {{ "{:,}".format(item.price|int) }} VNĐ (Exchange Available)
                                 {% else %}
-                                <span class="badge bg-secondary">Unknown</span>
+                                    <span class="badge bg-secondary">Unknown</span>
                                 {% endif %}
                             </td>
                             <td>
@@ -252,10 +244,6 @@
                         <label for="description" class="form-label">Description</label>
                         <textarea class="form-control" id="description" name="description" rows="4" required>{{ campaign.description }}</textarea>
                     </div>
-                    <div class="mb-3">
-                        <label for="organizer" class="form-label">Campaign Organizer</label>
-                        <input type="text" class="form-control" id="organizer" name="organizer" value="{{ campaign.organizer }}" required>
-                    </div>
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="start_date" class="form-label">Start Date</label>
@@ -296,58 +284,6 @@
     </div>
 </div>
 
-<!-- Cancel Campaign Modal -->
-<div class="modal fade" id="cancelCampaignModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Cancel Campaign</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form action="/admin/campaigns/{{ campaign.campaign_id }}/cancel" method="post">
-                <div class="modal-body">
-                    <p>Are you sure you want to cancel this campaign?</p>
-                    <p class="text-danger">This will make the campaign inactive and unavailable to users.</p>
-                    <div class="mb-3">
-                        <label for="cancellation_reason" class="form-label">Reason for Cancellation</label>
-                        <textarea class="form-control" id="cancellation_reason" name="reason" rows="3" required></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No, Keep Active</button>
-                    <button type="submit" class="btn btn-danger">Yes, Cancel Campaign</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Complete Campaign Modal -->
-<div class="modal fade" id="completeCampaignModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Complete Campaign</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form action="/admin/campaigns/{{ campaign.campaign_id }}/complete" method="post">
-                <div class="modal-body">
-                    <p>Are you sure you want to mark this campaign as completed?</p>
-                    <p class="text-info">This will finalize the campaign and make it read-only.</p>
-                    <div class="mb-3">
-                        <label for="completion_note" class="form-label">Completion Note (Optional)</label>
-                        <textarea class="form-control" id="completion_note" name="note" rows="3"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-success">Mark as Completed</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const campaignType = '{{ campaign.campaign_type }}';
@@ -355,6 +291,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const goalAmountInput = document.getElementById('goal_amount');
     const goalItemSection = document.getElementById('goal-item-section');
     const goalItemInput = document.getElementById('goal_item');
+    const editForm = document.querySelector('#editCampaignModal form');
+    if (editForm) {
+        editForm.addEventListener('submit', function(e) {
+            // Nếu goal_item bị ẩn hoặc rỗng thì xóa khỏi form trước khi submit
+            if (goalItemSection.style.display === 'none' || !goalItemInput.value) {
+                goalItemInput.removeAttribute('name');
+            }
+        });
+    }
     if (campaignType === 'fundraising') {
         goalAmountSection.style.display = 'block';
         goalAmountInput.setAttribute('required', '');

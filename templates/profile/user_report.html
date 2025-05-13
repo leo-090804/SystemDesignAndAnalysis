@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Báo cáo cá nhân - Nền tảng Trao Đổi Trường Học{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <h2 class="mb-4">Báo cáo cá nhân</h2>
+    <div class="row g-4">
+        <!-- Sản phẩm -->
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header text-white fw-bold" style="background:#0d6efd; border-top-left-radius: .75rem; border-top-right-radius: .75rem;">Sản phẩm của bạn</div>
+                <div class="card-body p-0">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Trạng thái</th>
+                                <th class="text-end">Số lượng</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Chờ duyệt</td>
+                                <td class="text-end"><span class="badge bg-warning text-dark">{{ item_stats.pending }}</span></td>
+                            </tr>
+                            <tr>
+                                <td>Đã duyệt</td>
+                                <td class="text-end"><span class="badge bg-success">{{ item_stats.active }}</span></td>
+                            </tr>
+                            <tr>
+                                <td>Bị từ chối</td>
+                                <td class="text-end"><span class="badge bg-danger">{{ item_stats.rejected }}</span></td>
+                            </tr>
+                            <tr>
+                                <td>Đã bán</td>
+                                <td class="text-end"><span class="badge bg-info text-dark">{{ item_stats.sold }}</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!-- Giao dịch -->
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header text-white fw-bold" style="background:#198754; border-top-left-radius: .75rem; border-top-right-radius: .75rem;">Giao dịch của bạn</div>
+                <div class="card-body p-0">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Loại</th>
+                                <th class="text-end">Số lượng</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Mua</td>
+                                <td class="text-end"><span class="badge bg-primary">{{ trans_stats.purchase }}</span></td>
+                            </tr>
+                            <tr>
+                                <td>Trao đổi</td>
+                                <td class="text-end"><span class="badge bg-info text-dark">{{ trans_stats.exchange }}</span></td>
+                            </tr>
+                            <tr>
+                                <td>Quyên góp</td>
+                                <td class="text-end"><span class="badge bg-warning text-dark">{{ trans_stats.donation }}</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!-- Chiến dịch -->
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header text-white fw-bold" style="background:#17c7ef; border-top-left-radius: .75rem; border-top-right-radius: .75rem;">Chiến dịch tham gia</div>
+                <div class="card-body d-flex flex-column align-items-center justify-content-center" style="height: 180px;">
+                    <div class="display-3 fw-bold text-primary">{{ campaign_count }}</div>
+                    <div class="mt-2 text-center">Số chiến dịch bạn đã tham gia</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

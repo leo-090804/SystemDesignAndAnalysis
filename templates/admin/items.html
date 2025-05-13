@@ -69,7 +69,6 @@
                             <th>Category</th>
                             <th>Owner</th>
                             <th>Status</th>
-                            <th><span title="Exchange Status">Exchange</span></th>
                             <th>Created</th>
                             <th></th>
                         </tr>
@@ -88,7 +87,13 @@
                                 {% endif %}
                             </td>
                             <td>{{ item.name }}</td>
-                            <td>{{ "{:,}".format(item.price|int) }} VNĐ</td>
+                            <td>
+                                {% if item.transaction_type == 'exchange' %}
+                                    Exchange
+                                {% else %}
+                                    {{ "{:,}".format(item.price|int) }} VNĐ
+                                {% endif %}
+                            </td>
                             <td>{% if item.transaction_fee %}{{ "{:,}".format(item.transaction_fee|int) }} VNĐ{% else %}0 VNĐ{% endif %}</td>
                             <td>{{ item.category_name }}</td>
                             <td>{{ item.user_name }}</td>
@@ -111,15 +116,6 @@
                                 <span class="badge bg-info">Exchanged</span>
                                 {% else %}
                                 <span class="badge bg-secondary">{{ item.status }}</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if item.status == 'pending_exchange' %}
-                                    <span class="badge bg-warning text-dark">Đang chờ xác nhận</span>
-                                {% elif item.status == 'exchanged' %}
-                                    <span class="badge bg-info">Đã trao đổi</span>
-                                {% else %}
-                                    <span class="text-muted">-</span>
                                 {% endif %}
                             </td>
                             <td>{{ item.created_at.split('T')[0] if item.created_at else "Unknown" }}</td>
