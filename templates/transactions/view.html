@@ -27,7 +27,7 @@
                                 <li class="list-group-item d-flex justify-content-between">
                                     <span>Amount / Transaction Fee:</span>
                                     {% if transaction.amount is defined %}
-                                        <span class="fw-bold">${{ "%.2f"|format(transaction.amount) }}</span>
+                                        <span class="fw-bold">{{ "{:,}".format(transaction.amount|int) }} VNĐ</span>
                                     {% elif transaction.transaction_fee is defined %}
                                         <span class="fw-bold text-info">{{ "{:,}".format(transaction.transaction_fee|int) }} VNĐ</span>
                                     {% else %}

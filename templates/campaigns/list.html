@@ -17,9 +17,6 @@
         <li class="nav-item">
             <a class="nav-link {% if campaign_type == 'donation' %}active{% endif %}" href="/campaigns?campaign_type=donation">Donation</a>
         </li>
-        <li class="nav-item">
-            <a class="nav-link {% if campaign_type == 'exchange' %}active{% endif %}" href="/campaigns?campaign_type=exchange">Exchange</a>
-        </li>
     </ul>
 
     {% if campaigns %}
@@ -35,7 +32,7 @@
                     
                     {% if campaign.goal_amount %}
                     <div class="mb-3">
-                        <p><strong>Goal:</strong> ${{ "%.2f"|format(campaign.goal_amount) }}</p>
+                        <p><strong>Goal:</strong> {{ "{:,}".format(campaign.goal_amount|int) }} VNĐ</p>
                         <div class="progress">
                             {% set progress = (campaign.current_amount / campaign.goal_amount * 100)|round|int %}
                             <div class="progress-bar" role="progressbar" style="width: {{ progress }}%;" 

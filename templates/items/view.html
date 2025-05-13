@@ -102,7 +102,7 @@
                     {% endif %}
                     <div class="card-body">
                         <h5 class="card-title">{{ related_item.name }}</h5>
-                        <p class="card-text text-primary fw-bold">${{ "%.2f"|format(related_item.price) }}</p>
+                        <p class="card-text text-primary fw-bold">{{ "{:,}".format(related_item.price|int) }} VNĐ</p>
                         <a href="/items/{{ related_item.item_id }}" class="btn btn-outline-primary btn-sm">View Details</a>
                     </div>
                 </div>

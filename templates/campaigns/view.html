@@ -35,7 +35,7 @@
                         {% if campaign.goal_amount %}
                         <div class="col-md-6">
                             <h5>Fundraising Goal</h5>
-                            <p class="fs-4">$<span class="campaign-amount">{{ "%.2f"|format(campaign.current_amount) }}</span> of ${{ "%.2f"|format(campaign.goal_amount) }}</p>
+                            <p class="fs-4"><span class="campaign-amount">{{ "{:,}".format(campaign.current_amount|int) }}</span> VNĐ of {{ "{:,}".format(campaign.goal_amount|int) }} VNĐ</p>
                             <div class="progress">
                                 {% set progress = (campaign.current_amount / campaign.goal_amount * 100)|round|int %}
                                 <div class="progress-bar" role="progressbar" style="width: {{ progress }}%;" 
