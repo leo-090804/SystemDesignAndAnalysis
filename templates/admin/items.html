@@ -65,6 +65,7 @@
                             <th>Image</th>
                             <th>Name</th>
                             <th>Price</th>
+                            <th>Fee</th>
                             <th>Category</th>
                             <th>Owner</th>
                             <th>Status</th>
@@ -87,13 +88,8 @@
                                 {% endif %}
                             </td>
                             <td>{{ item.name }}</td>
-                            <td>
-                                {% if item.transaction_type in ['exchange', 'exchange_sale'] and item.transaction_fee %}
-                                    <span class="text-info">{{ "{:,}".format(item.transaction_fee|int) }} VNĐ</span>
-                                {% else %}
-                                    {{ "{:,}".format(item.price|int) }} VNĐ
-                                {% endif %}
-                            </td>
+                            <td>{{ "{:,}".format(item.price|int) }} VNĐ</td>
+                            <td>{% if item.transaction_fee %}{{ "{:,}".format(item.transaction_fee|int) }} VNĐ{% else %}0 VNĐ{% endif %}</td>
                             <td>{{ item.category_name }}</td>
                             <td>{{ item.user_name }}</td>
                             <td>
